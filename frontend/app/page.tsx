@@ -1,11 +1,12 @@
-import { Navigation } from "@/components/navigation"
-import { UniverseBackground } from "@/components/universe-background"
-import { PlanetCard } from "@/components/planet-card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Sparkles, Rocket, Users, TrendingUp } from "lucide-react"
-import Link from "next/link"
+import { Navigation } from "@/components/navigation";
+import { UniverseBackground } from "@/components/universe-background";
+import { PlanetCard } from "@/components/planet-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles, Rocket, Users, TrendingUp } from "lucide-react";
+import Link from "next/link";
+import Footer from "@/components/footer";
 
 const creators = [
   {
@@ -74,9 +75,18 @@ const creators = [
     image: "/placeholder.svg?height=300&width=300",
     color: "#c084fc",
   },
-]
+];
 
-const categories = ["全部", "療癒", "極簡", "自然", "科技", "復古", "夢幻", "實驗"]
+const categories = [
+  "全部",
+  "療癒",
+  "極簡",
+  "自然",
+  "科技",
+  "復古",
+  "夢幻",
+  "實驗",
+];
 
 export default function HomePage() {
   return (
@@ -101,15 +111,6 @@ export default function HomePage() {
           <p className="mb-8 text-pretty text-lg text-muted-foreground md:text-xl">
             每個創作者都是一顆獨特的星球，等待你來探索他們的藝術世界
           </p>
-          <div className="mx-auto flex max-w-md items-center gap-2">
-            <Input
-              placeholder="搜尋創作者、風格、作品..."
-              className="h-12 border-border/50 bg-card/50 backdrop-blur-sm"
-            />
-            <Button size="lg" className="h-12 bg-gradient-to-r from-primary to-secondary">
-              探索
-            </Button>
-          </div>
         </div>
       </section>
 
@@ -141,7 +142,7 @@ export default function HomePage() {
       </section>
 
       {/* Categories */}
-      <section className="container mx-auto px-4 pb-12">
+      {/* <section className="container mx-auto px-4 pb-12">
         <div className="flex flex-wrap justify-center gap-2">
           {categories.map((category) => (
             <Badge
@@ -153,13 +154,17 @@ export default function HomePage() {
             </Badge>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* Creators Grid */}
       <section className="container mx-auto px-4 pb-20">
         <div className="mb-8 text-center">
-          <h2 className="mb-2 text-3xl font-bold text-foreground">熱門創作者星球</h2>
-          <p className="text-muted-foreground">點擊星球，進入創作者的專屬宇宙</p>
+          <h2 className="mb-2 text-3xl font-bold text-foreground">
+            熱門創作者星球
+          </h2>
+          <p className="text-muted-foreground">
+            點擊星球，進入創作者的專屬宇宙
+          </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {creators.map((creator) => (
@@ -172,11 +177,18 @@ export default function HomePage() {
       <section className="container mx-auto px-4 pb-32">
         <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 p-12 text-center backdrop-blur-sm">
           <div className="relative z-10">
-            <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">準備好展示你的創作了嗎？</h2>
-            <p className="mb-8 text-lg text-muted-foreground">加入我們，在藝術宇宙中建立屬於你的星球</p>
+            <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+              準備好展示你的創作了嗎？
+            </h2>
+            <p className="mb-8 text-lg text-muted-foreground">
+              加入我們，在藝術宇宙中建立屬於你的星球
+            </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/creator-apply">
-                <Button size="lg" className="bg-gradient-to-r from-primary to-secondary">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-secondary"
+                >
                   申請成為創作者
                 </Button>
               </Link>
@@ -190,6 +202,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]" />
         </div>
       </section>
+      <Footer />
     </div>
-  )
+  );
 }
