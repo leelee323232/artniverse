@@ -4,6 +4,7 @@
 
 :root {
   /* Universe-themed color palette with deep space blacks and cosmic accents */
+  --brand-secondary: #8e51ff;
   --background: oklch(0.08 0.02 265);
   --foreground: oklch(0.98 0.01 265);
   --card: oklch(0.12 0.03 265);
@@ -12,7 +13,7 @@
   --popover-foreground: oklch(0.98 0.01 265);
   --primary: oklch(0.65 0.25 265);
   --primary-foreground: oklch(0.98 0.01 265);
-  --secondary: oklch(0.55 0.2 310);
+  --secondary: var(--brand-secondary);
   --secondary-foreground: oklch(0.98 0.01 265);
   --muted: oklch(0.2 0.03 265);
   --muted-foreground: oklch(0.65 0.02 265);
@@ -40,6 +41,8 @@
 }
 
 .dark {
+  /* --brand-primary: #618bb8; */
+  --brand-secondary: #8e51ff;
   --background: oklch(0.08 0.02 265);
   --foreground: oklch(0.98 0.01 265);
   --card: oklch(0.12 0.03 265);
@@ -48,7 +51,7 @@
   --popover-foreground: oklch(0.98 0.01 265);
   --primary: oklch(0.65 0.25 265);
   --primary-foreground: oklch(0.98 0.01 265);
-  --secondary: oklch(0.55 0.2 310);
+  --secondary: var(--brand-secondary);
   --secondary-foreground: oklch(0.98 0.01 265);
   --muted: oklch(0.2 0.03 265);
   --muted-foreground: oklch(0.65 0.02 265);
