@@ -1,14 +1,20 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Navigation } from "@/components/navigation"
-import { UniverseBackground } from "@/components/universe-background"
-import { PlanetCard } from "@/components/planet-card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, SlidersHorizontal } from "lucide-react"
+import { useState } from "react";
+import { Navigation } from "@/components/navigation";
+import { UniverseBackground } from "@/components/universe-background";
+import { PlanetCard } from "@/components/planet-card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, SlidersHorizontal } from "lucide-react";
 
 const creators = [
   {
@@ -99,23 +105,37 @@ const creators = [
     image: "/placeholder.svg?height=300&width=300",
     color: "#fbbf24",
   },
-]
+];
 
-const categories = ["全部", "療癒", "極簡", "自然", "科技", "復古", "夢幻", "實驗", "水彩", "幾何"]
+const categories = [
+  "全部",
+  "療癒",
+  "極簡",
+  "自然",
+  "科技",
+  "復古",
+  "夢幻",
+  "實驗",
+  "水彩",
+  "幾何",
+];
 
 export default function ExplorePage() {
-  const [selectedCategory, setSelectedCategory] = useState("全部")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("全部");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredCreators = creators.filter((creator) => {
-    const matchesCategory = selectedCategory === "全部" || creator.tags.includes(selectedCategory)
+    const matchesCategory =
+      selectedCategory === "全部" || creator.tags.includes(selectedCategory);
     const matchesSearch =
       searchQuery === "" ||
       creator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       creator.creator.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-    return matchesCategory && matchesSearch
-  })
+      creator.tags.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="relative min-h-screen">
@@ -125,8 +145,12 @@ export default function ExplorePage() {
       <div className="container mx-auto px-4 pt-24 pb-20">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">探索創作者宇宙</h1>
-          <p className="text-lg text-muted-foreground">發現 {creators.length} 個獨特的創作星球</p>
+          <h1 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">
+            探索創作者宇宙
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            發現 {creators.length} 個獨特的創作星球
+          </p>
         </div>
 
         {/* Search and Filters */}
@@ -170,7 +194,9 @@ export default function ExplorePage() {
         </div>
 
         {/* Results */}
-        <div className="mb-6 text-center text-sm text-muted-foreground">找到 {filteredCreators.length} 個創作者</div>
+        <div className="mb-6 text-center text-sm text-muted-foreground">
+          找到 {filteredCreators.length} 個創作者
+        </div>
 
         {/* Creators Grid */}
         {filteredCreators.length > 0 ? (
@@ -181,13 +207,15 @@ export default function ExplorePage() {
           </div>
         ) : (
           <div className="rounded-xl border border-border/50 bg-card/30 p-12 text-center backdrop-blur-sm">
-            <p className="text-lg text-muted-foreground">找不到符合條件的創作者</p>
+            <p className="text-lg text-muted-foreground">
+              找不到符合條件的創作者
+            </p>
             <Button
               variant="outline"
               className="mt-4 bg-transparent"
               onClick={() => {
-                setSelectedCategory("全部")
-                setSearchQuery("")
+                setSelectedCategory("全部");
+                setSearchQuery("");
               }}
             >
               清除篩選
@@ -196,5 +224,5 @@ export default function ExplorePage() {
         )}
       </div>
     </div>
-  )
+  );
 }
