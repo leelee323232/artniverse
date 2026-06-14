@@ -84,13 +84,6 @@ export function Navigation() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Search className="h-5 w-5" />
-          </Button>
           <Link href="/cart">
             <Button
               variant="ghost"

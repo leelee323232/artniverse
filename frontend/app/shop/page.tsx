@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Navigation } from "@/components/navigation"
-import { ProductCard } from "@/components/product-card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react";
+import { Navigation } from "@/components/navigation";
+import { ProductCard } from "@/components/product-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Search,
   SlidersHorizontal,
@@ -24,7 +24,7 @@ import {
   Sparkles,
   Grid3X3,
   LayoutList,
-} from "lucide-react"
+} from "lucide-react";
 
 const categories = [
   { id: "all", name: "全部商品", icon: Grid3X3, count: 156 },
@@ -33,7 +33,7 @@ const categories = [
   { id: "kitchen", name: "廚房", icon: ChefHat, count: 28 },
   { id: "bedroom", name: "臥室", icon: Bed, count: 31 },
   { id: "car", name: "車用", icon: Car, count: 20 },
-]
+];
 
 const mockProducts = [
   {
@@ -168,35 +168,35 @@ const mockProducts = [
     creatorId: "5",
     isNew: true,
   },
-]
+];
 
 export default function ShopPage() {
-  const [selectedCategory, setSelectedCategory] = useState("all")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState("newest")
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const filteredProducts = mockProducts.filter((product) => {
     const matchesCategory =
-      selectedCategory === "all" || product.categoryId === selectedCategory
+      selectedCategory === "all" || product.categoryId === selectedCategory;
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+      product.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case "price-low":
-        return a.price - b.price
+        return a.price - b.price;
       case "price-high":
-        return b.price - a.price
+        return b.price - a.price;
       case "newest":
-        return a.isNew ? -1 : 1
+        return a.isNew ? -1 : 1;
       default:
-        return 0
+        return 0;
     }
-  })
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -229,8 +229,8 @@ export default function ShopPage() {
         <div className="mb-8">
           <div className="flex flex-wrap gap-3">
             {categories.map((category) => {
-              const Icon = category.icon
-              const isActive = selectedCategory === category.id
+              const Icon = category.icon;
+              const isActive = selectedCategory === category.id;
               return (
                 <Button
                   key={category.id}
@@ -255,7 +255,7 @@ export default function ShopPage() {
                     {category.count}
                   </Badge>
                 </Button>
-              )
+              );
             })}
           </div>
         </div>
@@ -375,7 +375,7 @@ export default function ShopPage() {
           </h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {categories.slice(1).map((category) => {
-              const Icon = category.icon
+              const Icon = category.icon;
               return (
                 <button
                   key={category.id}
@@ -394,11 +394,11 @@ export default function ShopPage() {
                     立即探索 →
                   </span>
                 </button>
-              )
+              );
             })}
           </div>
         </section>
       </div>
     </div>
-  )
+  );
 }

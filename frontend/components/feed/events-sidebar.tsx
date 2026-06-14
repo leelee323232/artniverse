@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, MapPin, ChevronRight, Sparkles, Clock } from "lucide-react";
+import { Calendar, MapPin, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { TheCard } from "@/components/common/TheCard";
 
 interface Event {
   id: string;
@@ -85,13 +85,7 @@ export function EventsSidebar() {
   return (
     <aside className="w-72 shrink-0 space-y-4 sticky top-20 h-fit">
       {/* Platform Events */}
-      <Card className="border-white/10 opacity-80">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            平台活動
-          </CardTitle>
-        </CardHeader>
+      <TheCard title="平台活動" highlightOnHover={false}>
         <CardContent className="space-y-3">
           {platformEvents.map((event) => (
             <Link
@@ -105,14 +99,6 @@ export function EventsSidebar() {
                     <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">
                       {event.title}
                     </p>
-                    {event.isNew && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-primary/10 text-primary text-xs px-1.5"
-                      >
-                        NEW
-                      </Badge>
-                    )}
                   </div>
                   <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                     <Calendar className="h-3 w-3" />
@@ -130,16 +116,10 @@ export function EventsSidebar() {
             查看全部活動 →
           </Link>
         </CardContent>
-      </Card>
+      </TheCard>
 
       {/* Creator Events */}
-      <Card className="border-border/50">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Clock className="h-4 w-4 text-accent" />
-            創作者活動
-          </CardTitle>
-        </CardHeader>
+      <TheCard title="創作者活動" highlightOnHover={false}>
         <CardContent className="space-y-3">
           {creatorEvents.map((event, index) => (
             <div key={event.id}>
@@ -182,7 +162,7 @@ export function EventsSidebar() {
             </div>
           ))}
         </CardContent>
-      </Card>
+      </TheCard>
     </aside>
   );
 }
