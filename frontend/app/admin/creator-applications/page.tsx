@@ -6,20 +6,70 @@ import { Button } from "@/components/ui/button";
 
 type ApplicationStatus = "pending" | "approved" | "rejected";
 
+// 根據 JSON 格式擴充 Interface，包含所有填寫欄位
 interface Application {
   id: string;
-  name: string;
-  brandName: string;
-  email: string;
   date: string;
   status: ApplicationStatus;
   rejectReason?: string;
+  
+  // JSON 欄位對接
+  email: string;
+  realName: string;
+  brandName: string;
+  storePickup: string;
+  phone: string;
+  birthday: string;
+  address: string;
+  bankCode: string;
+  bankAccount: string;
+  selectedCategories: string[]; // array
+  creativePhilosophy: string;   // string
+  idFrontImage: string;         // file (暫存 URL 或檔名)
+  idBackImage: string;          // file (暫存 URL 或檔名)
+  agreeToContract: boolean;     // boolean
 }
 
 const initialApplications: Application[] = [
-  { id: "1", name: "小小", brandName: "Artic Studio", email: "wei@example.com", date: "2026-06-20", status: "pending" },
-  { id: "2", name: "中中", brandName: "Meme Lab", email: "mei@example.com", date: "2026-06-19", status: "approved" },
-  { id: "3", name: "大大", brandName: "Space Flight", email: "howard@example.com", date: "2026-06-18", status: "rejected", rejectReason: "資料格式不正確" },
+  { 
+    id: "2", 
+    date: "2026-06-19", 
+    status: "approved",
+    email: "mei@example.com",
+    realName: "中中",
+    brandName: "Meme Lab",
+    storePickup: "台北車站店",
+    phone: "0923456789",
+    birthday: "2004-12-25",
+    address: "台北市中正區北平西路3號",
+    bankCode: "013",
+    bankAccount: "987654321098",
+    selectedCategories: ["潮流", "公仔"],
+    creativePhilosophy: "幽默拯救世界，迷因就是力量。",
+    idFrontImage: "id_front.jpg",
+    idBackImage: "id_back.jpg",
+    agreeToContract: true
+  },
+  { 
+    id: "3", 
+    date: "2026-06-18", 
+    status: "rejected", 
+    rejectReason: "資料格式不正確",
+    email: "howard@example.com",
+    realName: "大大",
+    brandName: "Space Flight",
+    storePickup: "信義店",
+    phone: "0934567890",
+    birthday: "2003-04-01",
+    address: "台北市信義區信義路五段7號",
+    bankCode: "004",
+    bankAccount: "554433221100",
+    selectedCategories: ["科技", "模型"],
+    creativePhilosophy: "將宇宙的奧秘，實體化呈現在桌面上。",
+    idFrontImage: "front.jpg",
+    idBackImage: "back.jpg",
+    agreeToContract: true
+  },
 ];
 
 export default function CreatorApplicationsPage() {
@@ -56,14 +106,16 @@ export default function CreatorApplicationsPage() {
         創作者申請審核管理
       </h1>
 
-      {/* 列表表格：完全沿用導覽列的背景與邊框標準 */}
+      {/* 列表表格：擴充顯示核心主要欄位 */}
       <div className="bg-background/80 backdrop-blur-lg rounded-xl border border-border/50 shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-muted/30 border-b border-border/50 text-muted-foreground text-sm font-semibold">
-              <th className="p-4">姓名</th>
+              <th className="p-4">真實姓名</th>
               <th className="p-4">品牌名稱</th>
               <th className="p-4">Email</th>
+              <th className="p-4">聯絡電話</th>
+              <th className="p-4">已選分類</th>
               <th className="p-4">申請日期</th>
               <th className="p-4">狀態</th>
               <th className="p-4 text-center">操作</th>
@@ -76,9 +128,11 @@ export default function CreatorApplicationsPage() {
                 onClick={() => setSelectedApp(app)}
                 className="border-b border-border/40 hover:bg-muted/40 cursor-pointer transition-colors text-muted-foreground hover:text-foreground text-sm"
               >
-                <td className="p-4 font-medium text-foreground">{app.name}</td>
+                <td className="p-4 font-medium text-foreground">{app.realName}</td>
                 <td className="p-4">{app.brandName}</td>
                 <td className="p-4">{app.email}</td>
+                <td className="p-4">{app.phone}</td>
+                <td className="p-4">{app.selectedCategories.join(", ")}</td>
                 <td className="p-4">{app.date}</td>
                 <td className="p-4">{renderStatusBadge(app.status)}</td>
                 <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
@@ -97,7 +151,7 @@ export default function CreatorApplicationsPage() {
         </table>
       </div>
 
-      {/* 第一層：詳細資料視窗 Modal */}
+      {/* 第一層：詳細資料視窗 Modal (此處修改為完整呈現 14 項欄位) */}
       {selectedApp && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-40 p-4 animate-in fade-in duration-150">
           <div className="bg-background border border-border/80 rounded-xl shadow-xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
@@ -112,20 +166,66 @@ export default function CreatorApplicationsPage() {
               </button>
             </div>
 
-            {/* Content */}
+            {/* Content：完整呈現 JSON 規範的所有欄位 */}
             <div className="p-6 space-y-4 overflow-y-auto text-muted-foreground">
               <div className="grid grid-cols-3 border-b border-border/30 pb-2">
-                <span className="font-medium text-muted-foreground">申請人姓名</span>
-                <span className="col-span-2 font-semibold text-foreground">{selectedApp.name}</span>
+                <span className="font-medium text-muted-foreground">電子郵件</span>
+                <span className="col-span-2 text-foreground">{selectedApp.email}</span>
+              </div>
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
+                <span className="font-medium text-muted-foreground">真實姓名</span>
+                <span className="col-span-2 font-semibold text-foreground">{selectedApp.realName}</span>
               </div>
               <div className="grid grid-cols-3 border-b border-border/30 pb-2">
                 <span className="font-medium text-muted-foreground">品牌名稱</span>
                 <span className="col-span-2 font-semibold text-foreground">{selectedApp.brandName}</span>
               </div>
               <div className="grid grid-cols-3 border-b border-border/30 pb-2">
-                <span className="font-medium text-muted-foreground">電子信箱</span>
-                <span className="col-span-2 text-foreground">{selectedApp.email}</span>
+                <span className="font-medium text-muted-foreground">取貨資訊</span>
+                <span className="col-span-2 text-foreground">{selectedApp.storePickup}</span>
               </div>
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
+                <span className="font-medium text-muted-foreground">聯絡電話</span>
+                <span className="col-span-2 text-foreground">{selectedApp.phone}</span>
+              </div>
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
+                <span className="font-medium text-muted-foreground">生日</span>
+                <span className="col-span-2 text-foreground">{selectedApp.birthday}</span>
+              </div>
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
+                <span className="font-medium text-muted-foreground">通訊地址</span>
+                <span className="col-span-2 text-foreground">{selectedApp.address}</span>
+              </div>
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
+                <span className="font-medium text-muted-foreground">銀行代碼</span>
+                <span className="col-span-2 text-foreground">{selectedApp.bankCode}</span>
+              </div>
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
+                <span className="font-medium text-muted-foreground">銀行帳號</span>
+                <span className="col-span-2 text-foreground">{selectedApp.bankAccount}</span>
+              </div>
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
+                <span className="font-medium text-muted-foreground">已選分類</span>
+                <span className="col-span-2 text-foreground">{selectedApp.selectedCategories.join(", ")}</span>
+              </div>
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
+                <span className="font-medium text-muted-foreground">創作理念</span>
+                <span className="col-span-2 text-foreground whitespace-pre-wrap">{selectedApp.creativePhilosophy}</span>
+              </div>
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
+                <span className="font-medium text-muted-foreground">身分證正面</span>
+                <span className="col-span-2 text-foreground font-mono text-xs">{selectedApp.idFrontImage}</span>
+              </div>
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
+                <span className="font-medium text-muted-foreground">身分證反面</span>
+                <span className="col-span-2 text-foreground font-mono text-xs">{selectedApp.idBackImage}</span>
+              </div>
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
+                <span className="font-medium text-muted-foreground">同意條款</span>
+                <span className="col-span-2 text-foreground">{selectedApp.agreeToContract ? "已同意合約條款" : "未同意"}</span>
+              </div>
+              
+              {/* 現有系統保留規格 */}
               <div className="grid grid-cols-3 border-b border-border/30 pb-2">
                 <span className="font-medium text-muted-foreground">申請日期</span>
                 <span className="col-span-2 text-foreground">{selectedApp.date}</span>
