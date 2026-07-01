@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
+import {
+  AdminTable,
+  type AdminTableColumn,
+} from "@/components/admin/AdminTable";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminRowActions } from "@/components/admin/AdminRowActions";
@@ -14,6 +17,7 @@ import { StatusToggle } from "@/components/admin/StatusToggle";
 import { useAdminCrud } from "@/lib/admin/useAdminCrud";
 import { mockActivities } from "@/mocks/admin/activities";
 import type { Activity } from "@/types/admin";
+import { BasicDatePicker } from "@/components/ui/date-picker";
 
 interface FormState {
   title: string;
@@ -21,6 +25,7 @@ interface FormState {
   imageUrl: string;
   sortOrder: string;
   isActive: boolean;
+  publishStartTime: Date | null;
 }
 
 const emptyForm: FormState = {
@@ -29,12 +34,14 @@ const emptyForm: FormState = {
   imageUrl: "",
   sortOrder: "1",
   isActive: true,
+  publishStartTime: null,
 };
 
 export default function ActivitiesPage() {
   const crud = useAdminCrud<Activity>("a", mockActivities);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [date, setDate] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!crud.isModalOpen) return;
@@ -46,6 +53,7 @@ export default function ActivitiesPage() {
         imageUrl: e.imageUrl,
         sortOrder: String(e.sortOrder),
         isActive: e.isActive,
+        publishStartTime: e.publishStartTime,
       });
     } else {
       setForm({ ...emptyForm, sortOrder: String(crud.items.length + 1) });
@@ -82,7 +90,12 @@ export default function ActivitiesPage() {
   };
 
   const columns: AdminTableColumn<Activity>[] = [
-    { key: "sortOrder", header: "排序", className: "w-16 text-muted-foreground", render: (i) => i.sortOrder },
+    {
+      key: "sortOrder",
+      header: "排序",
+      className: "w-16 text-muted-foreground",
+      render: (i) => i.sortOrder,
+    },
     {
       key: "image",
       header: "圖片",
@@ -96,15 +109,33 @@ export default function ActivitiesPage() {
         />
       ),
     },
-    { key: "title", header: "活動名稱", render: (i) => <span className="font-medium">{i.title}</span> },
+    {
+      key: "title",
+      header: "活動名稱",
+      render: (i) => <span className="font-medium">{i.title}</span>,
+    },
     {
       key: "linkUrl",
       header: "連結",
       className: "max-w-[160px] truncate text-muted-foreground",
       render: (i) => i.linkUrl,
     },
-    { key: "status", header: "狀態", render: (i) => <StatusToggle active={i.isActive} onToggle={() => crud.toggleActive(i)} /> },
-    { key: "createdAt", header: "建立時間", className: "text-muted-foreground", render: (i) => i.createdAt },
+    {
+      key: "status",
+      header: "狀態",
+      render: (i) => (
+        <StatusToggle
+          active={i.isActive}
+          onToggle={() => crud.toggleActive(i)}
+        />
+      ),
+    },
+    {
+      key: "createdAt",
+      header: "建立時間",
+      className: "text-muted-foreground",
+      render: (i) => i.createdAt,
+    },
     {
       key: "actions",
       header: "操作",
@@ -150,7 +181,12 @@ export default function ActivitiesPage() {
         onClose={crud.closeModal}
         onSubmit={handleSubmit}
       >
-        <AdminField label="活動名稱" htmlFor="title" required error={errors.title}>
+        <AdminField
+          label="活動名稱"
+          htmlFor="title"
+          required
+          error={errors.title}
+        >
           <Input
             id="title"
             value={form.title}
@@ -159,7 +195,12 @@ export default function ActivitiesPage() {
           />
         </AdminField>
 
-        <AdminField label="連結" htmlFor="linkUrl" required error={errors.linkUrl}>
+        <AdminField
+          label="連結"
+          htmlFor="linkUrl"
+          required
+          error={errors.linkUrl}
+        >
           <Input
             id="linkUrl"
             value={form.linkUrl}
@@ -168,7 +209,12 @@ export default function ActivitiesPage() {
           />
         </AdminField>
 
-        <AdminField label="圖片網址" htmlFor="imageUrl" required error={errors.imageUrl}>
+        <AdminField
+          label="圖片網址"
+          htmlFor="imageUrl"
+          required
+          error={errors.imageUrl}
+        >
           <Input
             id="imageUrl"
             value={form.imageUrl}
@@ -177,7 +223,12 @@ export default function ActivitiesPage() {
           />
         </AdminField>
 
-        <AdminField label="排序" htmlFor="sortOrder" required error={errors.sortOrder}>
+        <AdminField
+          label="排序"
+          htmlFor="sortOrder"
+          required
+          error={errors.sortOrder}
+        >
           <Input
             id="sortOrder"
             type="number"
@@ -185,7 +236,17 @@ export default function ActivitiesPage() {
             onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
           />
         </AdminField>
-
+        <AdminField
+          label="上架時間"
+          htmlFor="publishStartTime"
+          required
+          error={errors.publishStartTime}
+        >
+          <BasicDatePicker
+            value={form.publishStartTime}
+            onChange={(date) => setForm({ ...form, publishStartTime: date })}
+          />
+        </AdminField>
         <div className="flex items-center justify-between rounded-lg border border-border p-3">
           <span className="text-sm font-medium">是否啟用</span>
           <Switch
