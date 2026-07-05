@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Flame } from "lucide-react";
+import { Plus, Flame } from "lucide-react"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -13,10 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import {
-  AdminTable,
-  type AdminTableColumn,
-} from "@/components/admin/AdminTable";
+import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminRowActions } from "@/components/admin/AdminRowActions";
@@ -33,7 +30,7 @@ interface FormState {
   avatarUrl: string;
   sortOrder: string;
   isActive: boolean;
-  isPopular: boolean;
+  isPopular: boolean; 
 }
 
 const emptyForm: FormState = {
@@ -43,7 +40,7 @@ const emptyForm: FormState = {
   avatarUrl: "",
   sortOrder: "1",
   isActive: true,
-  isPopular: false,
+  isPopular: false, 
 };
 
 export default function CreatorsPage() {
@@ -64,7 +61,7 @@ export default function CreatorsPage() {
   const crud = useAdminCrud<Creator>("c", getInitialCreators());
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
+  
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -82,7 +79,7 @@ export default function CreatorsPage() {
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) return crud.items;
     return crud.items.filter((item) =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [crud.items, searchQuery]);
 
@@ -125,7 +122,7 @@ export default function CreatorsPage() {
       avatarUrl: form.avatarUrl.trim(),
       sortOrder: Number(form.sortOrder),
       isActive: form.isActive,
-      isPopular: form.isPopular,
+      isPopular: form.isPopular, 
     } as any);
   };
 
@@ -156,6 +153,7 @@ export default function CreatorsPage() {
             className="h-12 w-12 rounded-full object-cover"
           />
           {(i as any).isPopular && (
+
             <span className="absolute -bottom-0.5 -right-0.5 bg-background border border-border/50 rounded-full p-0.5 shadow-sm flex items-center justify-center">
               <Flame className="h-3.5 w-3.5 text-orange-500 fill-orange-500/20" />
             </span>
@@ -163,14 +161,14 @@ export default function CreatorsPage() {
         </div>
       ),
     },
-    {
-      key: "name",
-      header: "創作者名稱",
+    { 
+      key: "name", 
+      header: "創作者名稱", 
       render: (i) => (
         <div className="flex items-center gap-2">
           <span className="font-medium">{i.name}</span>
         </div>
-      ),
+      ) 
     },
     {
       key: "category",
@@ -178,22 +176,8 @@ export default function CreatorsPage() {
       className: "text-muted-foreground",
       render: (i) => categoryNameMap[i.categoryId] ?? "—",
     },
-    {
-      key: "specialty",
-      header: "專長",
-      className: "text-muted-foreground",
-      render: (i) => i.specialty || "—",
-    },
-    {
-      key: "status",
-      header: "狀態",
-      render: (i) => (
-        <StatusToggle
-          active={i.isActive}
-          onToggle={() => handleToggleActive(i)}
-        />
-      ),
-    },
+    { key: "specialty", header: "專長", className: "text-muted-foreground", render: (i) => i.specialty || "—" },
+    { key: "status", header: "狀態", render: (i) => <StatusToggle active={i.isActive} onToggle={() => handleToggleActive(i)} /> },
     {
       key: "actions",
       header: "操作",
@@ -243,12 +227,7 @@ export default function CreatorsPage() {
         onClose={crud.closeModal}
         onSubmit={handleSubmit}
       >
-        <AdminField
-          label="創作者名稱"
-          htmlFor="name"
-          required
-          error={errors.name}
-        >
+        <AdminField label="創作者名稱" htmlFor="name" required error={errors.name}>
           <Input
             id="name"
             value={form.name}
@@ -284,12 +263,7 @@ export default function CreatorsPage() {
           />
         </AdminField>
 
-        <AdminField
-          label="頭像網址"
-          htmlFor="avatarUrl"
-          required
-          error={errors.avatarUrl}
-        >
+        <AdminField label="頭像網址" htmlFor="avatarUrl" required error={errors.avatarUrl}>
           <Input
             id="avatarUrl"
             value={form.avatarUrl}
@@ -298,12 +272,7 @@ export default function CreatorsPage() {
           />
         </AdminField>
 
-        <AdminField
-          label="排序"
-          htmlFor="sortOrder"
-          required
-          error={errors.sortOrder}
-        >
+        <AdminField label="排序" htmlFor="sortOrder" required error={errors.sortOrder}>
           <Input
             id="sortOrder"
             type="number"
