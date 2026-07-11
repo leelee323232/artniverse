@@ -28,9 +28,9 @@ jobs:
         uses: easingthemes/ssh-deploy@main
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SITEGROUND_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.SITEGROUND_HOST }}
-          REMOTE_USER: ${{ secrets.SITEGROUND_USER }}
-          REMOTE_PORT: ${{ secrets.SITEGROUND_PORT }}
+          REMOTE_HOST: ${{ secrets.SERVER_HOST }}
+          REMOTE_USER: ${{ secrets.SERVER_USER }}
+          REMOTE_PORT: ${{ secrets.SERVER_PORT }}
           SOURCE: "frontend/out/"
           TARGET: "/home/customer/www/demoart.artniverse.com/public_html/"
           ARGS: "-rlgoDzvc --delete"
