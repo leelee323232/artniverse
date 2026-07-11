@@ -16,9 +16,13 @@ jobs:
         with:
           node-version: 24
 
-      - run: npm ci
-
-      - run: npm run build
+      - name: Install dependencies
+        working-directory: ./front
+        run: npm ci
+      
+      - name: Build
+        working-directory: ./front
+        run: npm run build
 
       - name: Deploy to SiteGround
         uses: easingthemes/ssh-deploy@main
@@ -27,6 +31,6 @@ jobs:
           REMOTE_HOST: ${{ secrets.SITEGROUND_HOST }}
           REMOTE_USER: ${{ secrets.SITEGROUND_USER }}
           REMOTE_PORT: ${{ secrets.SITEGROUND_PORT }}
-          SOURCE: "out/"
+          SOURCE: "frontend/out/"
           TARGET: "/home/customer/www/demoart.artniverse.com/public_html/"
           ARGS: "-rlgoDzvc --delete"
