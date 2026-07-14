@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Navigation } from "@/components/navigation"
 import { UniverseBackground } from "@/components/universe-background"
@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
+import { PostCard, type Post, type Comment } from "@/components/posts/PostCard";
 import {
   Dialog,
   DialogContent,
@@ -284,6 +285,121 @@ export default function CreatorPortalPage() {
   // Quest dialog state
   const [selectedQuest, setSelectedQuest] = useState<typeof specialQuests[0] | null>(null)
 
+  // -------------------------------------------------------------------
+  // 💡 過往貼文牆系統的 States 與持久化儲存邏輯
+  // -------------------------------------------------------------------
+  const [posts, setPosts] = useState<Post[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("creator_posts_data");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          return [];
+        }
+      }
+    }
+    // 預設提供一筆 Threads 風格的模擬動態
+    return [
+      {
+        id: "POST-001",
+        authorName: user?.creatorProfile?.brandName || user?.name || "星空創作者",
+        authorAvatar: "",
+        isVerified: true,
+        content: "好高興今天把「過往貼文牆」功能做出來了！✨\n完美的 Threads 串文排版，還能動態增加最多 10 張圖片網址！\n大家如果覺得排版不錯，歡迎在下面留言分享看法喔！🚀",
+        images: ["/cute-notebook-with-stars.jpg", "/dreamy-postcards.jpg"],
+        likes: 88,
+        isLiked: false,
+        comments: [
+          {
+            id: "C-01",
+            userName: "開發小幫手",
+            content: "這顆貼文牆元件寫得很精美，給過！",
+            createdAt: "2026-07-14 15:40"
+          }
+        ],
+        createdAt: "2026-07-14 12:00"
+      }
+    ];
+  });
+
+  // 當貼文陣列發生改變，自動同步至 LocalStorage
+  useEffect(() => {
+    localStorage.setItem("creator_posts_data", JSON.stringify(posts));
+  }, [posts]);
+
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [newPostContent, setNewPostContent] = useState("");
+  const [newPostImages, setNewPostImages] = useState<File[]>([]);
+
+  const handleImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!e.target.files) return;
+
+    const files = Array.from(e.target.files);
+
+    // 最多 10 張
+    setNewPostImages(files.slice(0, 10));
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setNewPostImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+const handleCreatePost = () => {
+  if (!newPostContent.trim()) return;
+
+  // 將 File 轉成可顯示的圖片網址（目前前端暫存）
+  const validImages = newPostImages.map((file) =>
+    URL.createObjectURL(file)
+  );
+
+  const newPost: Post = {
+    id: `POST-${Date.now()}`,
+    authorName:
+      user?.creatorProfile?.brandName ||
+      user?.name ||
+      "未知創作者",
+    authorAvatar: "",
+    isVerified: true,
+    content: newPostContent,
+    images: validImages,
+    likes: 0,
+    isLiked: false,
+    comments: [],
+    createdAt: new Date()
+      .toISOString()
+      .replace("T", " ")
+      .substring(0, 16),
+  };
+
+  setPosts((prev) => [newPost, ...prev]);
+
+  setNewPostContent("");
+  setNewPostImages([]);
+  setIsPostModalOpen(false);
+};
+
+  const handleLikePost = (postId: string) => {
+    setPosts(prev =>
+      prev.map(p => p.id === postId ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p)
+    );
+  };
+
+  const handleAddCommentToPost = (postId: string, content: string) => {
+    const newComment: Comment = {
+      id: `C-${Date.now()}`,
+      userName: user?.name || "訪客粉絲",
+      content,
+      createdAt: new Date().toISOString().replace('T', ' ').substring(0, 16)
+    };
+
+    setPosts(prev =>
+      prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p)
+    );
+  };
+  
   // Check if user is a creator
   if (!user) {
     router.push("/login")
@@ -476,7 +592,7 @@ export default function CreatorPortalPage() {
 
         {/* Main Content Tabs - Order: 商店設定 - 訂單管理 - 商品管理 - 接案請求 - 特殊委託 */}
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="mb-6 grid w-full max-w-4xl grid-cols-5">
+          <TabsList className="mb-6 grid w-full max-w-4xl grid-cols-6">
             <TabsTrigger value="profile">商店設定</TabsTrigger>
             <TabsTrigger value="orders">
               訂單管理
@@ -499,6 +615,7 @@ export default function CreatorPortalPage() {
               <Scroll className="mr-1 h-4 w-4" />
               特殊委託
             </TabsTrigger>
+            <TabsTrigger value="posts">過往貼文</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab with Super Subscription */}
@@ -1195,8 +1312,194 @@ export default function CreatorPortalPage() {
               ))}
             </div>
           </TabsContent>
+
+            {/* 過往貼文 Tab — 完美打造 Threads 貼文牆與發佈彈窗 */}
+          <TabsContent value="posts" className="space-y-6">
+            <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">過往貼文牆</h2>
+                  <p className="text-sm text-muted-foreground">發佈創作動態、新品花絮，與追蹤粉絲進行零距離留言互動。</p>
+                </div>
+
+                {/* 彈出式新貼文發佈視窗 */}
+                <Dialog open={isPostModalOpen} onOpenChange={setIsPostModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-gradient-to-r from-primary to-secondary gap-1.5 shadow-lg shadow-primary/20">
+                      <Plus className="h-4 w-4" />
+                      發佈新貼文
+                    </Button>
+                  </DialogTrigger>
+                  
+                  <DialogContent className="max-w-lg border-primary/30 bg-background/95 backdrop-blur-md">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-1.5 text-lg text-foreground">
+                        <text className="h-5 w-5 text-yellow-500 animate-pulse" />
+                        建立新貼文
+                      </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-1">
+                      {/* 內文 */}
+                      <div className="space-y-2">
+                        <Label htmlFor="post-content" className="text-sm font-medium text-foreground">貼文內容</Label>
+                        <Textarea
+                          id="post-content"
+                          placeholder="今天有些什麼創作靈感？跟你的星球粉絲分享吧..."
+                          className="min-h-[120px] bg-white/5 border-border/40 focus-visible:ring-primary text-foreground"
+                          value={newPostContent}
+                          onChange={(e) => setNewPostContent(e.target.value)}
+                          maxLength={500}
+                        />
+                        <div className="flex justify-end text-xs text-muted-foreground">
+                          <span>{newPostContent.length}/500 字</span>
+                        </div>
+                      </div>
+
+                      {/* 圖片連結清單 */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium text-foreground">
+                            上傳圖片（最多 10 張）
+                          </Label>
+                        </div>
+
+                          <Input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleImageUpload}
+                          className="cursor-pointer bg-white/5 border-border/40 text-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
+                        />
+
+                        <p className="text-xs text-muted-foreground">
+                          支援 JPG、PNG、WEBP 等圖片格式，可一次選擇多張圖片。
+                        </p>
+
+                        {/* 圖片預覽 */}
+                        {newPostImages.length > 0 && (
+                          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                            {newPostImages.map((file, index) => (
+                              <div
+                                key={index}
+                                className="relative aspect-square overflow-hidden rounded-lg border border-border/40"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt={`預覽 ${index + 1}`}
+                                  className="h-full w-full object-cover"
+                                />
+
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="destructive"
+                                  className="absolute right-1 top-1 h-6 w-6 rounded-full"
+                                  onClick={() =>
+                                    setNewPostImages(newPostImages.filter((_, i) => i !== index))
+                                  }
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 圖片預覽區 */}
+                      {newPostImages.length > 0 && (
+                        <div className="rounded-lg border border-dashed border-border/40 bg-white/5 p-3">
+                          <p className="mb-2 text-xs text-muted-foreground">
+                            圖片預覽：
+                          </p>
+
+                          <div className="flex flex-wrap gap-3">
+                            {newPostImages.map((file, idx) => (
+                              <div
+                                key={idx}
+                                className="relative h-20 w-20 overflow-hidden rounded-md border border-border/50"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt={`Preview ${idx + 1}`}
+                                  className="h-full w-full object-cover"
+                                />
+
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="destructive"
+                                  className="absolute right-1 top-1 h-5 w-5 rounded-full"
+                                  onClick={() => handleRemoveImage(idx)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <DialogFooter className="gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsPostModalOpen(false)}
+                        className="bg-transparent"
+                      >
+                        取消
+                      </Button>
+
+                      <Button
+                        onClick={handleCreatePost}
+                        disabled={!newPostContent.trim()}
+                        className="bg-gradient-to-r from-primary to-secondary px-6"
+                      >
+                        <Send className="mr-2 h-4 w-4" />
+                        發佈串文
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {/* 串文串流清單牆 */}
+              {posts.length > 0 ? (
+                <div className="mx-auto max-w-2xl space-y-4">
+                  {posts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onLike={handleLikePost}
+                      onAddComment={handleAddCommentToPost}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border/50 py-16 text-center">
+                  <MessageSquare className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
+                  <h3 className="mb-2 text-lg font-medium text-foreground">
+                    這裡空空如也
+                  </h3>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    發佈你的第一串日常，開啟與太空粉絲的交流吧！
+                  </p>
+
+                  <Button
+                    onClick={() => setIsPostModalOpen(true)}
+                    className="bg-gradient-to-r from-primary to-secondary"
+                  >
+                    發佈貼文
+                  </Button>
+                </div>
+              )}
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </div>
-  )
+  );
 }
