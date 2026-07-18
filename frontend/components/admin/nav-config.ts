@@ -9,6 +9,7 @@ import {
   Sparkles,
   ClipboardList,
   Ticket,
+  Scroll,
   type LucideIcon,
 } from "lucide-react";
 
@@ -27,6 +28,7 @@ export const adminNavItems: AdminNavItem[] = [
     href: "/admin/creator-applications",
     icon: ClipboardList,
   },
+  { label: "企業委託管理", href: "/admin/quests", icon: Scroll }, 
   { label: "活動區塊管理", href: "/admin/activities", icon: ImageIcon },
   { label: "產品類別管理", href: "/admin/product-categories", icon: Tags },
   {

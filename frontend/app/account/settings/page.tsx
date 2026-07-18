@@ -223,15 +223,6 @@ export default function SettingsPage() {
             </div>
           </Card>
 
-          {/* Danger Zone */}
-          <Card className="border-destructive/50 bg-destructive/10 p-6 backdrop-blur-md">
-            <h2 className="mb-4 text-lg font-bold text-destructive">危險區域</h2>
-            <p className="mb-4 text-sm text-muted-foreground">
-              刪除帳號將永久移除您的所有資料，此操作無法復原。
-            </p>
-            <Button variant="destructive">刪除帳號</Button>
-          </Card>
-
           <div className="mt-6 flex justify-end">
             <Button
               onClick={handleSave}

@@ -73,7 +73,7 @@ export function Navigation() {
             href="/commission"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            委託創作
+            企業委託
           </Link>
           <Link
             href="/about"
