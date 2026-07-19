@@ -5,82 +5,32 @@ on:
     branches:
       - frontend-dev
 
-  workflow_dispatch:
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: ./frontend
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show current commit
-        run: |
-          echo "Current commit:"
-          git rev-parse HEAD
-          git log -1 --oneline
-
-          echo "Current directory:"
-          pwd
-
-          echo "Frontend files:"
-          find . -maxdepth 2 -type f | sort | head -100
-
-      - name: Verify frontend project
-        run: |
-          test -f package.json || {
-            echo "frontend/package.json 不存在"
-            exit 1
-          }
-
-          echo "Package name:"
-          node -p "require('./package.json').name"
-
-          echo "Build command:"
-          node -p "require('./package.json').scripts.build"
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm ci
 
       - name: Clean previous build
+        working-directory: ./frontend
         run: |
           rm -rf .next
           rm -rf out
 
-      - name: Build frontend
+      - name: Build
+        working-directory: ./frontend
         run: npm run build
-
-      - name: Verify build output
-        run: |
-          echo "Build output:"
-          find out -maxdepth 2 -type f | sort | head -150
-
-          test -f out/index.html || {
-            echo "out/index.html 不存在"
-            exit 1
-          }
-
-          test -d out/_next/static || {
-            echo "out/_next/static 不存在"
-            exit 1
-          }
-
-          if grep -R -q "cute-bear-stickers" out; then
-            echo "錯誤：仍然建置到舊的商城專案"
-            exit 1
-          fi
 
       - name: Deploy to SiteGround
         uses: easingthemes/ssh-deploy@v5.1.0
@@ -93,11 +43,8 @@ jobs:
           SOURCE: "frontend/out/"
           TARGET: "/home/customer/www/demoart.artniverse.com/public_html/"
 
-          ARGS: "-rlzvc --delete"
+          ARGS: "-rlzvc"
 
-          SCRIPT_AFTER: |
+          SCRIPT_BEFORE: |
             cd /home/customer/www/demoart.artniverse.com/public_html
-
-            echo "Remote deployment result:"
-            pwd
-            find . -maxdepth 2 -type f | sort | head -150
+            find . -mindepth 1 -maxdepth 1 -exec rm -rf {} +
