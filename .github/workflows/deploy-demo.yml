@@ -1,36 +1,103 @@
-name: Deploy to SiteGround 
+name: Deploy to SiteGround
 
 on:
   push:
     branches:
       - frontend-dev
 
+  workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+    defaults:
+      run:
+        working-directory: ./frontend
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show current commit
+        run: |
+          echo "Current commit:"
+          git rev-parse HEAD
+          git log -1 --oneline
+
+          echo "Current directory:"
+          pwd
+
+          echo "Frontend files:"
+          find . -maxdepth 2 -type f | sort | head -100
+
+      - name: Verify frontend project
+        run: |
+          test -f package.json || {
+            echo "frontend/package.json 不存在"
+            exit 1
+          }
+
+          echo "Package name:"
+          node -p "require('./package.json').name"
+
+          echo "Build command:"
+          node -p "require('./package.json').scripts.build"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        working-directory: ./frontend
         run: npm ci
-      
-      - name: Build
-        working-directory: ./frontend
+
+      - name: Clean previous build
+        run: |
+          rm -rf .next
+          rm -rf out
+
+      - name: Build frontend
         run: npm run build
 
+      - name: Verify build output
+        run: |
+          echo "Build output:"
+          find out -maxdepth 2 -type f | sort | head -150
+
+          test -f out/index.html || {
+            echo "out/index.html 不存在"
+            exit 1
+          }
+
+          test -d out/_next/static || {
+            echo "out/_next/static 不存在"
+            exit 1
+          }
+
+          if grep -R -q "cute-bear-stickers" out; then
+            echo "錯誤：仍然建置到舊的商城專案"
+            exit 1
+          fi
+
       - name: Deploy to SiteGround
-        uses: easingthemes/ssh-deploy@main
+        uses: easingthemes/ssh-deploy@v5.1.0
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SITEGROUND_SSH_KEY }}
           REMOTE_HOST: ${{ secrets.SERVER_HOST }}
           REMOTE_USER: ${{ secrets.SERVER_USER }}
           REMOTE_PORT: ${{ secrets.SERVER_PORT }}
+
           SOURCE: "frontend/out/"
           TARGET: "/home/customer/www/demoart.artniverse.com/public_html/"
-          ARGS: "-rlgoDzvc --delete"
+
+          ARGS: "-rlzvc --delete"
+
+          SCRIPT_AFTER: |
+            cd /home/customer/www/demoart.artniverse.com/public_html
+
+            echo "Remote deployment result:"
+            pwd
+            find . -maxdepth 2 -type f | sort | head -150
