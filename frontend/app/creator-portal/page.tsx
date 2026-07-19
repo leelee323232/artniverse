@@ -1663,13 +1663,6 @@ export default function CreatorPortalPage() {
                             <span className="font-semibold text-white">
                               {user?.creatorProfile?.brandName || user?.name || "創作者"}
                             </span>
-
-
-                            <button
-                              type="button"
-                              className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80 transition hover:bg-white/20"
-                            >
-                            </button>
                           </div>
 
                           <Textarea
