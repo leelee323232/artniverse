@@ -72,7 +72,7 @@ export default function Footer() {
             <ul className="space-y-2.5 text-[16px] flex flex-col items-center">
               <li><Link href="/creator-apply" className="text-muted-foreground hover:text-foreground transition-colors hover:underline">成為創作者</Link></li>
               <li><Link href="/login" className="text-muted-foreground hover:text-foreground transition-colors hover:underline">創作者入口</Link></li>
-              <li><Link href="/commission" className="text-muted-foreground hover:text-foreground transition-colors hover:underline">委託創作</Link></li>
+              <li><Link href="/commission" className="text-muted-foreground hover:text-foreground transition-colors hover:underline">企業委託</Link></li>
             </ul>
           </div>
 

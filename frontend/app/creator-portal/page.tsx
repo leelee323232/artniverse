@@ -1,17 +1,18 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Navigation } from "@/components/navigation"
-import { UniverseBackground } from "@/components/universe-background"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Navigation } from "@/components/navigation";
+import { UniverseBackground } from "@/components/universe-background";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { PostCard, type Post, type Comment } from "@/components/posts/PostCard";
 import {
   Dialog,
   DialogContent,
@@ -19,8 +20,8 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { useAuth } from "@/lib/auth-context"
+} from "@/components/ui/dialog";
+import { useAuth } from "@/lib/auth-context";
 import {
   Package,
   ShoppingBag,
@@ -49,8 +50,9 @@ import {
   Target,
   Zap,
   Send,
-} from "lucide-react"
-import Link from "next/link"
+  Image,
+} from "lucide-react";
+import Link from "next/link";
 
 // Mock data
 const stats = {
@@ -60,7 +62,7 @@ const stats = {
   totalFollowers: 12500,
   pendingOrders: 8,
   pendingCommissions: 3,
-}
+};
 
 const recentOrders = [
   {
@@ -90,7 +92,7 @@ const recentOrders = [
     status: "completed",
     date: "2024-01-13",
   },
-]
+];
 
 const products = [
   {
@@ -120,7 +122,7 @@ const products = [
     image: "/dreamy-postcards.jpg",
     status: "active",
   },
-]
+];
 
 // Commission requests from individual customers
 const commissionRequests = [
@@ -178,7 +180,7 @@ const commissionRequests = [
     quotedPrice: 12000,
     createdAt: "2024-01-15",
   },
-]
+];
 
 // Special commission quests (like adventure guild board)
 const specialQuests = [
@@ -190,7 +192,8 @@ const specialQuests = [
     deadline: "2024-03-01",
     tags: ["包裝設計", "插畫", "療癒風"],
     difficulty: "A",
-    description: "為春季限定飲品設計可愛療癒風格的包裝插畫，需要3款不同口味的設計。",
+    description:
+      "為春季限定飲品設計可愛療癒風格的包裝插畫，需要3款不同口味的設計。",
     requirements: [
       "具備商業包裝設計經驗",
       "可提供原始設計檔案",
@@ -243,61 +246,181 @@ const specialQuests = [
     tags: ["吉祥物", "科技", "現代"],
     difficulty: "B",
     description: "設計一個代表科技創新的吉祥物，需要現代感但親切可愛。",
-    requirements: [
-      "可提供多個設計方案",
-      "需配合品牌色系",
-    ],
+    requirements: ["可提供多個設計方案", "需配合品牌色系"],
     applicants: 15,
     status: "applied",
   },
-]
+];
 
 export default function CreatorPortalPage() {
-  const router = useRouter()
-  const { user, updateCreatorProfile } = useAuth()
-  
+  const router = useRouter();
+  const { user, updateCreatorProfile } = useAuth();
+
   // Profile editing state
   const [profileData, setProfileData] = useState({
     avatar: user?.creatorProfile?.brandName || "",
-    bio: user?.creatorProfile?.bio || "專注於療癒系插畫創作，用溫暖的筆觸描繪生活中的小確幸。",
+    bio:
+      user?.creatorProfile?.bio ||
+      "專注於療癒系插畫創作，用溫暖的筆觸描繪生活中的小確幸。",
     links: user?.creatorProfile?.links || [
       { label: "Instagram", url: "https://instagram.com/starryart" },
       { label: "Facebook", url: "https://facebook.com/starryart" },
     ],
-  })
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
-  const [isSavingProfile, setIsSavingProfile] = useState(false)
+  });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Super subscription state
   const [subscriptionEnabled, setSubscriptionEnabled] = useState(
-    user?.creatorProfile?.superSubscription?.enabled || false
-  )
+    user?.creatorProfile?.superSubscription?.enabled || false,
+  );
   const [subscriptionPrice, setSubscriptionPrice] = useState(
-    user?.creatorProfile?.superSubscription?.price || 99
-  )
+    user?.creatorProfile?.superSubscription?.price || 99,
+  );
   const [subscriptionBenefits, setSubscriptionBenefits] = useState<string[]>(
-    user?.creatorProfile?.superSubscription?.benefits || ["每月獨家桌布", "新品搶先看", "專屬折扣碼"]
-  )
-  const [newBenefit, setNewBenefit] = useState("")
-  const [quoteAmount, setQuoteAmount] = useState(0)
+    user?.creatorProfile?.superSubscription?.benefits || [
+      "每月獨家桌布",
+      "新品搶先看",
+      "專屬折扣碼",
+    ],
+  );
+  const [newBenefit, setNewBenefit] = useState("");
+  const [quoteAmount, setQuoteAmount] = useState(0);
 
   // Quest dialog state
-  const [selectedQuest, setSelectedQuest] = useState<typeof specialQuests[0] | null>(null)
+  const [selectedQuest, setSelectedQuest] = useState<
+    (typeof specialQuests)[0] | null
+  >(null);
+
+
+  const [posts, setPosts] = useState<Post[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("creator_posts_data");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          return [];
+        }
+      }
+    }
+    // 預設提供一筆 Threads 風格的模擬動態
+    return [
+      {
+        id: "POST-001",
+        authorName:
+          user?.creatorProfile?.brandName || user?.name || "星空創作者",
+        authorAvatar: "",
+        isVerified: true,
+        content:
+          "好高興今天把「過往貼文牆」功能做出來了！✨\n完美的 Threads 串文排版，還能動態增加最多 10 張圖片網址！\n大家如果覺得排版不錯，歡迎在下面留言分享看法喔！🚀",
+        images: ["/cute-notebook-with-stars.jpg", "/dreamy-postcards.jpg"],
+        likes: 88,
+        isLiked: false,
+        comments: [
+          {
+            id: "C-01",
+            userName: "開發小幫手",
+            content: "這顆貼文牆元件寫得很精美，給過！",
+            createdAt: "2026-07-14 15:40",
+          },
+        ],
+        createdAt: "2026-07-14 12:00",
+      },
+    ];
+  });
+
+  // 當貼文陣列發生改變，自動同步至 LocalStorage
+  useEffect(() => {
+    localStorage.setItem("creator_posts_data", JSON.stringify(posts));
+  }, [posts]);
+
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [newPostContent, setNewPostContent] = useState("");
+  const [newPostImages, setNewPostImages] = useState<File[]>([]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+
+    const files = Array.from(e.target.files);
+
+    // 最多 10 張
+    setNewPostImages(files.slice(0, 10));
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setNewPostImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCreatePost = () => {
+    if (!newPostContent.trim()) return;
+
+    // 將 File 轉成可顯示的圖片網址（目前前端暫存）
+    const validImages = newPostImages.map((file) => URL.createObjectURL(file));
+
+    const newPost: Post = {
+      id: `POST-${Date.now()}`,
+      authorName: user?.creatorProfile?.brandName || user?.name || "未知創作者",
+      authorAvatar: "",
+      isVerified: true,
+      content: newPostContent,
+      images: validImages,
+      likes: 0,
+      isLiked: false,
+      comments: [],
+      createdAt: new Date().toISOString().replace("T", " ").substring(0, 16),
+    };
+
+    setPosts((prev) => [newPost, ...prev]);
+
+    setNewPostContent("");
+    setNewPostImages([]);
+    setIsPostModalOpen(false);
+  };
+
+  const handleLikePost = (postId: string) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              isLiked: !p.isLiked,
+              likes: p.isLiked ? p.likes - 1 : p.likes + 1,
+            }
+          : p,
+      ),
+    );
+  };
+
+  const handleAddCommentToPost = (postId: string, content: string) => {
+    const newComment: Comment = {
+      id: `C-${Date.now()}`,
+      userName: user?.name || "訪客粉絲",
+      content,
+      createdAt: new Date().toISOString().replace("T", " ").substring(0, 16),
+    };
+
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p,
+      ),
+    );
+  };
 
   // Check if user is a creator
   if (!user) {
-    router.push("/login")
-    return null
+    router.push("/login");
+    return null;
   }
 
   if (!user.isCreator) {
-    router.push("/creator-apply")
-    return null
+    router.push("/creator-apply");
+    return null;
   }
 
   const handleSaveProfile = async () => {
-    setIsSavingProfile(true)
-    await new Promise((resolve) => setTimeout(resolve, 800))
+    setIsSavingProfile(true);
+    await new Promise((resolve) => setTimeout(resolve, 800));
     updateCreatorProfile({
       bio: profileData.bio,
       links: profileData.links,
@@ -306,93 +429,93 @@ export default function CreatorPortalPage() {
         price: subscriptionPrice,
         benefits: subscriptionBenefits,
       },
-    })
-    setIsSavingProfile(false)
-    setIsEditingProfile(false)
-  }
+    });
+    setIsSavingProfile(false);
+    setIsEditingProfile(false);
+  };
 
   const addBenefit = () => {
     if (newBenefit.trim()) {
-      setSubscriptionBenefits([...subscriptionBenefits, newBenefit.trim()])
-      setNewBenefit("")
+      setSubscriptionBenefits([...subscriptionBenefits, newBenefit.trim()]);
+      setNewBenefit("");
     }
-  }
+  };
 
   const removeBenefit = (index: number) => {
-    setSubscriptionBenefits(subscriptionBenefits.filter((_, i) => i !== index))
-  }
+    setSubscriptionBenefits(subscriptionBenefits.filter((_, i) => i !== index));
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-500/20 text-yellow-500"
+        return "bg-yellow-500/20 text-yellow-500";
       case "shipped":
-        return "bg-blue-500/20 text-blue-500"
+        return "bg-blue-500/20 text-blue-500";
       case "completed":
-        return "bg-green-500/20 text-green-500"
+        return "bg-green-500/20 text-green-500";
       case "in-progress":
-        return "bg-purple-500/20 text-purple-500"
+        return "bg-purple-500/20 text-purple-500";
       case "quoted":
-        return "bg-blue-500/20 text-blue-500"
+        return "bg-blue-500/20 text-blue-500";
       case "paid":
-        return "bg-green-500/20 text-green-500"
+        return "bg-green-500/20 text-green-500";
       case "designing":
-        return "bg-purple-500/20 text-purple-500"
+        return "bg-purple-500/20 text-purple-500";
       default:
-        return "bg-muted"
+        return "bg-muted";
     }
-  }
+  };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case "pending":
-        return "待處理"
+        return "待處理";
       case "shipped":
-        return "已出貨"
+        return "已出貨";
       case "completed":
-        return "已完成"
+        return "已完成";
       case "in-progress":
-        return "進行中"
+        return "進行中";
       case "quoted":
-        return "已報價"
+        return "已報價";
       case "paid":
-        return "已付款"
+        return "已付款";
       case "designing":
-        return "設計中"
+        return "設計中";
       default:
-        return status
+        return status;
     }
-  }
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "S":
-        return "bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
+        return "bg-gradient-to-r from-yellow-500 to-orange-500 text-white";
       case "A":
-        return "bg-purple-500/20 text-purple-400"
+        return "bg-purple-500/20 text-purple-400";
       case "B":
-        return "bg-blue-500/20 text-blue-400"
+        return "bg-blue-500/20 text-blue-400";
       case "C":
-        return "bg-green-500/20 text-green-400"
+        return "bg-green-500/20 text-green-400";
       default:
-        return "bg-muted"
+        return "bg-muted";
     }
-  }
+  };
 
   const getDifficultyIcon = (difficulty: string) => {
     switch (difficulty) {
       case "S":
-        return <Zap className="h-4 w-4" />
+        return <Zap className="h-4 w-4" />;
       case "A":
-        return <Swords className="h-4 w-4" />
+        return <Swords className="h-4 w-4" />;
       case "B":
-        return <Shield className="h-4 w-4" />
+        return <Shield className="h-4 w-4" />;
       case "C":
-        return <Target className="h-4 w-4" />
+        return <Target className="h-4 w-4" />;
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <div className="relative min-h-screen">
@@ -403,7 +526,9 @@ export default function CreatorPortalPage() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="mb-2 text-3xl font-bold text-foreground">創作者控制台</h1>
+            <h1 className="mb-2 text-3xl font-bold text-foreground">
+              創作者控制台
+            </h1>
             <p className="text-muted-foreground">管理你的商品、訂單與接案</p>
           </div>
           <div className="flex gap-3">
@@ -428,7 +553,9 @@ export default function CreatorPortalPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">總銷售額</p>
-                <p className="text-2xl font-bold text-foreground">NT$ {stats.totalSales.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  NT$ {stats.totalSales.toLocaleString()}
+                </p>
               </div>
               <div className="rounded-full bg-primary/20 p-3">
                 <DollarSign className="h-6 w-6 text-primary" />
@@ -440,8 +567,14 @@ export default function CreatorPortalPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">總訂單數</p>
-                <p className="text-2xl font-bold text-foreground">{stats.totalOrders}</p>
-                {stats.pendingOrders > 0 && <p className="text-xs text-yellow-500">{stats.pendingOrders} 筆待處理</p>}
+                <p className="text-2xl font-bold text-foreground">
+                  {stats.totalOrders}
+                </p>
+                {stats.pendingOrders > 0 && (
+                  <p className="text-xs text-yellow-500">
+                    {stats.pendingOrders} 筆待處理
+                  </p>
+                )}
               </div>
               <div className="rounded-full bg-secondary/20 p-3">
                 <ShoppingBag className="h-6 w-6 text-secondary" />
@@ -453,7 +586,9 @@ export default function CreatorPortalPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">商品數量</p>
-                <p className="text-2xl font-bold text-foreground">{stats.totalProducts}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {stats.totalProducts}
+                </p>
               </div>
               <div className="rounded-full bg-accent/20 p-3">
                 <Package className="h-6 w-6 text-accent" />
@@ -465,7 +600,9 @@ export default function CreatorPortalPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">追蹤者</p>
-                <p className="text-2xl font-bold text-foreground">{stats.totalFollowers.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {stats.totalFollowers.toLocaleString()}
+                </p>
               </div>
               <div className="rounded-full bg-primary/20 p-3">
                 <Users className="h-6 w-6 text-primary" />
@@ -476,7 +613,7 @@ export default function CreatorPortalPage() {
 
         {/* Main Content Tabs - Order: 商店設定 - 訂單管理 - 商品管理 - 接案請求 - 特殊委託 */}
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="mb-6 grid w-full max-w-4xl grid-cols-5">
+          <TabsList className="mb-6 grid w-full max-w-4xl grid-cols-6">
             <TabsTrigger value="profile">商店設定</TabsTrigger>
             <TabsTrigger value="orders">
               訂單管理
@@ -499,6 +636,7 @@ export default function CreatorPortalPage() {
               <Scroll className="mr-1 h-4 w-4" />
               特殊委託
             </TabsTrigger>
+            <TabsTrigger value="posts">過往貼文</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab with Super Subscription */}
@@ -506,15 +644,25 @@ export default function CreatorPortalPage() {
             {/* Shop Info Card */}
             <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
               <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-foreground">商店資訊編輯</h2>
+                <h2 className="text-xl font-bold text-foreground">
+                  商店資訊編輯
+                </h2>
                 {!isEditingProfile ? (
-                  <Button onClick={() => setIsEditingProfile(true)} variant="outline" className="bg-transparent">
+                  <Button
+                    onClick={() => setIsEditingProfile(true)}
+                    variant="outline"
+                    className="bg-transparent"
+                  >
                     <Edit className="mr-2 h-4 w-4" />
                     編輯
                   </Button>
                 ) : (
                   <div className="flex gap-2">
-                    <Button onClick={() => setIsEditingProfile(false)} variant="outline" className="bg-transparent">
+                    <Button
+                      onClick={() => setIsEditingProfile(false)}
+                      variant="outline"
+                      className="bg-transparent"
+                    >
                       取消
                     </Button>
                     <Button
@@ -545,7 +693,8 @@ export default function CreatorPortalPage() {
                     <div className="h-32 w-32 overflow-hidden rounded-full bg-gradient-to-br from-primary to-secondary">
                       <div className="flex h-full w-full items-center justify-center">
                         <span className="text-4xl font-bold text-primary-foreground">
-                          {user.creatorProfile?.brandName?.charAt(0) || user.name.charAt(0)}
+                          {user.creatorProfile?.brandName?.charAt(0) ||
+                            user.name.charAt(0)}
                         </span>
                       </div>
                     </div>
@@ -568,12 +717,19 @@ export default function CreatorPortalPage() {
                     {isEditingProfile ? (
                       <Textarea
                         value={profileData.bio}
-                        onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            bio: e.target.value,
+                          })
+                        }
                         className="min-h-[120px] bg-white/5"
                         placeholder="介紹你的創作風格和理念..."
                       />
                     ) : (
-                      <p className="rounded-lg bg-white/5 p-4 text-foreground">{profileData.bio}</p>
+                      <p className="rounded-lg bg-white/5 p-4 text-foreground">
+                        {profileData.bio}
+                      </p>
                     )}
                   </div>
 
@@ -588,9 +744,12 @@ export default function CreatorPortalPage() {
                               <Input
                                 value={link.label}
                                 onChange={(e) => {
-                                  const newLinks = [...profileData.links]
-                                  newLinks[index].label = e.target.value
-                                  setProfileData({ ...profileData, links: newLinks })
+                                  const newLinks = [...profileData.links];
+                                  newLinks[index].label = e.target.value;
+                                  setProfileData({
+                                    ...profileData,
+                                    links: newLinks,
+                                  });
                                 }}
                                 className="w-32 bg-white/5"
                                 placeholder="名稱"
@@ -598,9 +757,12 @@ export default function CreatorPortalPage() {
                               <Input
                                 value={link.url}
                                 onChange={(e) => {
-                                  const newLinks = [...profileData.links]
-                                  newLinks[index].url = e.target.value
-                                  setProfileData({ ...profileData, links: newLinks })
+                                  const newLinks = [...profileData.links];
+                                  newLinks[index].url = e.target.value;
+                                  setProfileData({
+                                    ...profileData,
+                                    links: newLinks,
+                                  });
                                 }}
                                 className="flex-1 bg-white/5"
                                 placeholder="https://..."
@@ -609,8 +771,13 @@ export default function CreatorPortalPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => {
-                                  const newLinks = profileData.links.filter((_, i) => i !== index)
-                                  setProfileData({ ...profileData, links: newLinks })
+                                  const newLinks = profileData.links.filter(
+                                    (_, i) => i !== index,
+                                  );
+                                  setProfileData({
+                                    ...profileData,
+                                    links: newLinks,
+                                  });
                                 }}
                                 className="text-destructive hover:text-destructive"
                               >
@@ -636,8 +803,11 @@ export default function CreatorPortalPage() {
                           onClick={() => {
                             setProfileData({
                               ...profileData,
-                              links: [...profileData.links, { label: "", url: "" }],
-                            })
+                              links: [
+                                ...profileData.links,
+                                { label: "", url: "" },
+                              ],
+                            });
                           }}
                           className="bg-transparent"
                         >
@@ -658,7 +828,9 @@ export default function CreatorPortalPage() {
                   <Crown className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">超級訂閱</h2>
+                  <h2 className="text-xl font-bold text-foreground">
+                    超級訂閱
+                  </h2>
                   <p className="text-sm text-muted-foreground">
                     讓粉絲訂閱你的專屬內容，獲得穩定收入
                   </p>
@@ -686,13 +858,17 @@ export default function CreatorPortalPage() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <Label>訂閱金額 (NT$/月)</Label>
-                        <span className="text-xs text-muted-foreground">平台將抽取 10% 服務費</span>
+                        <span className="text-xs text-muted-foreground">
+                          平台將抽取 10% 服務費
+                        </span>
                       </div>
                       <div className="flex items-center gap-4">
                         <Input
                           type="number"
                           value={subscriptionPrice}
-                          onChange={(e) => setSubscriptionPrice(Number(e.target.value))}
+                          onChange={(e) =>
+                            setSubscriptionPrice(Number(e.target.value))
+                          }
                           className="w-32 bg-white/5"
                           min={30}
                           max={9999}
@@ -701,10 +877,18 @@ export default function CreatorPortalPage() {
                           {[49, 99, 199, 299].map((price) => (
                             <Button
                               key={price}
-                              variant={subscriptionPrice === price ? "default" : "outline"}
+                              variant={
+                                subscriptionPrice === price
+                                  ? "default"
+                                  : "outline"
+                              }
                               size="sm"
                               onClick={() => setSubscriptionPrice(price)}
-                              className={subscriptionPrice === price ? "bg-primary" : "bg-transparent"}
+                              className={
+                                subscriptionPrice === price
+                                  ? "bg-primary"
+                                  : "bg-transparent"
+                              }
                             >
                               ${price}
                             </Button>
@@ -714,16 +898,28 @@ export default function CreatorPortalPage() {
                       {subscriptionPrice > 0 && (
                         <div className="mt-2 rounded-lg bg-green-500/10 p-3">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">設定金額</span>
-                            <span className="text-foreground">NT$ {subscriptionPrice}</span>
+                            <span className="text-muted-foreground">
+                              設定金額
+                            </span>
+                            <span className="text-foreground">
+                              NT$ {subscriptionPrice}
+                            </span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">平台服務費 (10%)</span>
-                            <span className="text-red-400">- NT$ {Math.round(subscriptionPrice * 0.1)}</span>
+                            <span className="text-muted-foreground">
+                              平台服務費 (10%)
+                            </span>
+                            <span className="text-red-400">
+                              - NT$ {Math.round(subscriptionPrice * 0.1)}
+                            </span>
                           </div>
                           <div className="mt-2 flex items-center justify-between border-t border-border/30 pt-2">
-                            <span className="font-medium text-foreground">實際收入</span>
-                            <span className="text-lg font-bold text-green-500">NT$ {Math.round(subscriptionPrice * 0.9)}</span>
+                            <span className="font-medium text-foreground">
+                              實際收入
+                            </span>
+                            <span className="text-lg font-bold text-green-500">
+                              NT$ {Math.round(subscriptionPrice * 0.9)}
+                            </span>
                           </div>
                         </div>
                       )}
@@ -733,9 +929,14 @@ export default function CreatorPortalPage() {
                       <Label>訂閱福利</Label>
                       <div className="space-y-2">
                         {subscriptionBenefits.map((benefit, index) => (
-                          <div key={index} className="flex items-center gap-2 rounded-lg bg-white/5 p-3">
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 rounded-lg bg-white/5 p-3"
+                          >
                             <Sparkles className="h-4 w-4 text-yellow-500" />
-                            <span className="flex-1 text-foreground">{benefit}</span>
+                            <span className="flex-1 text-foreground">
+                              {benefit}
+                            </span>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -755,7 +956,11 @@ export default function CreatorPortalPage() {
                           className="bg-white/5"
                           onKeyDown={(e) => e.key === "Enter" && addBenefit()}
                         />
-                        <Button onClick={addBenefit} variant="outline" className="bg-transparent">
+                        <Button
+                          onClick={addBenefit}
+                          variant="outline"
+                          className="bg-transparent"
+                        >
                           <Plus className="h-4 w-4" />
                         </Button>
                       </div>
@@ -766,7 +971,9 @@ export default function CreatorPortalPage() {
                 {!subscriptionEnabled && (
                   <div className="rounded-lg border border-dashed border-border/50 p-6 text-center">
                     <Coins className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
-                    <h3 className="mb-2 text-lg font-medium text-foreground">打賞模式</h3>
+                    <h3 className="mb-2 text-lg font-medium text-foreground">
+                      打賞模式
+                    </h3>
                     <p className="text-sm text-muted-foreground">
                       未啟用超級訂閱時，粉絲可以自由金額打賞支持你的創作
                     </p>
@@ -789,30 +996,58 @@ export default function CreatorPortalPage() {
           {/* Orders Tab */}
           <TabsContent value="orders" className="space-y-4">
             <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
-              <h2 className="mb-4 text-xl font-bold text-foreground">最近訂單</h2>
+              <h2 className="mb-4 text-xl font-bold text-foreground">
+                最近訂單
+              </h2>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border/50">
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">訂單編號</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">顧客</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">商品</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">數量</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">金額</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">狀態</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">操作</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        訂單編號
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        顧客
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        商品
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        數量
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        金額
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        狀態
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        操作
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentOrders.map((order) => (
                       <tr key={order.id} className="border-b border-border/30">
-                        <td className="px-4 py-3 text-sm text-foreground">{order.id}</td>
-                        <td className="px-4 py-3 text-sm text-foreground">{order.customer}</td>
-                        <td className="px-4 py-3 text-sm text-foreground">{order.product}</td>
-                        <td className="px-4 py-3 text-sm text-foreground">{order.quantity}</td>
-                        <td className="px-4 py-3 text-sm text-foreground">NT$ {order.total}</td>
+                        <td className="px-4 py-3 text-sm text-foreground">
+                          {order.id}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground">
+                          {order.customer}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground">
+                          {order.product}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground">
+                          {order.quantity}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-foreground">
+                          NT$ {order.total}
+                        </td>
                         <td className="px-4 py-3">
-                          <Badge className={getStatusColor(order.status)}>{getStatusText(order.status)}</Badge>
+                          <Badge className={getStatusColor(order.status)}>
+                            {getStatusText(order.status)}
+                          </Badge>
                         </td>
                         <td className="px-4 py-3">
                           <Button variant="ghost" size="sm">
@@ -832,22 +1067,45 @@ export default function CreatorPortalPage() {
           <TabsContent value="products" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {products.map((product) => (
-                <Card key={product.id} className="border-border/50 bg-card/30 p-4 backdrop-blur-sm">
+                <Card
+                  key={product.id}
+                  className="border-border/50 bg-card/30 p-4 backdrop-blur-sm"
+                >
                   <div className="mb-3 aspect-square overflow-hidden rounded-lg">
-                    <img src={product.image || "/placeholder.svg"} alt={product.name} className="h-full w-full object-cover" />
+                    <img
+                      src={product.image || "/placeholder.svg"}
+                      alt={product.name}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
-                  <h3 className="mb-1 font-bold text-foreground">{product.name}</h3>
-                  <p className="mb-2 text-sm text-muted-foreground">NT$ {product.price}</p>
+                  <h3 className="mb-1 font-bold text-foreground">
+                    {product.name}
+                  </h3>
+                  <p className="mb-2 text-sm text-muted-foreground">
+                    NT$ {product.price}
+                  </p>
                   <div className="mb-3 flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">庫存: {product.stock}</span>
-                    <span className="text-muted-foreground">已售: {product.sales}</span>
+                    <span className="text-muted-foreground">
+                      庫存: {product.stock}
+                    </span>
+                    <span className="text-muted-foreground">
+                      已售: {product.sales}
+                    </span>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1 bg-transparent">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 bg-transparent"
+                    >
                       <Edit className="mr-1 h-4 w-4" />
                       編輯
                     </Button>
-                    <Button variant="outline" size="sm" className="bg-transparent text-destructive hover:text-destructive">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-transparent text-destructive hover:text-destructive"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -862,14 +1120,35 @@ export default function CreatorPortalPage() {
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-foreground">接案請求</h2>
                 <div className="flex gap-2">
-                  <Badge variant="outline" className="border-yellow-500/30 text-yellow-500">
-                    {commissionRequests.filter(r => r.status === "pending").length} 待處理
+                  <Badge
+                    variant="outline"
+                    className="border-yellow-500/30 text-yellow-500"
+                  >
+                    {
+                      commissionRequests.filter((r) => r.status === "pending")
+                        .length
+                    }{" "}
+                    待處理
                   </Badge>
-                  <Badge variant="outline" className="border-blue-500/30 text-blue-500">
-                    {commissionRequests.filter(r => r.status === "quoted").length} 已報價
+                  <Badge
+                    variant="outline"
+                    className="border-blue-500/30 text-blue-500"
+                  >
+                    {
+                      commissionRequests.filter((r) => r.status === "quoted")
+                        .length
+                    }{" "}
+                    已報價
                   </Badge>
-                  <Badge variant="outline" className="border-green-500/30 text-green-500">
-                    {commissionRequests.filter(r => r.status === "paid").length} 已付款
+                  <Badge
+                    variant="outline"
+                    className="border-green-500/30 text-green-500"
+                  >
+                    {
+                      commissionRequests.filter((r) => r.status === "paid")
+                        .length
+                    }{" "}
+                    已付款
                   </Badge>
                 </div>
               </div>
@@ -882,16 +1161,28 @@ export default function CreatorPortalPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="mb-2 flex items-center gap-2">
-                          <h3 className="font-bold text-foreground">{request.title}</h3>
-                          <Badge className={getStatusColor(request.status)}>{getStatusText(request.status)}</Badge>
-                          <Badge variant="outline" className="text-xs">{request.productType}</Badge>
+                          <h3 className="font-bold text-foreground">
+                            {request.title}
+                          </h3>
+                          <Badge className={getStatusColor(request.status)}>
+                            {getStatusText(request.status)}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {request.productType}
+                          </Badge>
                         </div>
-                        <p className="mb-3 text-sm text-muted-foreground">{request.summary}</p>
-                        
+                        <p className="mb-3 text-sm text-muted-foreground">
+                          {request.summary}
+                        </p>
+
                         {request.specialRequirements && (
                           <div className="mb-3 rounded-lg bg-white/5 p-3">
-                            <p className="text-xs text-muted-foreground">特殊需求:</p>
-                            <p className="text-sm text-foreground">{request.specialRequirements}</p>
+                            <p className="text-xs text-muted-foreground">
+                              特殊需求:
+                            </p>
+                            <p className="text-sm text-foreground">
+                              {request.specialRequirements}
+                            </p>
                           </div>
                         )}
 
@@ -900,23 +1191,36 @@ export default function CreatorPortalPage() {
                           <span>Email: {request.email}</span>
                           <span>日期: {request.createdAt}</span>
                           {request.needInvoice && (
-                            <span className="text-yellow-500">需要統編: {request.companyName} ({request.taxId})</span>
+                            <span className="text-yellow-500">
+                              需要統編: {request.companyName} ({request.taxId})
+                            </span>
                           )}
                         </div>
 
                         {request.status === "quoted" && request.quotedPrice && (
                           <div className="mt-3 flex items-center gap-2 text-sm">
-                            <span className="text-muted-foreground">已報價:</span>
-                            <span className="font-bold text-primary">NT$ {request.quotedPrice.toLocaleString()}</span>
-                            <span className="text-muted-foreground">（等待客戶付款）</span>
+                            <span className="text-muted-foreground">
+                              已報價:
+                            </span>
+                            <span className="font-bold text-primary">
+                              NT$ {request.quotedPrice.toLocaleString()}
+                            </span>
+                            <span className="text-muted-foreground">
+                              （等待客戶付款）
+                            </span>
                           </div>
                         )}
 
                         {request.status === "paid" && request.quotedPrice && (
                           <div className="mt-3 flex items-center gap-2 text-sm">
                             <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span className="text-green-500">客戶已付款 NT$ {request.quotedPrice.toLocaleString()}</span>
-                            <span className="text-muted-foreground">- 請開始設計製作</span>
+                            <span className="text-green-500">
+                              客戶已付款 NT${" "}
+                              {request.quotedPrice.toLocaleString()}
+                            </span>
+                            <span className="text-muted-foreground">
+                              - 請開始設計製作
+                            </span>
                           </div>
                         )}
                       </div>
@@ -926,7 +1230,10 @@ export default function CreatorPortalPage() {
                           <>
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button size="sm" className="bg-gradient-to-r from-primary to-secondary">
+                                <Button
+                                  size="sm"
+                                  className="bg-gradient-to-r from-primary to-secondary"
+                                >
                                   <CheckCircle className="mr-1 h-4 w-4" />
                                   接受並報價
                                 </Button>
@@ -937,15 +1244,23 @@ export default function CreatorPortalPage() {
                                 </DialogHeader>
                                 <div className="space-y-4 py-4">
                                   <div className="rounded-lg bg-white/5 p-4">
-                                    <h4 className="mb-2 font-bold text-foreground">{request.title}</h4>
-                                    <p className="mb-2 text-sm text-muted-foreground">{request.summary}</p>
-                                    <p className="text-xs text-muted-foreground">產品類型: {request.productType}</p>
+                                    <h4 className="mb-2 font-bold text-foreground">
+                                      {request.title}
+                                    </h4>
+                                    <p className="mb-2 text-sm text-muted-foreground">
+                                      {request.summary}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      產品類型: {request.productType}
+                                    </p>
                                   </div>
-                                  
+
                                   <div className="space-y-2">
                                     <div className="flex items-center gap-2">
                                       <Label>報價金額 (NT$)</Label>
-                                      <span className="text-xs text-muted-foreground">平台將抽取 10% 服務費</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        平台將抽取 10% 服務費
+                                      </span>
                                     </div>
                                     <Input
                                       type="number"
@@ -953,7 +1268,9 @@ export default function CreatorPortalPage() {
                                       className="bg-white/5"
                                       min={100}
                                       value={quoteAmount || ""}
-                                      onChange={(e) => setQuoteAmount(Number(e.target.value))}
+                                      onChange={(e) =>
+                                        setQuoteAmount(Number(e.target.value))
+                                      }
                                     />
                                     <p className="text-xs text-muted-foreground">
                                       報價將發送至客戶信箱: {request.email}
@@ -961,16 +1278,34 @@ export default function CreatorPortalPage() {
                                     {quoteAmount > 0 && (
                                       <div className="mt-2 rounded-lg bg-green-500/10 p-3">
                                         <div className="flex items-center justify-between text-sm">
-                                          <span className="text-muted-foreground">報價金額</span>
-                                          <span className="text-foreground">NT$ {quoteAmount.toLocaleString()}</span>
+                                          <span className="text-muted-foreground">
+                                            報價金額
+                                          </span>
+                                          <span className="text-foreground">
+                                            NT$ {quoteAmount.toLocaleString()}
+                                          </span>
                                         </div>
                                         <div className="flex items-center justify-between text-sm">
-                                          <span className="text-muted-foreground">平台服務費 (10%)</span>
-                                          <span className="text-red-400">- NT$ {Math.round(quoteAmount * 0.1).toLocaleString()}</span>
+                                          <span className="text-muted-foreground">
+                                            平台服務費 (10%)
+                                          </span>
+                                          <span className="text-red-400">
+                                            - NT${" "}
+                                            {Math.round(
+                                              quoteAmount * 0.1,
+                                            ).toLocaleString()}
+                                          </span>
                                         </div>
                                         <div className="mt-2 flex items-center justify-between border-t border-border/30 pt-2">
-                                          <span className="font-medium text-foreground">實際收入</span>
-                                          <span className="text-lg font-bold text-green-500">NT$ {Math.round(quoteAmount * 0.9).toLocaleString()}</span>
+                                          <span className="font-medium text-foreground">
+                                            實際收入
+                                          </span>
+                                          <span className="text-lg font-bold text-green-500">
+                                            NT${" "}
+                                            {Math.round(
+                                              quoteAmount * 0.9,
+                                            ).toLocaleString()}
+                                          </span>
                                         </div>
                                       </div>
                                     )}
@@ -990,7 +1325,9 @@ export default function CreatorPortalPage() {
                                       <li>系統將發送報價通知至客戶信箱</li>
                                       <li>客戶點擊連結前往「我的訂單」付款</li>
                                       <li>付款完成後，您將收到通知開始設計</li>
-                                      <li>完成後由 Artniverse 寄送產品給客戶</li>
+                                      <li>
+                                        完成後由 Artniverse 寄送產品給客戶
+                                      </li>
                                     </ol>
                                   </div>
                                 </div>
@@ -1002,20 +1339,31 @@ export default function CreatorPortalPage() {
                                 </DialogFooter>
                               </DialogContent>
                             </Dialog>
-                            <Button variant="outline" size="sm" className="bg-transparent text-destructive hover:text-destructive">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-transparent text-destructive hover:text-destructive"
+                            >
                               <XCircle className="mr-1 h-4 w-4" />
                               拒絕
                             </Button>
                           </>
                         )}
                         {request.status === "quoted" && (
-                          <Button variant="outline" size="sm" className="bg-transparent">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-transparent"
+                          >
                             <MessageSquare className="mr-1 h-4 w-4" />
                             聯繫客戶
                           </Button>
                         )}
                         {request.status === "paid" && (
-                          <Button size="sm" className="bg-gradient-to-r from-green-500 to-emerald-500 text-white">
+                          <Button
+                            size="sm"
+                            className="bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+                          >
                             <CheckCircle className="mr-1 h-4 w-4" />
                             標記完成
                           </Button>
@@ -1038,9 +1386,12 @@ export default function CreatorPortalPage() {
                   <Scroll className="h-8 w-8 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground">冒險者公會 - 特殊委託公佈欄</h2>
+                  <h2 className="text-2xl font-bold text-foreground">
+                    冒險者公會 - 特殊委託公佈欄
+                  </h2>
                   <p className="text-muted-foreground">
-                    由 Artniverse 精選的企業合作案，依照你的風格標籤推薦適合的委託
+                    由 Artniverse
+                    精選的企業合作案，依照你的風格標籤推薦適合的委託
                   </p>
                 </div>
               </div>
@@ -1055,7 +1406,9 @@ export default function CreatorPortalPage() {
                 >
                   {/* Difficulty Badge */}
                   <div className="absolute right-4 top-4">
-                    <Badge className={`${getDifficultyColor(quest.difficulty)} flex items-center gap-1 px-3 py-1`}>
+                    <Badge
+                      className={`${getDifficultyColor(quest.difficulty)} flex items-center gap-1 px-3 py-1`}
+                    >
                       {getDifficultyIcon(quest.difficulty)}
                       <span className="font-bold">{quest.difficulty}級</span>
                     </Badge>
@@ -1064,14 +1417,22 @@ export default function CreatorPortalPage() {
                   <div className="p-6">
                     {/* Quest Header */}
                     <div className="mb-4 pr-16">
-                      <h3 className="mb-1 text-lg font-bold text-foreground">{quest.title}</h3>
-                      <p className="text-sm text-muted-foreground">委託企業: {quest.client}</p>
+                      <h3 className="mb-1 text-lg font-bold text-foreground">
+                        {quest.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        委託企業: {quest.client}
+                      </p>
                     </div>
 
                     {/* Tags */}
                     <div className="mb-4 flex flex-wrap gap-2">
                       {quest.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="border-amber-500/30 text-amber-400">
+                        <Badge
+                          key={tag}
+                          variant="outline"
+                          className="border-amber-500/30 text-amber-400"
+                        >
                           {tag}
                         </Badge>
                       ))}
@@ -1093,9 +1454,13 @@ export default function CreatorPortalPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         {quest.status === "open" ? (
-                          <Badge className="bg-green-500/20 text-green-500">開放申請</Badge>
+                          <Badge className="bg-green-500/20 text-green-500">
+                            開放申請
+                          </Badge>
                         ) : (
-                          <Badge className="bg-blue-500/20 text-blue-500">已申請</Badge>
+                          <Badge className="bg-blue-500/20 text-blue-500">
+                            已申請
+                          </Badge>
                         )}
                       </div>
                     </div>
@@ -1115,12 +1480,20 @@ export default function CreatorPortalPage() {
                         <DialogHeader>
                           <div className="flex items-start justify-between">
                             <div>
-                              <DialogTitle className="mb-2 text-xl">{quest.title}</DialogTitle>
-                              <p className="text-sm text-muted-foreground">委託企業: {quest.client}</p>
+                              <DialogTitle className="mb-2 text-xl">
+                                {quest.title}
+                              </DialogTitle>
+                              <p className="text-sm text-muted-foreground">
+                                委託企業: {quest.client}
+                              </p>
                             </div>
-                            <Badge className={`${getDifficultyColor(quest.difficulty)} flex items-center gap-1 px-3 py-1`}>
+                            <Badge
+                              className={`${getDifficultyColor(quest.difficulty)} flex items-center gap-1 px-3 py-1`}
+                            >
                               {getDifficultyIcon(quest.difficulty)}
-                              <span className="font-bold">{quest.difficulty}級委託</span>
+                              <span className="font-bold">
+                                {quest.difficulty}級委託
+                              </span>
                             </Badge>
                           </div>
                         </DialogHeader>
@@ -1132,29 +1505,46 @@ export default function CreatorPortalPage() {
                               <div className="flex items-center gap-3">
                                 <Coins className="h-8 w-8 text-yellow-500" />
                                 <div>
-                                  <p className="text-sm text-muted-foreground">委託報酬</p>
-                                  <p className="text-xl font-bold text-yellow-500">{quest.reward}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    委託報酬
+                                  </p>
+                                  <p className="text-xl font-bold text-yellow-500">
+                                    {quest.reward}
+                                  </p>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <p className="text-sm text-muted-foreground">截止日期</p>
-                                <p className="font-medium text-foreground">{quest.deadline}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  截止日期
+                                </p>
+                                <p className="font-medium text-foreground">
+                                  {quest.deadline}
+                                </p>
                               </div>
                             </div>
                           </div>
 
                           {/* Description */}
                           <div>
-                            <h4 className="mb-2 font-bold text-foreground">委託說明</h4>
-                            <p className="text-muted-foreground">{quest.description}</p>
+                            <h4 className="mb-2 font-bold text-foreground">
+                              委託說明
+                            </h4>
+                            <p className="text-muted-foreground">
+                              {quest.description}
+                            </p>
                           </div>
 
                           {/* Requirements */}
                           <div>
-                            <h4 className="mb-2 font-bold text-foreground">注意事項</h4>
+                            <h4 className="mb-2 font-bold text-foreground">
+                              注意事項
+                            </h4>
                             <ul className="space-y-2">
                               {quest.requirements.map((req, index) => (
-                                <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
+                                <li
+                                  key={index}
+                                  className="flex items-start gap-2 text-sm text-muted-foreground"
+                                >
                                   <AlertCircle className="mt-0.5 h-4 w-4 text-amber-500" />
                                   {req}
                                 </li>
@@ -1164,10 +1554,16 @@ export default function CreatorPortalPage() {
 
                           {/* Tags */}
                           <div>
-                            <h4 className="mb-2 font-bold text-foreground">相關標籤</h4>
+                            <h4 className="mb-2 font-bold text-foreground">
+                              相關標籤
+                            </h4>
                             <div className="flex flex-wrap gap-2">
                               {quest.tags.map((tag) => (
-                                <Badge key={tag} variant="outline" className="border-amber-500/30 text-amber-400">
+                                <Badge
+                                  key={tag}
+                                  variant="outline"
+                                  className="border-amber-500/30 text-amber-400"
+                                >
                                   {tag}
                                 </Badge>
                               ))}
@@ -1195,8 +1591,220 @@ export default function CreatorPortalPage() {
               ))}
             </div>
           </TabsContent>
+
+          {/* 過往貼文 Tab — 完美打造 Threads 貼文牆與發佈彈窗 */}
+          <TabsContent value="posts" className="space-y-6">
+            <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">
+                    過往貼文牆
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    發佈創作動態、新品花絮，與追蹤粉絲進行零距離留言互動。
+                  </p>
+                </div>
+
+                {/* 彈出式新貼文發佈視窗 */}
+                <Dialog
+                  open={isPostModalOpen}
+                  onOpenChange={setIsPostModalOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button className="bg-gradient-to-r from-primary to-secondary gap-1.5 shadow-lg shadow-primary/20">
+                      <Plus className="h-4 w-4" />
+                      發佈新貼文
+                    </Button>
+                  </DialogTrigger>
+
+                  <DialogContent className="overflow-hidden rounded-2xl border border-white/10 bg-[#101010] p-0 text-white shadow-2xl sm:max-w-xl">
+
+                    {/* Threads Header */}
+                    <div className="flex h-14 items-center justify-between border-b border-white/10 px-5">
+                      <Button
+                        variant="ghost"
+                        onClick={() => setIsPostModalOpen(false)}
+                        className="h-auto p-0 text-sm font-medium text-white/70 hover:bg-transparent hover:text-white"
+                      >
+                        取消
+                      </Button>
+
+                      <h2 className="text-base font-semibold tracking-tight">
+                        新貼文
+                      </h2>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full text-white/70 hover:bg-white/10 hover:text-white"
+                      >
+                      </Button>
+                    </div>
+
+                    <div className="space-y-1 max-h-[60vh] overflow-y-auto px-0 py-2">
+                      {/* 創作者資訊 + 發文輸入 */}
+                      <div className="flex gap-4 px-5 pt-2">
+                        {/* 頭像 */}
+                        <div className="flex-shrink-0">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-base font-bold text-white shadow-md">
+                           {
+                            user?.creatorProfile?.brandName
+                              ? user.creatorProfile.brandName.substring(0, 1)
+                              : user?.name
+                                ? user.name.substring(0, 1)
+                                : "創"
+                          }
+                          </div>
+                        </div>
+
+                        {/* 右側內容 */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-white">
+                              {user?.creatorProfile?.brandName || user?.name || "創作者"}
+                            </span>
+
+
+                            <button
+                              type="button"
+                              className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80 transition hover:bg-white/20"
+                            >
+                            </button>
+                          </div>
+
+                          <Textarea
+                            id="post-content"
+                            placeholder="有什麼新鮮事？"
+                            value={newPostContent}
+                            onChange={(e) =>
+                              setNewPostContent(e.target.value)
+                            }
+                            maxLength={500}
+                            className="mt-3 min-h-[80px] resize-none border-0 bg-transparent p-0 text-lg leading-7 text-white shadow-none placeholder:text-white/35 focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+
+                          <div className="mt-3 flex items-center gap-3">
+                            <span className="text-xs text-white/35">
+                              {newPostImages.length}/10 張圖片
+                            </span>
+
+                            <span
+                              className={`text-xs ${
+                                newPostContent.length > 450
+                                  ? "text-yellow-400"
+                                  : "text-white/30"
+                              }`}
+                            >
+                              {newPostContent.length}/500
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 圖片連結清單 */}
+                      <div className="space-y-1 px-5">
+
+                        <Input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleImageUpload}
+                          className="hidden"
+                        />
+
+                        <label
+                          htmlFor="image-upload"
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
+                        >
+                          <Image className="h-5 w-5" />
+                        </label>
+
+
+                        {/* 圖片預覽 */}
+                        {newPostImages.length > 0 && (
+                          <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-xl">
+                            {newPostImages.map((file, index) => (
+                              <div
+                                key={index}
+                                className="relative aspect-square overflow-hidden rounded-xl"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt={`預覽 ${index + 1}`}
+                                  className="h-full w-full object-cover"
+                                />
+
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="destructive"
+                                  className="absolute right-2 top-2 h-7 w-7 rounded-full"
+                                  onClick={() =>
+                                    setNewPostImages(
+                                      newPostImages.filter(
+                                        (_, i) => i !== index,
+                                      ),
+                                    )
+                                  }
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <DialogFooter className="justify-end px-5 pb-2">
+                      <Button
+                        onClick={handleCreatePost}
+                        disabled={!newPostContent.trim()}
+                        className="rounded-full bg-white px-6 text-black hover:bg-white/90"
+                      >
+                        發佈
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {/* 串文串流清單牆 */}
+              {posts.length > 0 ? (
+                <div className="mx-auto max-w-2xl space-y-4">
+                  {posts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onLike={handleLikePost}
+                      onAddComment={handleAddCommentToPost}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border/50 py-16 text-center">
+                  <MessageSquare className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
+                  <h3 className="mb-2 text-lg font-medium text-foreground">
+                    這裡空空如也
+                  </h3>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    發佈你的第一串日常，開啟與太空粉絲的交流吧！
+                  </p>
+
+                  <Button
+                    onClick={() => setIsPostModalOpen(true)}
+                    className="bg-gradient-to-r from-primary to-secondary"
+                  >
+                    發佈貼文
+                  </Button>
+                </div>
+              )}
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </div>
-  )
+  );
 }

@@ -143,7 +143,7 @@ function CreatorCard({ creator }: { creator: Creator }) {
 export function ProductsSidebar() {
   const router = useRouter();
   return (
-    <aside className="w-80 shrink-0 space-y-4 sticky top-20 h-fit">
+    <aside className="w-80 shrink-0 space-y-4">
       {/* Featured Creators */}
       <TheCard highlightOnHover={false}>
         <CardHeader className="pb-3">

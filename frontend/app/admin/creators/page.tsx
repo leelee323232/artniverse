@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -13,7 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
+import {
+  AdminTable,
+  type AdminTableColumn,
+} from "@/components/admin/AdminTable";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminRowActions } from "@/components/admin/AdminRowActions";
@@ -30,6 +33,7 @@ interface FormState {
   avatarUrl: string;
   sortOrder: string;
   isActive: boolean;
+  isPopular: boolean;
 }
 
 const emptyForm: FormState = {
@@ -39,18 +43,48 @@ const emptyForm: FormState = {
   avatarUrl: "",
   sortOrder: "1",
   isActive: true,
+  isPopular: false,
 };
 
 export default function CreatorsPage() {
-  const crud = useAdminCrud<Creator>("c", mockCreators);
+  const getInitialCreators = () => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("admin_creators_data");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          return mockCreators;
+        }
+      }
+    }
+    return mockCreators;
+  };
+
+  const crud = useAdminCrud<Creator>("c", getInitialCreators());
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (crud.items && crud.items.length > 0) {
+      localStorage.setItem("admin_creators_data", JSON.stringify(crud.items));
+    }
+  }, [crud.items]);
 
   const categoryNameMap = useMemo(() => {
     const map: Record<string, string> = {};
     mockCreatorCategories.forEach((c) => (map[c.id] = c.name));
     return map;
   }, []);
+
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return crud.items;
+    return crud.items.filter((item) =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }, [crud.items, searchQuery]);
 
   useEffect(() => {
     if (!crud.isModalOpen) return;
@@ -63,6 +97,7 @@ export default function CreatorsPage() {
         avatarUrl: e.avatarUrl,
         sortOrder: String(e.sortOrder),
         isActive: e.isActive,
+        isPopular: (e as any).isPopular ?? false,
       });
     } else {
       setForm({ ...emptyForm, sortOrder: String(crud.items.length + 1) });
@@ -90,7 +125,8 @@ export default function CreatorsPage() {
       avatarUrl: form.avatarUrl.trim(),
       sortOrder: Number(form.sortOrder),
       isActive: form.isActive,
-    });
+      isPopular: form.isPopular,
+    } as any);
   };
 
   const handleDelete = (item: Creator) => {
@@ -99,29 +135,65 @@ export default function CreatorsPage() {
     }
   };
 
+  // 修正狀態切換
+  const handleToggleActive = (item: Creator) => {
+    crud.submit({
+      ...item,
+      isActive: !item.isActive,
+    } as any);
+  };
+
   const columns: AdminTableColumn<Creator>[] = [
     {
       key: "avatar",
       header: "頭像",
       className: "w-16",
       render: (i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={i.avatarUrl}
-          alt={i.name}
-          className="h-12 w-12 rounded-full object-cover"
-        />
+        <div className="relative h-12 w-12">
+          <img
+            src={i.avatarUrl}
+            alt={i.name}
+            className="h-12 w-12 rounded-full object-cover"
+          />
+          {(i as any).isPopular && (
+            <span className="absolute -bottom-0.5 -right-0.5 bg-background border border-border/50 rounded-full p-0.5 shadow-sm flex items-center justify-center">
+              <Flame className="h-3.5 w-3.5 text-orange-500 fill-orange-500/20" />
+            </span>
+          )}
+        </div>
       ),
     },
-    { key: "name", header: "創作者名稱", render: (i) => <span className="font-medium">{i.name}</span> },
+    {
+      key: "name",
+      header: "創作者名稱",
+      render: (i) => (
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{i.name}</span>
+        </div>
+      ),
+    },
     {
       key: "category",
       header: "類別",
       className: "text-muted-foreground",
       render: (i) => categoryNameMap[i.categoryId] ?? "—",
     },
-    { key: "specialty", header: "專長", className: "text-muted-foreground", render: (i) => i.specialty || "—" },
-    { key: "status", header: "狀態", render: (i) => <StatusToggle active={i.isActive} onToggle={() => crud.toggleActive(i)} /> },
+    {
+      key: "specialty",
+      header: "專長",
+      className: "text-muted-foreground",
+      render: (i) => i.specialty || "—",
+    },
+    {
+      key: "status",
+      header: "狀態",
+      render: (i) => (
+        <StatusToggle
+          active={i.isActive}
+          onToggle={() => handleToggleActive(i)}
+        />
+      ),
+    },
     {
       key: "actions",
       header: "操作",
@@ -136,7 +208,7 @@ export default function CreatorsPage() {
   ];
 
   return (
-    <div>
+    <div className="space-y-4">
       <AdminPageHeader
         title="創作者管理"
         description="管理平台創作者資料。"
@@ -148,9 +220,19 @@ export default function CreatorsPage() {
         }
       />
 
+      <div className="max-w-md">
+        <Input
+          type="text"
+          placeholder="搜尋創作者名稱..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="bg-background/50 border border-border/50"
+        />
+      </div>
+
       <AdminTable
         columns={columns}
-        items={crud.items}
+        items={filteredItems}
         loading={crud.loading}
         error={crud.error}
       />
@@ -161,7 +243,12 @@ export default function CreatorsPage() {
         onClose={crud.closeModal}
         onSubmit={handleSubmit}
       >
-        <AdminField label="創作者名稱" htmlFor="name" required error={errors.name}>
+        <AdminField
+          label="創作者名稱"
+          htmlFor="name"
+          required
+          error={errors.name}
+        >
           <Input
             id="name"
             value={form.name}
@@ -197,7 +284,12 @@ export default function CreatorsPage() {
           />
         </AdminField>
 
-        <AdminField label="頭像網址" htmlFor="avatarUrl" required error={errors.avatarUrl}>
+        <AdminField
+          label="頭像網址"
+          htmlFor="avatarUrl"
+          required
+          error={errors.avatarUrl}
+        >
           <Input
             id="avatarUrl"
             value={form.avatarUrl}
@@ -206,7 +298,12 @@ export default function CreatorsPage() {
           />
         </AdminField>
 
-        <AdminField label="排序" htmlFor="sortOrder" required error={errors.sortOrder}>
+        <AdminField
+          label="排序"
+          htmlFor="sortOrder"
+          required
+          error={errors.sortOrder}
+        >
           <Input
             id="sortOrder"
             type="number"
@@ -215,12 +312,22 @@ export default function CreatorsPage() {
           />
         </AdminField>
 
-        <div className="flex items-center justify-between rounded-lg border border-border p-3">
-          <span className="text-sm font-medium">是否啟用</span>
-          <Switch
-            checked={form.isActive}
-            onCheckedChange={(v) => setForm({ ...form, isActive: v })}
-          />
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-lg border border-border p-3">
+            <span className="text-sm font-medium">是否啟用</span>
+            <Switch
+              checked={form.isActive}
+              onCheckedChange={(v) => setForm({ ...form, isActive: v })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border border-border p-3">
+            <span className="text-sm font-medium">設為熱門創作者</span>
+            <Switch
+              checked={form.isPopular}
+              onCheckedChange={(v) => setForm({ ...form, isPopular: v })}
+            />
+          </div>
         </div>
       </AdminModal>
     </div>
