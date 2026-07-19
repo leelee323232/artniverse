@@ -489,10 +489,10 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
 
       {/* Content Tabs */}
       <section className="container mx-auto px-4 pb-20">
-        <Tabs defaultValue="products" className="w-full">
+        <Tabs defaultValue="commissions" className="w-full">
           <TabsList className="mb-8 grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="commissions">貼文</TabsTrigger>
             <TabsTrigger value="products">商品</TabsTrigger>
-            <TabsTrigger value="commissions">接案作品</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products" className="space-y-6">

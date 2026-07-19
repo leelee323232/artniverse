@@ -92,7 +92,7 @@ export default function SubscribePage() {
           className="mb-8 inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          返回委託創作
+          返回企業委託
         </Link>
 
         <div className="grid gap-8 lg:grid-cols-3">

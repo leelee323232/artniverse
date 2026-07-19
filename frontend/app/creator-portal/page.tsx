@@ -50,6 +50,7 @@ import {
   Target,
   Zap,
   Send,
+  Image,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -291,9 +292,7 @@ export default function CreatorPortalPage() {
     (typeof specialQuests)[0] | null
   >(null);
 
-  // -------------------------------------------------------------------
-  // 💡 過往貼文牆系統的 States 與持久化儲存邏輯
-  // -------------------------------------------------------------------
+
   const [posts, setPosts] = useState<Post[]>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("creator_posts_data");
@@ -1618,63 +1617,117 @@ export default function CreatorPortalPage() {
                     </Button>
                   </DialogTrigger>
 
-                  <DialogContent className="max-w-lg border-primary/30 bg-background/95 backdrop-blur-md">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-1.5 text-lg text-foreground">
-                        <MessageSquare className="h-5 w-5 text-yellow-500 animate-pulse" />
-                        建立新貼文
-                      </DialogTitle>
-                    </DialogHeader>
+                  <DialogContent className="overflow-hidden rounded-2xl border border-white/10 bg-[#101010] p-0 text-white shadow-2xl sm:max-w-xl">
 
-                    <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-1">
-                      {/* 內文 */}
-                      <div className="space-y-2">
-                        <Label
-                          htmlFor="post-content"
-                          className="text-sm font-medium text-foreground"
-                        >
-                          貼文內容
-                        </Label>
-                        <Textarea
-                          id="post-content"
-                          placeholder="今天有些什麼創作靈感？跟你的星球粉絲分享吧..."
-                          className="min-h-[120px] bg-white/5 border-border/40 focus-visible:ring-primary text-foreground"
-                          value={newPostContent}
-                          onChange={(e) => setNewPostContent(e.target.value)}
-                          maxLength={500}
-                        />
-                        <div className="flex justify-end text-xs text-muted-foreground">
-                          <span>{newPostContent.length}/500 字</span>
+                    {/* Threads Header */}
+                    <div className="flex h-14 items-center justify-between border-b border-white/10 px-5">
+                      <Button
+                        variant="ghost"
+                        onClick={() => setIsPostModalOpen(false)}
+                        className="h-auto p-0 text-sm font-medium text-white/70 hover:bg-transparent hover:text-white"
+                      >
+                        取消
+                      </Button>
+
+                      <h2 className="text-base font-semibold tracking-tight">
+                        新貼文
+                      </h2>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full text-white/70 hover:bg-white/10 hover:text-white"
+                      >
+                      </Button>
+                    </div>
+
+                    <div className="space-y-1 max-h-[60vh] overflow-y-auto px-0 py-2">
+                      {/* 創作者資訊 + 發文輸入 */}
+                      <div className="flex gap-4 px-5 pt-2">
+                        {/* 頭像 */}
+                        <div className="flex-shrink-0">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-base font-bold text-white shadow-md">
+                           {
+                            user?.creatorProfile?.brandName
+                              ? user.creatorProfile.brandName.substring(0, 1)
+                              : user?.name
+                                ? user.name.substring(0, 1)
+                                : "創"
+                          }
+                          </div>
+                        </div>
+
+                        {/* 右側內容 */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-white">
+                              {user?.creatorProfile?.brandName || user?.name || "創作者"}
+                            </span>
+
+
+                            <button
+                              type="button"
+                              className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80 transition hover:bg-white/20"
+                            >
+                            </button>
+                          </div>
+
+                          <Textarea
+                            id="post-content"
+                            placeholder="有什麼新鮮事？"
+                            value={newPostContent}
+                            onChange={(e) =>
+                              setNewPostContent(e.target.value)
+                            }
+                            maxLength={500}
+                            className="mt-3 min-h-[80px] resize-none border-0 bg-transparent p-0 text-lg leading-7 text-white shadow-none placeholder:text-white/35 focus-visible:ring-0 focus-visible:ring-offset-0"
+                          />
+
+                          <div className="mt-3 flex items-center gap-3">
+                            <span className="text-xs text-white/35">
+                              {newPostImages.length}/10 張圖片
+                            </span>
+
+                            <span
+                              className={`text-xs ${
+                                newPostContent.length > 450
+                                  ? "text-yellow-400"
+                                  : "text-white/30"
+                              }`}
+                            >
+                              {newPostContent.length}/500
+                            </span>
+                          </div>
                         </div>
                       </div>
 
                       {/* 圖片連結清單 */}
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm font-medium text-foreground">
-                            上傳圖片（最多 10 張）
-                          </Label>
-                        </div>
+                      <div className="space-y-1 px-5">
 
                         <Input
+                          id="image-upload"
                           type="file"
                           accept="image/*"
                           multiple
                           onChange={handleImageUpload}
-                          className="cursor-pointer bg-white/5 border-border/40 text-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
+                          className="hidden"
                         />
 
-                        <p className="text-xs text-muted-foreground">
-                          支援 JPG、PNG、WEBP 等圖片格式，可一次選擇多張圖片。
-                        </p>
+                        <label
+                          htmlFor="image-upload"
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 hover:text-white"
+                        >
+                          <Image className="h-5 w-5" />
+                        </label>
+
 
                         {/* 圖片預覽 */}
                         {newPostImages.length > 0 && (
-                          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                          <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-xl">
                             {newPostImages.map((file, index) => (
                               <div
                                 key={index}
-                                className="relative aspect-square overflow-hidden rounded-lg border border-border/40"
+                                className="relative aspect-square overflow-hidden rounded-xl"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -1687,7 +1740,7 @@ export default function CreatorPortalPage() {
                                   type="button"
                                   size="icon"
                                   variant="destructive"
-                                  className="absolute right-1 top-1 h-6 w-6 rounded-full"
+                                  className="absolute right-2 top-2 h-7 w-7 rounded-full"
                                   onClick={() =>
                                     setNewPostImages(
                                       newPostImages.filter(
@@ -1703,59 +1756,15 @@ export default function CreatorPortalPage() {
                           </div>
                         )}
                       </div>
-
-                      {/* 圖片預覽區 */}
-                      {newPostImages.length > 0 && (
-                        <div className="rounded-lg border border-dashed border-border/40 bg-white/5 p-3">
-                          <p className="mb-2 text-xs text-muted-foreground">
-                            圖片預覽：
-                          </p>
-
-                          <div className="flex flex-wrap gap-3">
-                            {newPostImages.map((file, idx) => (
-                              <div
-                                key={idx}
-                                className="relative h-20 w-20 overflow-hidden rounded-md border border-border/50"
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={URL.createObjectURL(file)}
-                                  alt={`Preview ${idx + 1}`}
-                                  className="h-full w-full object-cover"
-                                />
-
-                                <Button
-                                  type="button"
-                                  size="icon"
-                                  variant="destructive"
-                                  className="absolute right-1 top-1 h-5 w-5 rounded-full"
-                                  onClick={() => handleRemoveImage(idx)}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
 
-                    <DialogFooter className="gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsPostModalOpen(false)}
-                        className="bg-transparent"
-                      >
-                        取消
-                      </Button>
-
+                    <DialogFooter className="justify-end px-5 pb-2">
                       <Button
                         onClick={handleCreatePost}
                         disabled={!newPostContent.trim()}
-                        className="bg-gradient-to-r from-primary to-secondary px-6"
+                        className="rounded-full bg-white px-6 text-black hover:bg-white/90"
                       >
-                        <Send className="mr-2 h-4 w-4" />
-                        發佈串文
+                        發佈
                       </Button>
                     </DialogFooter>
                   </DialogContent>

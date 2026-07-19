@@ -21,7 +21,7 @@ export const mockActivities: Activity[] = [
   },
   {
     id: "a-3",
-    title: "限時委託創作優惠",
+    title: "限時企業委託優惠",
     linkUrl: "/commission",
     imageUrl: "https://placehold.co/320x120?text=Commission",
     sortOrder: 3,
