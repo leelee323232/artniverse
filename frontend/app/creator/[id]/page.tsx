@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Navigation } from "@/components/navigation"
-import { UniverseBackground } from "@/components/universe-background"
-import { ProductCard } from "@/components/product-card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { useState } from "react";
+import { Navigation } from "@/components/navigation";
+import { UniverseBackground } from "@/components/universe-background";
+import { ProductCard } from "@/components/product-card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -24,8 +24,20 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Star, Heart, Share2, Crown, Sparkles, Coins, Gift, Check, Upload, Send, CheckCircle } from "lucide-react"
+} from "@/components/ui/dialog";
+import {
+  Star,
+  Heart,
+  Share2,
+  Crown,
+  Sparkles,
+  Coins,
+  Gift,
+  Check,
+  Upload,
+  Send,
+  CheckCircle,
+} from "lucide-react";
 
 // Mock data - in real app this would come from database
 const creatorData = {
@@ -45,7 +57,7 @@ const creatorData = {
     price: 99,
     benefits: ["每月獨家桌布", "新品搶先看", "專屬折扣碼", "創作幕後分享"],
   },
-}
+};
 
 const products = [
   {
@@ -96,7 +108,7 @@ const products = [
     category: "海報",
     stock: 28,
   },
-]
+];
 
 const commissionWorks = [
   {
@@ -120,7 +132,7 @@ const commissionWorks = [
     image: "/children-book-illustration.jpg",
     description: "溫馨兒童繪本全書插圖繪製",
   },
-]
+];
 
 // Product categories for commission
 const productCategories = [
@@ -135,15 +147,15 @@ const productCategories = [
   "徽章",
   "筆記本",
   "其他",
-]
+];
 
 export default function CreatorPage({ params }: { params: { id: string } }) {
-  const [tipAmount, setTipAmount] = useState(100)
-  const [isSubscribed, setIsSubscribed] = useState(false)
-  const [showTipDialog, setShowTipDialog] = useState(false)
-  const [showCommissionDialog, setShowCommissionDialog] = useState(false)
-  const [commissionSubmitted, setCommissionSubmitted] = useState(false)
-  
+  const [tipAmount, setTipAmount] = useState(100);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [showTipDialog, setShowTipDialog] = useState(false);
+  const [showCommissionDialog, setShowCommissionDialog] = useState(false);
+  const [commissionSubmitted, setCommissionSubmitted] = useState(false);
+
   // Commission form state
   const [commissionForm, setCommissionForm] = useState({
     summary: "",
@@ -154,33 +166,38 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
     specialRequirements: "",
     email: "",
     referenceImages: [] as File[],
-  })
+  });
 
   const handleSubscribe = () => {
-    setIsSubscribed(true)
-  }
+    setIsSubscribed(true);
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setCommissionForm({
         ...commissionForm,
-        referenceImages: [...commissionForm.referenceImages, ...Array.from(e.target.files)],
-      })
+        referenceImages: [
+          ...commissionForm.referenceImages,
+          ...Array.from(e.target.files),
+        ],
+      });
     }
-  }
+  };
 
   const removeImage = (index: number) => {
     setCommissionForm({
       ...commissionForm,
-      referenceImages: commissionForm.referenceImages.filter((_, i) => i !== index),
-    })
-  }
+      referenceImages: commissionForm.referenceImages.filter(
+        (_, i) => i !== index,
+      ),
+    });
+  };
 
   const handleCommissionSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // In real app, this would send to the backend and then to creator's dashboard
-    setCommissionSubmitted(true)
-  }
+    setCommissionSubmitted(true);
+  };
 
   const resetCommissionForm = () => {
     setCommissionForm({
@@ -192,10 +209,10 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
       specialRequirements: "",
       email: "",
       referenceImages: [],
-    })
-    setCommissionSubmitted(false)
-    setShowCommissionDialog(false)
-  }
+    });
+    setCommissionSubmitted(false);
+    setShowCommissionDialog(false);
+  };
 
   return (
     <div className="relative min-h-screen">
@@ -233,11 +250,17 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
             {/* Creator Info */}
             <div className="space-y-4">
               <div>
-                <h1 className="mb-2 text-3xl font-bold text-foreground md:text-4xl">{creatorData.name}</h1>
-                <p className="text-lg text-muted-foreground">{creatorData.creator}</p>
+                <h1 className="mb-2 text-3xl font-bold text-foreground md:text-4xl">
+                  {creatorData.name}
+                </h1>
+                <p className="text-lg text-muted-foreground">
+                  {creatorData.creator}
+                </p>
               </div>
 
-              <p className="text-pretty text-muted-foreground">{creatorData.description}</p>
+              <p className="text-pretty text-muted-foreground">
+                {creatorData.description}
+              </p>
 
               <div className="flex flex-wrap gap-2">
                 {creatorData.tags.map((tag) => (
@@ -250,7 +273,9 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
               {/* Stats - Only showing followers, rating, and joinedDate */}
               <div className="grid grid-cols-2 gap-4 border-t border-border/50 pt-4 md:grid-cols-3">
                 <div>
-                  <div className="text-2xl font-bold text-foreground">{creatorData.followers.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-foreground">
+                    {creatorData.followers.toLocaleString()}
+                  </div>
                   <div className="text-sm text-muted-foreground">追蹤者</div>
                 </div>
                 <div>
@@ -258,15 +283,22 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                     <Star className="h-5 w-5 fill-yellow-500 text-yellow-500" />
                     {creatorData.rating}
                   </div>
-                  <div className="text-sm text-muted-foreground">{creatorData.totalReviews} 評價</div>
+                  <div className="text-sm text-muted-foreground">
+                    {creatorData.totalReviews} 評價
+                  </div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">加入於 {creatorData.joinedDate}</div>
+                  <div className="text-sm text-muted-foreground">
+                    加入於 {creatorData.joinedDate}
+                  </div>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button size="lg" className="bg-gradient-to-r from-primary to-secondary">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-secondary"
+                >
                   <Heart className="mr-2 h-4 w-4" />
                   追蹤創作者
                 </Button>
@@ -275,7 +307,10 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                 {creatorData.superSubscription.enabled ? (
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button size="lg" className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-600 hover:to-orange-600">
+                      <Button
+                        size="lg"
+                        className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-600 hover:to-orange-600"
+                      >
                         <Crown className="mr-2 h-4 w-4" />
                         超級訂閱
                       </Button>
@@ -292,25 +327,36 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                         <div className="space-y-6 py-4">
                           {/* Price */}
                           <div className="rounded-lg bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-6 text-center">
-                            <p className="mb-2 text-sm text-muted-foreground">每月訂閱價格</p>
+                            <p className="mb-2 text-sm text-muted-foreground">
+                              每月訂閱價格
+                            </p>
                             <p className="text-4xl font-bold text-yellow-500">
                               NT$ {creatorData.superSubscription.price}
-                              <span className="text-lg font-normal text-muted-foreground">/月</span>
+                              <span className="text-lg font-normal text-muted-foreground">
+                                /月
+                              </span>
                             </p>
                           </div>
 
                           {/* Benefits */}
                           <div>
-                            <h4 className="mb-3 font-bold text-foreground">訂閱福利</h4>
+                            <h4 className="mb-3 font-bold text-foreground">
+                              訂閱福利
+                            </h4>
                             <ul className="space-y-3">
-                              {creatorData.superSubscription.benefits.map((benefit, index) => (
-                                <li key={index} className="flex items-center gap-3 text-foreground">
-                                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500/20">
-                                    <Sparkles className="h-4 w-4 text-yellow-500" />
-                                  </div>
-                                  {benefit}
-                                </li>
-                              ))}
+                              {creatorData.superSubscription.benefits.map(
+                                (benefit, index) => (
+                                  <li
+                                    key={index}
+                                    className="flex items-center gap-3 text-foreground"
+                                  >
+                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-yellow-500/20">
+                                      <Sparkles className="h-4 w-4 text-yellow-500" />
+                                    </div>
+                                    {benefit}
+                                  </li>
+                                ),
+                              )}
                             </ul>
                           </div>
 
@@ -329,20 +375,29 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                             <Check className="h-10 w-10 text-green-500" />
                           </div>
                           <div>
-                            <h3 className="mb-2 text-xl font-bold text-foreground">訂閱成功!</h3>
+                            <h3 className="mb-2 text-xl font-bold text-foreground">
+                              訂閱成功!
+                            </h3>
                             <p className="text-muted-foreground">
                               感謝你成為 {creatorData.name} 的超級粉絲!
                             </p>
                           </div>
                           <div className="rounded-lg bg-white/5 p-4">
-                            <p className="mb-2 text-sm text-muted-foreground">你現在可以享受以下福利:</p>
+                            <p className="mb-2 text-sm text-muted-foreground">
+                              你現在可以享受以下福利:
+                            </p>
                             <ul className="space-y-1 text-sm">
-                              {creatorData.superSubscription.benefits.map((benefit, index) => (
-                                <li key={index} className="flex items-center gap-2 text-foreground">
-                                  <Check className="h-4 w-4 text-green-500" />
-                                  {benefit}
-                                </li>
-                              ))}
+                              {creatorData.superSubscription.benefits.map(
+                                (benefit, index) => (
+                                  <li
+                                    key={index}
+                                    className="flex items-center gap-2 text-foreground"
+                                  >
+                                    <Check className="h-4 w-4 text-green-500" />
+                                    {benefit}
+                                  </li>
+                                ),
+                              )}
                             </ul>
                           </div>
                         </div>
@@ -353,7 +408,10 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                   /* Tip Mode - When super subscription is not enabled */
                   <Dialog open={showTipDialog} onOpenChange={setShowTipDialog}>
                     <DialogTrigger asChild>
-                      <Button size="lg" className="bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600">
+                      <Button
+                        size="lg"
+                        className="bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600"
+                      >
                         <Gift className="mr-2 h-4 w-4" />
                         打賞支持
                       </Button>
@@ -368,7 +426,8 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
 
                       <div className="space-y-6 py-4">
                         <p className="text-center text-muted-foreground">
-                          喜歡這位創作者的作品嗎?<br />
+                          喜歡這位創作者的作品嗎?
+                          <br />
                           用打賞來表達你的支持吧!
                         </p>
 
@@ -377,9 +436,15 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                           {[50, 100, 200, 500].map((amount) => (
                             <Button
                               key={amount}
-                              variant={tipAmount === amount ? "default" : "outline"}
+                              variant={
+                                tipAmount === amount ? "default" : "outline"
+                              }
                               onClick={() => setTipAmount(amount)}
-                              className={tipAmount === amount ? "bg-pink-500" : "bg-transparent"}
+                              className={
+                                tipAmount === amount
+                                  ? "bg-pink-500"
+                                  : "bg-transparent"
+                              }
                             >
                               ${amount}
                             </Button>
@@ -392,7 +457,9 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                           <Input
                             type="number"
                             value={tipAmount}
-                            onChange={(e) => setTipAmount(Number(e.target.value))}
+                            onChange={(e) =>
+                              setTipAmount(Number(e.target.value))
+                            }
                             className="bg-white/5"
                             min={10}
                           />
@@ -431,11 +498,17 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
           <TabsContent value="products" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-foreground">所有商品</h2>
-              <p className="text-sm text-muted-foreground">{products.length} 件商品</p>
+              <p className="text-sm text-muted-foreground">
+                {products.length} 件商品
+              </p>
             </div>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {products.map((product) => (
-                <ProductCard key={product.id} {...product} creatorId={creatorData.id} />
+                <ProductCard
+                  key={product.id}
+                  {...product}
+                  creatorId={creatorData.id}
+                />
               ))}
             </div>
           </TabsContent>
@@ -443,13 +516,18 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
           <TabsContent value="commissions" className="space-y-6">
             {/* Commission Request Section */}
             <div className="mb-8 rounded-xl border border-border/50 bg-card/30 p-6 backdrop-blur-sm">
-              <h3 className="mb-2 text-xl font-bold text-foreground">接受客製化委託</h3>
+              <h3 className="mb-2 text-xl font-bold text-foreground">
+                接受客製化委託
+              </h3>
               <p className="mb-4 text-muted-foreground">
                 我們提供各種客製化設計服務，包括品牌設計、插畫繪製、周邊商品設計等。歡迎與我們討論您的需求!
               </p>
-              
+
               {/* Commission Request Dialog */}
-              <Dialog open={showCommissionDialog} onOpenChange={setShowCommissionDialog}>
+              <Dialog
+                open={showCommissionDialog}
+                onOpenChange={setShowCommissionDialog}
+              >
                 <DialogTrigger asChild>
                   <Button className="bg-gradient-to-r from-primary to-secondary">
                     <Send className="mr-2 h-4 w-4" />
@@ -464,7 +542,10 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                   </DialogHeader>
 
                   {!commissionSubmitted ? (
-                    <form onSubmit={handleCommissionSubmit} className="space-y-6 py-4">
+                    <form
+                      onSubmit={handleCommissionSubmit}
+                      className="space-y-6 py-4"
+                    >
                       {/* Email */}
                       <div className="space-y-2">
                         <Label htmlFor="email" className="text-foreground">
@@ -474,7 +555,12 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                           id="email"
                           type="email"
                           value={commissionForm.email}
-                          onChange={(e) => setCommissionForm({ ...commissionForm, email: e.target.value })}
+                          onChange={(e) =>
+                            setCommissionForm({
+                              ...commissionForm,
+                              email: e.target.value,
+                            })
+                          }
                           placeholder="請輸入您的電子郵件，用於接收報價通知"
                           className="bg-white/5"
                           required
@@ -492,7 +578,12 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                         <Textarea
                           id="summary"
                           value={commissionForm.summary}
-                          onChange={(e) => setCommissionForm({ ...commissionForm, summary: e.target.value })}
+                          onChange={(e) =>
+                            setCommissionForm({
+                              ...commissionForm,
+                              summary: e.target.value,
+                            })
+                          }
                           placeholder="請簡述您的設計需求，例如：想要設計一組可愛的貓咪主題貼紙..."
                           className="min-h-[100px] bg-white/5"
                           required
@@ -506,7 +597,12 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                         </Label>
                         <Select
                           value={commissionForm.needInvoice}
-                          onValueChange={(value) => setCommissionForm({ ...commissionForm, needInvoice: value })}
+                          onValueChange={(value) =>
+                            setCommissionForm({
+                              ...commissionForm,
+                              needInvoice: value,
+                            })
+                          }
                         >
                           <SelectTrigger className="bg-white/5">
                             <SelectValue placeholder="請選擇" />
@@ -522,13 +618,21 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                       {commissionForm.needInvoice === "yes" && (
                         <div className="space-y-4 rounded-lg border border-border/50 bg-white/5 p-4">
                           <div className="space-y-2">
-                            <Label htmlFor="companyName" className="text-foreground">
+                            <Label
+                              htmlFor="companyName"
+                              className="text-foreground"
+                            >
                               公司名稱 <span className="text-red-500">*</span>
                             </Label>
                             <Input
                               id="companyName"
                               value={commissionForm.companyName}
-                              onChange={(e) => setCommissionForm({ ...commissionForm, companyName: e.target.value })}
+                              onChange={(e) =>
+                                setCommissionForm({
+                                  ...commissionForm,
+                                  companyName: e.target.value,
+                                })
+                              }
                               placeholder="請輸入公司名稱"
                               className="bg-white/5"
                               required={commissionForm.needInvoice === "yes"}
@@ -541,7 +645,12 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                             <Input
                               id="taxId"
                               value={commissionForm.taxId}
-                              onChange={(e) => setCommissionForm({ ...commissionForm, taxId: e.target.value })}
+                              onChange={(e) =>
+                                setCommissionForm({
+                                  ...commissionForm,
+                                  taxId: e.target.value,
+                                })
+                              }
                               placeholder="請輸入統一編號"
                               className="bg-white/5"
                               required={commissionForm.needInvoice === "yes"}
@@ -557,7 +666,12 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                         </Label>
                         <Select
                           value={commissionForm.productType}
-                          onValueChange={(value) => setCommissionForm({ ...commissionForm, productType: value })}
+                          onValueChange={(value) =>
+                            setCommissionForm({
+                              ...commissionForm,
+                              productType: value,
+                            })
+                          }
                           required
                         >
                           <SelectTrigger className="bg-white/5">
@@ -594,39 +708,49 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                             <span className="text-xs">支援 JPG、PNG 格式</span>
                           </label>
                         </div>
-                        
+
                         {/* Preview uploaded images */}
                         {commissionForm.referenceImages.length > 0 && (
                           <div className="mt-3 grid grid-cols-4 gap-2">
-                            {commissionForm.referenceImages.map((file, index) => (
-                              <div key={index} className="group relative">
-                                <img
-                                  src={URL.createObjectURL(file)}
-                                  alt={`Reference ${index + 1}`}
-                                  className="h-20 w-full rounded-lg object-cover"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => removeImage(index)}
-                                  className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
-                                >
-                                  x
-                                </button>
-                              </div>
-                            ))}
+                            {commissionForm.referenceImages.map(
+                              (file, index) => (
+                                <div key={index} className="group relative">
+                                  <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={`Reference ${index + 1}`}
+                                    className="h-20 w-full rounded-lg object-cover"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeImage(index)}
+                                    className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                                  >
+                                    x
+                                  </button>
+                                </div>
+                              ),
+                            )}
                           </div>
                         )}
                       </div>
 
                       {/* Special Requirements */}
                       <div className="space-y-2">
-                        <Label htmlFor="specialRequirements" className="text-foreground">
+                        <Label
+                          htmlFor="specialRequirements"
+                          className="text-foreground"
+                        >
                           特殊需求
                         </Label>
                         <Textarea
                           id="specialRequirements"
                           value={commissionForm.specialRequirements}
-                          onChange={(e) => setCommissionForm({ ...commissionForm, specialRequirements: e.target.value })}
+                          onChange={(e) =>
+                            setCommissionForm({
+                              ...commissionForm,
+                              specialRequirements: e.target.value,
+                            })
+                          }
                           placeholder="請說明任何其他特殊需求，例如：希望的交期、特定顏色偏好等..."
                           className="min-h-[80px] bg-white/5"
                         />
@@ -634,7 +758,9 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
 
                       {/* Info Box */}
                       <div className="rounded-lg bg-primary/10 p-4 text-sm">
-                        <h4 className="mb-2 font-bold text-primary">委託流程說明</h4>
+                        <h4 className="mb-2 font-bold text-primary">
+                          委託流程說明
+                        </h4>
                         <ol className="list-inside list-decimal space-y-1 text-muted-foreground">
                           <li>送出委託需求後，創作者將於 3-5 個工作天內回覆</li>
                           <li>創作者接受後，會將報價發送至您的電子信箱</li>
@@ -645,10 +771,18 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                       </div>
 
                       <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setShowCommissionDialog(false)} className="bg-transparent">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setShowCommissionDialog(false)}
+                          className="bg-transparent"
+                        >
                           取消
                         </Button>
-                        <Button type="submit" className="bg-gradient-to-r from-primary to-secondary">
+                        <Button
+                          type="submit"
+                          className="bg-gradient-to-r from-primary to-secondary"
+                        >
                           <Send className="mr-2 h-4 w-4" />
                           送出委託
                         </Button>
@@ -661,13 +795,17 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                         <CheckCircle className="h-10 w-10 text-green-500" />
                       </div>
                       <div>
-                        <h3 className="mb-2 text-xl font-bold text-foreground">委託已送出!</h3>
+                        <h3 className="mb-2 text-xl font-bold text-foreground">
+                          委託已送出!
+                        </h3>
                         <p className="text-muted-foreground">
                           感謝您的委託! 我們已將需求傳送給 {creatorData.name}。
                         </p>
                       </div>
                       <div className="rounded-lg bg-white/5 p-4 text-left">
-                        <h4 className="mb-2 font-bold text-foreground">後續流程</h4>
+                        <h4 className="mb-2 font-bold text-foreground">
+                          後續流程
+                        </h4>
                         <ul className="space-y-2 text-sm text-muted-foreground">
                           <li className="flex items-start gap-2">
                             <Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
@@ -683,7 +821,10 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                           </li>
                         </ul>
                       </div>
-                      <Button onClick={resetCommissionForm} className="bg-gradient-to-r from-primary to-secondary">
+                      <Button
+                        onClick={resetCommissionForm}
+                        className="bg-gradient-to-r from-primary to-secondary"
+                      >
                         完成
                       </Button>
                     </div>
@@ -708,8 +849,12 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="mb-2 text-xl font-bold text-foreground">{work.title}</h3>
-                    <p className="mb-2 text-sm text-muted-foreground">客戶: {work.client}</p>
+                    <h3 className="mb-2 text-xl font-bold text-foreground">
+                      {work.title}
+                    </h3>
+                    <p className="mb-2 text-sm text-muted-foreground">
+                      客戶: {work.client}
+                    </p>
                     <p className="text-muted-foreground">{work.description}</p>
                   </div>
                 </div>
@@ -719,5 +864,5 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
         </Tabs>
       </section>
     </div>
-  )
+  );
 }

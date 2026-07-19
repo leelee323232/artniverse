@@ -83,7 +83,7 @@ const creatorEvents: Event[] = [
 
 export function EventsSidebar() {
   return (
-    <aside className="w-72 shrink-0 space-y-4 sticky top-20 h-fit">
+    <aside className="w-72 shrink-0 space-y-4">
       {/* Platform Events */}
       <TheCard title="平台活動" highlightOnHover={false}>
         <CardContent className="space-y-3">

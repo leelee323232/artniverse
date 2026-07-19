@@ -1,27 +1,33 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef } from "react";
 
 export function UniverseBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
     // Set canvas size
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    resizeCanvas()
-    window.addEventListener("resize", resizeCanvas)
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
 
     // Create stars
-    const stars: { x: number; y: number; size: number; speed: number; opacity: number }[] = []
+    const stars: {
+      x: number;
+      y: number;
+      size: number;
+      speed: number;
+      opacity: number;
+    }[] = [];
     for (let i = 0; i < 200; i++) {
       stars.push({
         x: Math.random() * canvas.width,
@@ -29,49 +35,63 @@ export function UniverseBackground() {
         size: Math.random() * 2,
         speed: Math.random() * 0.5,
         opacity: Math.random(),
-      })
+      });
     }
 
     // Animation loop
-    let animationFrameId: number
+    let animationFrameId: number;
     const animate = () => {
-      ctx.fillStyle = "rgba(13, 10, 30, 0.1)"
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      // Fully repaint the gradient background each frame so no dark trail accumulates
+      const gradient = ctx.createRadialGradient(
+        canvas.width / 2,
+        canvas.height / 2,
+        0,
+        canvas.width / 2,
+        canvas.height / 2,
+        Math.max(canvas.width, canvas.height) / 1.2,
+      );
+      gradient.addColorStop(0, "#1a1535");
+      gradient.addColorStop(1, "#0d0a1e");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Draw stars
       stars.forEach((star) => {
-        ctx.beginPath()
-        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`
-        ctx.fill()
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+        ctx.fill();
 
         // Twinkle effect
-        star.opacity += (Math.random() - 0.5) * 0.1
-        star.opacity = Math.max(0.1, Math.min(1, star.opacity))
+        star.opacity += (Math.random() - 0.5) * 0.1;
+        star.opacity = Math.max(0.1, Math.min(1, star.opacity));
 
         // Move stars slowly
-        star.y += star.speed
+        star.y += star.speed;
         if (star.y > canvas.height) {
-          star.y = 0
-          star.x = Math.random() * canvas.width
+          star.y = 0;
+          star.x = Math.random() * canvas.width;
         }
-      })
+      });
 
-      animationFrameId = requestAnimationFrame(animate)
-    }
-    animate()
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    animate();
 
     return () => {
-      window.removeEventListener("resize", resizeCanvas)
-      cancelAnimationFrame(animationFrameId)
-    }
-  }, [])
+      window.removeEventListener("resize", resizeCanvas);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 -z-10"
-      style={{ background: "radial-gradient(ellipse at center, #1a1535 0%, #0d0a1e 100%)" }}
+      style={{
+        background:
+          "radial-gradient(ellipse at center, #1a1535 0%, #0d0a1e 100%)",
+      }}
     />
-  )
+  );
 }
