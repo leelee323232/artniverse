@@ -24,7 +24,7 @@ export function PlanetCard({ id, name, creator, description, tags, followers, ra
   const [isLiked, setIsLiked] = useState(false)
 
   return (
-    <Link href={`/creator/${id}`}>
+    <Link href={`/creator/${id}`}> 
       <Card
         className="group relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20"
         onMouseEnter={() => setIsHovered(true)}
