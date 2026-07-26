@@ -140,8 +140,95 @@ function CreatorCard({ creator }: { creator: Creator }) {
   );
 }
 
-export function ProductsSidebar() {
+export function ProductsSidebar({
+  layout = "vertical",
+}: {
+  layout?: "vertical" | "horizontal";
+}) {
   const router = useRouter();
+
+  if (layout === "horizontal") {
+    return (
+      <div className="space-y-4">
+        {/* Featured Creators */}
+        <section>
+          <div className="mb-2 flex items-center justify-between px-1">
+            <h3 className="text-sm font-semibold">熱門創作者</h3>
+            <Link
+              href="/explore"
+              className="text-xs font-medium text-primary hover:text-violet-400"
+            >
+              查看全部
+            </Link>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {featuredCreators.map((creator) => (
+              <div key={creator.id} className="w-32 shrink-0">
+                <CreatorCard creator={creator} />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Recommended Products */}
+        <section>
+          <div className="mb-2 flex items-center justify-between px-1">
+            <h3 className="text-sm font-semibold">熱門商品</h3>
+            <button
+              type="button"
+              onClick={() => router.push("/shop")}
+              className="text-xs font-medium text-primary hover:text-violet-400"
+            >
+              探索更多
+            </button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {recommendedProducts.map((product) => (
+              <Link
+                key={product.id}
+                href={`/product/${product.id}`}
+                className="group w-40 shrink-0"
+              >
+                <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  {product.isNew && (
+                    <Badge className="absolute left-1 top-1 border-0 bg-primary px-1.5 py-0 text-[9px] text-white">
+                      NEW
+                    </Badge>
+                  )}
+                  {product.isSale && (
+                    <Badge className="absolute left-1 top-1 border-0 bg-rose-500 px-1.5 py-0 text-[9px] text-white">
+                      SALE
+                    </Badge>
+                  )}
+                </div>
+                <p className="mt-2 truncate text-sm font-medium transition-colors group-hover:text-primary">
+                  {product.name}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {product.creator}
+                </p>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-sm font-bold">NT${product.price}</span>
+                  {product.originalPrice && (
+                    <span className="text-xs text-muted-foreground line-through">
+                      NT${product.originalPrice}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <aside className="w-80 shrink-0 space-y-4">
       {/* Featured Creators */}

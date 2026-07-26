@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { Navigation } from "@/components/navigation"
 import { UniverseBackground } from "@/components/universe-background"
 import { Card } from "@/components/ui/card"
@@ -16,6 +16,8 @@ export default function ProfilePage() {
   const { user, updateUser } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
@@ -50,6 +52,56 @@ export default function ProfilePage() {
     setIsEditing(false)
   }
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 驗證檔案類型
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+    if (!allowedTypes.includes(file.type)) {
+      alert("只支援 JPG、PNG、WEBP、GIF 格式的圖片")
+      return
+    }
+
+    // 驗證檔案大小（上限 5MB）
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      alert("圖片大小不可超過 5MB")
+      return
+    }
+
+    setIsUploadingAvatar(true)
+
+    try {
+      // 以 FormData 夾帶檔案（multipart/form-data）送到後端
+      const formPayload = new FormData()
+      formPayload.append("avatar", file)
+
+      // TODO: 接上真正的後端上傳 API，例如：
+      // const res = await fetch("/api/account/avatar", {
+      //   method: "POST",
+      //   body: formPayload, // 不要手動設定 Content-Type，瀏覽器會自動帶 boundary
+      // })
+      // const data = await res.json() // { url: "https://.../avatar.jpg" }
+      // updateUser({ avatar: data.url })
+
+      // 目前為前端模擬：用本地預覽網址暫時顯示
+      await new Promise((resolve) => setTimeout(resolve, 800))
+      const previewUrl = URL.createObjectURL(file)
+      updateUser({ avatar: previewUrl })
+    } catch {
+      alert("頭像上傳失敗，請稍後再試")
+    } finally {
+      setIsUploadingAvatar(false)
+      // 清空 input 讓同一張圖可再次選取觸發 onChange
+      e.target.value = ""
+    }
+  }
+
   return (
     <div className="relative min-h-screen">
       <UniverseBackground />
@@ -76,8 +128,25 @@ export default function ProfilePage() {
                     </span>
                   </div>
                 )}
-                <button className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90">
-                  <Camera className="h-4 w-4" />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={handleAvatarClick}
+                  disabled={isUploadingAvatar}
+                  aria-label="更換頭像"
+                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-70"
+                >
+                  {isUploadingAvatar ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
                 </button>
               </div>
               <div>

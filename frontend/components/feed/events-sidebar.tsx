@@ -81,7 +81,99 @@ const creatorEvents: Event[] = [
   },
 ];
 
-export function EventsSidebar() {
+export function EventsSidebar({
+  layout = "vertical",
+}: {
+  layout?: "vertical" | "horizontal";
+}) {
+  if (layout === "horizontal") {
+    return (
+      <div className="space-y-4">
+        {/* Platform Events */}
+        <section>
+          <div className="mb-2 flex items-center justify-between px-1">
+            <h3 className="text-sm font-semibold">平台活動</h3>
+            <Link
+              href="/events"
+              className="text-xs font-medium text-primary hover:text-primary/80"
+            >
+              查看全部 →
+            </Link>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {platformEvents.map((event) => (
+              <Link
+                key={event.id}
+                href={`/event/${event.id}`}
+                className="group w-56 shrink-0"
+              >
+                <div className="h-full rounded-xl border border-white/10 bg-card/40 p-3 backdrop-blur-sm transition-colors hover:bg-card/60">
+                  <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">
+                    {event.title}
+                  </p>
+                  <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                    <Calendar className="h-3 w-3" />
+                    {event.date}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Creator Events */}
+        <section>
+          <div className="mb-2 flex items-center justify-between px-1">
+            <h3 className="text-sm font-semibold">創作者活動</h3>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {creatorEvents.map((event) => (
+              <Link
+                key={event.id}
+                href={`/event/${event.id}`}
+                className="group w-64 shrink-0"
+              >
+                <div className="h-full rounded-xl border border-white/10 bg-card/40 p-3 backdrop-blur-sm transition-colors hover:bg-card/60">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarImage
+                        src={event.creator?.avatar}
+                        alt={event.creator?.name}
+                      />
+                      <AvatarFallback className="bg-accent/10 text-xs text-accent">
+                        {event.creator?.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">
+                        {event.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {event.creator?.name}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {event.date}
+                    </span>
+                    {event.location && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {event.location}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <aside className="w-72 shrink-0 space-y-4">
       {/* Platform Events */}
