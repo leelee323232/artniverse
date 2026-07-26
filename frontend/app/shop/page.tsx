@@ -223,88 +223,89 @@ export default function ShopPage() {
           </div>
         </div>
       </section>
-
       <div className="container mx-auto px-4 pb-20">
-        {/* Category Navigation */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-3">
-            {categories.map((category) => {
-              const Icon = category.icon;
-              const isActive = selectedCategory === category.id;
-              return (
-                <Button
-                  key={category.id}
-                  variant={isActive ? "default" : "outline"}
-                  className={`gap-2 ${
-                    isActive
-                      ? "bg-gradient-to-r from-primary to-secondary"
-                      : "bg-card/50 hover:bg-card"
-                  }`}
-                  onClick={() => setSelectedCategory(category.id)}
-                >
-                  <Icon className="h-4 w-4" />
-                  {category.name}
-                  <Badge
-                    variant="secondary"
-                    className={`ml-1 ${
-                      isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {category.count}
-                  </Badge>
-                </Button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Filters and Search */}
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="搜尋商品..."
-              className="bg-card/50 pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-40 bg-card/50">
-                  <SelectValue placeholder="排序方式" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">最新上架</SelectItem>
-                  <SelectItem value="price-low">價格低到高</SelectItem>
-                  <SelectItem value="price-high">價格高到低</SelectItem>
-                  <SelectItem value="popular">熱門商品</SelectItem>
-                </SelectContent>
-              </Select>
+        <div className="mb-8 sticky top-20 z-20 -mx-4 px-4 py-4 bg-[oklch(0.13_0.05_275)]/80 backdrop-blur-md flex flex-col gap-4 md:items-center md:justify-start w-full">
+          <div className="flex w-full justify-between gap-8">
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="搜尋商品..."
+                className="bg-card/50 pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
 
-            <div className="flex rounded-lg border border-border bg-card/50 p-1">
-              <Button
-                variant={viewMode === "grid" ? "secondary" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "secondary" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setViewMode("list")}
-              >
-                <LayoutList className="h-4 w-4" />
-              </Button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40 bg-card/50">
+                    <SelectValue placeholder="排序方式" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">最新上架</SelectItem>
+                    <SelectItem value="price-low">價格低到高</SelectItem>
+                    <SelectItem value="price-high">價格高到低</SelectItem>
+                    <SelectItem value="popular">熱門商品</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex rounded-lg border border-border bg-card/50 p-1">
+                <Button
+                  variant={viewMode === "grid" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setViewMode("grid")}
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setViewMode("list")}
+                >
+                  <LayoutList className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Category Navigation */}
+          <div className="">
+            <div className="flex flex-wrap gap-3">
+              {categories.map((category) => {
+                const Icon = category.icon;
+                const isActive = selectedCategory === category.id;
+                return (
+                  <Button
+                    key={category.id}
+                    variant={isActive ? "default" : "outline"}
+                    className={`gap-2 ${
+                      isActive
+                        ? "bg-gradient-to-r from-primary to-secondary"
+                        : "bg-card/50 hover:bg-card"
+                    }`}
+                    onClick={() => setSelectedCategory(category.id)}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {category.name}
+                    <Badge
+                      variant="secondary"
+                      className={`ml-1 ${
+                        isActive
+                          ? "bg-white/20 text-white"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {category.count}
+                    </Badge>
+                  </Button>
+                );
+              })}
             </div>
           </div>
         </div>
