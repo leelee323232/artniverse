@@ -21,6 +21,7 @@ import {
   Palette,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { MobileMenu } from "@/components/mobile-menu";
 
 export function Navigation() {
   const router = useRouter();
@@ -47,16 +48,19 @@ export function Navigation() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-lg py-2">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
-          <img
-            src="/images/logos/logo_lg.png"
-            alt="logo"
-            height="auto"
-            width={150}
-          />
-        </Link>
+        <div className="flex items-center gap-2">
+          <MobileMenu />
+          <Link href="/" className="flex items-center gap-2">
+            <img
+              src="/images/logos/logo_lg.png"
+              alt="logo"
+              height="auto"
+              width={150}
+            />
+          </Link>
+        </div>
 
-        <div className="flex items-center gap-6">
+        <div className="hidden items-center gap-6 lg:flex">
           <Link
             href="/explore"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -175,7 +179,7 @@ export function Navigation() {
 
               <Button
                 size="sm"
-                className="gap-2 bg-gradient-to-r from-primary to-secondary"
+                className="hidden gap-2 bg-gradient-to-r from-primary to-secondary lg:inline-flex"
                 onClick={handleCreatorPortal}
               >
                 <Palette className="h-4 w-4" />
