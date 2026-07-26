@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   Package,
+  PackagePlus,
   Users,
   Image as ImageIcon,
   Star,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { mockProducts } from "@/mocks/admin/products";
+import { mockProductApplications } from "@/mocks/admin/productApplications";
 import { mockCreators } from "@/mocks/admin/creators";
 import { mockActivities } from "@/mocks/admin/activities";
 import { mockFeaturedProducts } from "@/mocks/admin/featuredProducts";
@@ -25,6 +27,7 @@ interface StatCard {
 
 const stats: StatCard[] = [
   { label: "產品數量", count: mockProducts.length, href: "/admin/products", icon: Package },
+  { label: "待審核商品申請", count: mockProductApplications.filter((a) => a.status === "pending").length, href: "/admin/product-applications", icon: PackagePlus },
   { label: "創作者數量", count: mockCreators.length, href: "/admin/creators", icon: Users },
   { label: "活動區塊數量", count: mockActivities.length, href: "/admin/activities", icon: ImageIcon },
   { label: "熱門商品數量", count: mockFeaturedProducts.length, href: "/admin/featured-products", icon: Sparkles },
