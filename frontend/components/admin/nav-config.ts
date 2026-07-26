@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Package,
+  PackagePlus,
   Users,
   Image as ImageIcon,
   Tags,
@@ -22,6 +23,11 @@ export interface AdminNavItem {
 export const adminNavItems: AdminNavItem[] = [
   { label: "後台首頁", href: "/admin", icon: LayoutDashboard },
   { label: "商品管理", href: "/admin/products", icon: Package },
+  {
+    label: "商品開發申請審核",
+    href: "/admin/product-applications",
+    icon: PackagePlus,
+  },
   { label: "創作者管理", href: "/admin/creators", icon: Users },
   {
     label: "創作者申請審核",
