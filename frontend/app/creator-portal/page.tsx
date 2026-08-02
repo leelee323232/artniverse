@@ -23,6 +23,11 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
 import {
+  // getEvents, // 等接後端 API 時再啟用
+  // createEvents, // 等接後端 API 時再啟用
+  type EventApplication,
+} from "@/lib/creator/events-api";
+import {
   Package,
   ShoppingBag,
   DollarSign,
@@ -51,6 +56,9 @@ import {
   Zap,
   Send,
   Image,
+  Calendar,
+  MapPin,
+  CalendarPlus,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -252,6 +260,12 @@ const specialQuests = [
   },
 ];
 
+interface EventFormRow {
+  name: string;
+  time: string;
+  address: string;
+}
+
 export default function CreatorPortalPage() {
   const router = useRouter();
   const { user, updateCreatorProfile } = useAuth();
@@ -291,7 +305,6 @@ export default function CreatorPortalPage() {
   const [selectedQuest, setSelectedQuest] = useState<
     (typeof specialQuests)[0] | null
   >(null);
-
 
   const [posts, setPosts] = useState<Post[]>(() => {
     if (typeof window !== "undefined") {
@@ -334,6 +347,109 @@ export default function CreatorPortalPage() {
   useEffect(() => {
     localStorage.setItem("creator_posts_data", JSON.stringify(posts));
   }, [posts]);
+
+  // 活動管理 state（目前為本地端暫存，之後再接後端 API）
+  const [events, setEvents] = useState<EventApplication[]>([
+    {
+      id: "EVT-001",
+      name: "星空市集擺攤",
+      time: "2026-08-20 10:00",
+      address: "台北市信義區松壽路 12 號",
+      status: "approved",
+      createdAt: "2026-07-10",
+    },
+    {
+      id: "EVT-002",
+      name: "療癒插畫粉絲見面會",
+      time: "2026-09-05 14:00",
+      address: "台中市西區美術館路 2 號",
+      status: "pending",
+      createdAt: "2026-07-18",
+    },
+  ]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [isSubmittingEvents, setIsSubmittingEvents] = useState(false);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+
+  // 載入時向後端 GET 取得活動申請列表（等有 API 時再啟用）
+  // const loadEvents = async () => {
+  //   setEventsLoading(true);
+  //   try {
+  //     const data = await getEvents();
+  //     setEvents(data);
+  //   } catch (err) {
+  //     console.error(err);
+  //   } finally {
+  //     setEventsLoading(false);
+  //   }
+  // };
+  //
+  // useEffect(() => {
+  //   loadEvents();
+  // }, []);
+
+  const [eventForms, setEventForms] = useState<EventFormRow[]>([
+    { name: "", time: "", address: "" },
+  ]);
+
+  const addEventForm = () => {
+    setEventForms((prev) => [...prev, { name: "", time: "", address: "" }]);
+  };
+
+  const removeEventForm = (index: number) => {
+    setEventForms((prev) =>
+      prev.length === 1 ? prev : prev.filter((_, i) => i !== index),
+    );
+  };
+
+  const updateEventForm = (
+    index: number,
+    field: keyof EventFormRow,
+    value: string,
+  ) => {
+    setEventForms((prev) =>
+      prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
+    );
+  };
+
+  // 送出申請：目前先直接加入本地列表，狀態為「申請中」。
+  // 之後接上後端時，改為呼叫 createEvents() 並重新 loadEvents()，並在此處理錯誤邏輯。
+  const handleSubmitEvents = async () => {
+    const validRows = eventForms
+      .filter((row) => row.name.trim() && row.time.trim() && row.address.trim())
+      .map((row) => ({
+        name: row.name.trim(),
+        time: row.time.trim(),
+        address: row.address.trim(),
+      }));
+    if (validRows.length === 0) return;
+
+    setIsSubmittingEvents(true);
+
+    // === 本地端暫存版本 ===
+    const now = Date.now();
+    const newEvents: EventApplication[] = validRows.map((row, i) => ({
+      id: `EVT-${now}-${i}`,
+      name: row.name,
+      time: row.time,
+      address: row.address,
+      status: "pending",
+      createdAt: new Date().toISOString().substring(0, 10),
+    }));
+    setEvents((prev) => [...newEvents, ...prev]);
+
+    // === 之後接後端 API 時改用以下邏輯 ===
+    // try {
+    //   await createEvents(validRows);
+    //   await loadEvents();
+    // } catch (err) {
+    //   console.error(err);
+    // }
+
+    setEventForms([{ name: "", time: "", address: "" }]);
+    setIsEventModalOpen(false);
+    setIsSubmittingEvents(false);
+  };
 
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [newPostContent, setNewPostContent] = useState("");
@@ -517,6 +633,36 @@ export default function CreatorPortalPage() {
     }
   };
 
+  const getEventStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "bg-green-500/20 text-green-500";
+      case "pending":
+        return "bg-yellow-500/20 text-yellow-500";
+      case "ended":
+        return "bg-muted text-muted-foreground";
+      case "cancelled":
+        return "bg-red-500/20 text-red-500";
+      default:
+        return "bg-muted";
+    }
+  };
+
+  const getEventStatusText = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "已通過";
+      case "pending":
+        return "申請中";
+      case "ended":
+        return "已結束";
+      case "cancelled":
+        return "已取消";
+      default:
+        return status;
+    }
+  };
+
   return (
     <div className="relative min-h-screen">
       <UniverseBackground />
@@ -613,7 +759,7 @@ export default function CreatorPortalPage() {
 
         {/* Main Content Tabs - Order: 商店設定 - 訂單管理 - 商品管理 - 接案請求 - 特殊委託 */}
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="mb-6 grid w-full max-w-4xl grid-cols-6">
+          <TabsList className="mb-6 grid w-full max-w-5xl grid-cols-7">
             <TabsTrigger value="profile">商店設定</TabsTrigger>
             <TabsTrigger value="orders">
               訂單管理
@@ -635,6 +781,10 @@ export default function CreatorPortalPage() {
             <TabsTrigger value="quests">
               <Scroll className="mr-1 h-4 w-4" />
               特殊委託
+            </TabsTrigger>
+            <TabsTrigger value="events">
+              <Calendar className="mr-1 h-4 w-4" />
+              活動管理
             </TabsTrigger>
             <TabsTrigger value="posts">過往貼文</TabsTrigger>
           </TabsList>
@@ -1592,6 +1742,243 @@ export default function CreatorPortalPage() {
             </div>
           </TabsContent>
 
+          {/* 活動管理 Tab */}
+          <TabsContent value="events" className="space-y-6">
+            <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">
+                    活動管理
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    提出活動資訊申請，送出後將交由管理員審核，並在下方追蹤審核狀態。
+                  </p>
+                </div>
+
+                {/* 彈出式新增活動視窗 */}
+                <Dialog
+                  open={isEventModalOpen}
+                  onOpenChange={setIsEventModalOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button className="gap-1.5 bg-gradient-to-r from-primary to-secondary shadow-lg shadow-primary/20">
+                      <Plus className="h-4 w-4" />
+                      新增活動申請
+                    </Button>
+                  </DialogTrigger>
+
+                  <DialogContent className="max-h-[85vh] overflow-y-auto border-primary/30 bg-background/95 backdrop-blur-md sm:max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <CalendarPlus className="h-5 w-5 text-primary" />
+                        提出活動資訊申請
+                      </DialogTitle>
+                    </DialogHeader>
+
+                    <p className="text-sm text-muted-foreground">
+                      條列式填寫活動資訊，送出後將交由管理員審核。
+                    </p>
+
+                    <div className="space-y-4 py-2">
+                      {eventForms.map((form, index) => (
+                        <div
+                          key={index}
+                          className="rounded-lg border border-border/50 bg-white/5 p-4"
+                        >
+                          <div className="mb-3 flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              活動 {index + 1}
+                            </span>
+                            {eventForms.length > 1 && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeEventForm(index)}
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <div className="space-y-3">
+                            <div className="space-y-2">
+                              <Label>活動名稱</Label>
+                              <Input
+                                value={form.name}
+                                onChange={(e) =>
+                                  updateEventForm(index, "name", e.target.value)
+                                }
+                                placeholder="例如：星空市集擺攤"
+                                className="bg-white/5"
+                              />
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <div className="space-y-2">
+                                <Label>時間</Label>
+                                <Input
+                                  type="datetime-local"
+                                  value={form.time}
+                                  onChange={(e) =>
+                                    updateEventForm(
+                                      index,
+                                      "time",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className="bg-white/5"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>地址</Label>
+                                <Input
+                                  value={form.address}
+                                  onChange={(e) =>
+                                    updateEventForm(
+                                      index,
+                                      "address",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="例如：台北市信義區松壽路 12 號"
+                                  className="bg-white/5"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <DialogFooter>
+                      <Button
+                        onClick={handleSubmitEvents}
+                        disabled={isSubmittingEvents}
+                        className="bg-gradient-to-r from-primary to-secondary"
+                      >
+                        {isSubmittingEvents ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            送出中...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="mr-2 h-4 w-4" />
+                            送出申請
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {/* 狀態統計 */}
+              <div className="mb-4 flex flex-wrap gap-2">
+                <Badge
+                  variant="outline"
+                  className="border-green-500/30 text-green-500"
+                >
+                  {events.filter((e) => e.status === "approved").length} 已通過
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="border-yellow-500/30 text-yellow-500"
+                >
+                  {events.filter((e) => e.status === "pending").length} 申請中
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="border-border/50 text-muted-foreground"
+                >
+                  {events.filter((e) => e.status === "ended").length} 已結束
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="border-red-500/30 text-red-500"
+                >
+                  {events.filter((e) => e.status === "cancelled").length} 已取消
+                </Badge>
+              </div>
+
+              {eventsLoading ? (
+                <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  載入活動申請中...
+                </div>
+              ) : events.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border/50">
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          活動名稱
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          時間
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          地址
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          申請日期
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          審核狀態
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {events.map((evt) => (
+                        <tr key={evt.id} className="border-b border-border/30">
+                          <td className="px-4 py-3 text-sm font-medium text-foreground">
+                            {evt.name}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1.5">
+                              <Clock className="h-3.5 w-3.5" />
+                              {evt.time}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1.5">
+                              <MapPin className="h-3.5 w-3.5" />
+                              {evt.address}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                            {evt.createdAt}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge className={getEventStatusColor(evt.status)}>
+                              {getEventStatusText(evt.status)}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border/50 py-16 text-center">
+                  <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground" />
+                  <h3 className="mb-2 text-lg font-medium text-foreground">
+                    尚無活動申請
+                  </h3>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    點擊「新增活動申請」填寫活動資訊並送出，即可在此追蹤審核狀態。
+                  </p>
+                  <Button
+                    onClick={() => setIsEventModalOpen(true)}
+                    className="bg-gradient-to-r from-primary to-secondary"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    新增活動申請
+                  </Button>
+                </div>
+              )}
+            </Card>
+          </TabsContent>
+
           {/* 過往貼文 Tab — 完美打造 Threads 貼文牆與發佈彈窗 */}
           <TabsContent value="posts" className="space-y-6">
             <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
@@ -1618,7 +2005,6 @@ export default function CreatorPortalPage() {
                   </DialogTrigger>
 
                   <DialogContent className="overflow-hidden rounded-2xl border border-white/10 bg-[#101010] p-0 text-white shadow-2xl sm:max-w-xl">
-
                     {/* Threads Header */}
                     <div className="flex h-14 items-center justify-between border-b border-white/10 px-5">
                       <Button
@@ -1637,8 +2023,7 @@ export default function CreatorPortalPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 rounded-full text-white/70 hover:bg-white/10 hover:text-white"
-                      >
-                      </Button>
+                      ></Button>
                     </div>
 
                     <div className="space-y-1 max-h-[60vh] overflow-y-auto px-0 py-2">
@@ -1647,13 +2032,11 @@ export default function CreatorPortalPage() {
                         {/* 頭像 */}
                         <div className="flex-shrink-0">
                           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-base font-bold text-white shadow-md">
-                           {
-                            user?.creatorProfile?.brandName
+                            {user?.creatorProfile?.brandName
                               ? user.creatorProfile.brandName.substring(0, 1)
                               : user?.name
                                 ? user.name.substring(0, 1)
-                                : "創"
-                          }
+                                : "創"}
                           </div>
                         </div>
 
@@ -1661,24 +2044,22 @@ export default function CreatorPortalPage() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-white">
-                              {user?.creatorProfile?.brandName || user?.name || "創作者"}
+                              {user?.creatorProfile?.brandName ||
+                                user?.name ||
+                                "創作者"}
                             </span>
-
 
                             <button
                               type="button"
                               className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80 transition hover:bg-white/20"
-                            >
-                            </button>
+                            ></button>
                           </div>
 
                           <Textarea
                             id="post-content"
                             placeholder="有什麼新鮮事？"
                             value={newPostContent}
-                            onChange={(e) =>
-                              setNewPostContent(e.target.value)
-                            }
+                            onChange={(e) => setNewPostContent(e.target.value)}
                             maxLength={500}
                             className="mt-3 min-h-[80px] resize-none border-0 bg-transparent p-0 text-lg leading-7 text-white shadow-none placeholder:text-white/35 focus-visible:ring-0 focus-visible:ring-offset-0"
                           />
@@ -1703,7 +2084,6 @@ export default function CreatorPortalPage() {
 
                       {/* 圖片連結清單 */}
                       <div className="space-y-1 px-5">
-
                         <Input
                           id="image-upload"
                           type="file"
@@ -1719,7 +2099,6 @@ export default function CreatorPortalPage() {
                         >
                           <Image className="h-5 w-5" />
                         </label>
-
 
                         {/* 圖片預覽 */}
                         {newPostImages.length > 0 && (

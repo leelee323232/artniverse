@@ -38,6 +38,7 @@ import {
   Send,
   CheckCircle,
 } from "lucide-react";
+import { PostCard, type Post } from "@/components/posts/PostCard";
 
 // Mock data - in real app this would come from database
 const creatorData = {
@@ -110,27 +111,40 @@ const products = [
   },
 ];
 
-const commissionWorks = [
+// 創作者貼文牆 - 之後會顯示作者的貼文
+const initialPosts: Post[] = [
   {
-    id: "1",
-    title: "品牌吉祥物設計",
-    client: "甜點工作室",
-    image: "/cute-mascot-design.jpg",
-    description: "為在地甜點品牌設計的療癒系吉祥物",
+    id: "POST-001",
+    authorName: creatorData.name,
+    authorAvatar: "",
+    isVerified: true,
+    content:
+      "最近正在趕製新一批的星空系列周邊，先來個幕後花絮！✨\n這次加入了更多夜光元素，希望大家會喜歡～",
+    images: ["/cute-notebook-with-stars.jpg", "/dreamy-postcards.jpg"],
+    likes: 128,
+    isLiked: false,
+    comments: [
+      {
+        id: "C-01",
+        userName: "小星星",
+        content: "夜光元素太讚了吧！期待新品！",
+        createdAt: "2026-07-20 15:40",
+      },
+    ],
+    createdAt: "2026-07-20 12:00",
   },
   {
-    id: "2",
-    title: "婚禮插畫邀請卡",
-    client: "王先生 & 李小姐",
-    image: "/wedding-invitation-illustration.jpg",
-    description: "客製化婚禮邀請卡插畫設計",
-  },
-  {
-    id: "3",
-    title: "兒童繪本插圖",
-    client: "小樹出版社",
-    image: "/children-book-illustration.jpg",
-    description: "溫馨兒童繪本全書插圖繪製",
+    id: "POST-002",
+    authorName: creatorData.name,
+    authorAvatar: "",
+    isVerified: true,
+    content:
+      "感謝大家一路以來的支持，追蹤人數突破 12,000 了！🎉\n來抽個宇宙帆布袋回饋粉絲吧～",
+    images: ["/universe-tote-bag.jpg"],
+    likes: 256,
+    isLiked: false,
+    comments: [],
+    createdAt: "2026-07-15 10:30",
   },
 ];
 
@@ -155,6 +169,45 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
   const [showTipDialog, setShowTipDialog] = useState(false);
   const [showCommissionDialog, setShowCommissionDialog] = useState(false);
   const [commissionSubmitted, setCommissionSubmitted] = useState(false);
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
+
+  const handleLikePost = (postId: string) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              isLiked: !p.isLiked,
+              likes: p.isLiked ? p.likes - 1 : p.likes + 1,
+            }
+          : p,
+      ),
+    );
+  };
+
+  const handleAddCommentToPost = (postId: string, content: string) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              comments: [
+                ...p.comments,
+                {
+                  id: `C-${Date.now()}`,
+                  userName: "訪客粉絲",
+                  content,
+                  createdAt: new Date()
+                    .toISOString()
+                    .replace("T", " ")
+                    .substring(0, 16),
+                },
+              ],
+            }
+          : p,
+      ),
+    );
+  };
 
   // Commission form state
   const [commissionForm, setCommissionForm] = useState({
@@ -833,32 +886,19 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
               </Dialog>
             </div>
 
-            {/* Commission Works Gallery */}
-            <div className="space-y-6">
+            {/* 過往貼文牆 - 引用創作者入口頁的貼文元件，靠左排列 */}
+            <div className="space-y-4">
               <h2 className="text-2xl font-bold text-foreground">過往作品</h2>
-              {commissionWorks.map((work) => (
-                <div
-                  key={work.id}
-                  className="overflow-hidden rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm transition-all hover:border-primary/50"
-                >
-                  <div className="aspect-video overflow-hidden">
-                    <img
-                      src={work.image || "/placeholder.svg"}
-                      alt={work.title}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div className="p-6">
-                    <h3 className="mb-2 text-xl font-bold text-foreground">
-                      {work.title}
-                    </h3>
-                    <p className="mb-2 text-sm text-muted-foreground">
-                      客戶: {work.client}
-                    </p>
-                    <p className="text-muted-foreground">{work.description}</p>
-                  </div>
-                </div>
-              ))}
+              <div className="mr-auto max-w-2xl space-y-4">
+                {posts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    onLike={handleLikePost}
+                    onAddComment={handleAddCommentToPost}
+                  />
+                ))}
+              </div>
             </div>
           </TabsContent>
         </Tabs>
