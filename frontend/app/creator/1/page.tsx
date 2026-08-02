@@ -834,14 +834,14 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
             </div>
 
             {/* Commission Works Gallery */}
-            <div className="space-y-6">
+            <div className="mx-auto w-full max-w-xl space-y-6">
               <h2 className="text-2xl font-bold text-foreground">過往作品</h2>
               {commissionWorks.map((work) => (
                 <div
                   key={work.id}
                   className="overflow-hidden rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm transition-all hover:border-primary/50"
                 >
-                  <div className="aspect-video overflow-hidden">
+                  <div className="aspect-[4/5] overflow-hidden">
                     <img
                       src={work.image || "/placeholder.svg"}
                       alt={work.title}
