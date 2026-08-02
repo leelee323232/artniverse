@@ -62,6 +62,12 @@ export function Navigation() {
 
         <div className="hidden items-center gap-6 lg:flex">
           <Link
+            href="/"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            首頁
+          </Link>
+          <Link
             href="/explore"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >

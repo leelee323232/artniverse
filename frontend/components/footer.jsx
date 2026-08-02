@@ -92,7 +92,7 @@ export default function Footer() {
       </div>
 
       <div className="container mx-auto px-4 mt-10 pt-5 border-t border-border/50 text-center text-[14px] text-muted-foreground">
-        <p className="font-bold">&copy; 2026 Artniverse. All rights reserved.</p>
+        <p className="font-bold">&copy; 2026 ARTNIVERSE. All rights reserved.</p>
       </div>
     </footer>
   );

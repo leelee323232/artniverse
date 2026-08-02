@@ -138,7 +138,8 @@ const initialPosts: Post[] = [
     authorName: creatorData.name,
     authorAvatar: "",
     isVerified: true,
-    content: "感謝大家一路以來的支持，追蹤人數突破 12,000 了！🎉\n來抽個宇宙帆布袋回饋粉絲吧～",
+    content:
+      "感謝大家一路以來的支持，追蹤人數突破 12,000 了！🎉\n來抽個宇宙帆布袋回饋粉絲吧～",
     images: ["/universe-tote-bag.jpg"],
     likes: 256,
     isLiked: false,
