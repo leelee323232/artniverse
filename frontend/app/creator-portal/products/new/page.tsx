@@ -42,6 +42,7 @@ import {
   Layers,
   Hand,
   MousePointer,
+  Search,
 } from "lucide-react";
 
 // Print zone definition
@@ -856,6 +857,8 @@ interface DesignImage {
   scale: number;
   rotation: number;
   zoneId: string; // which zone this image belongs to
+  customWidth?: number; // user-defined print width in cm (overrides auto size)
+  customHeight?: number; // user-defined print height in cm (overrides auto size)
 }
 
 // Calculate print size in cm based on image scale and zone
@@ -868,6 +871,38 @@ function calculatePrintSize(scale: number, zone: PrintZone) {
     width: Math.round(width * 10) / 10,
     height: Math.round(height * 10) / 10,
   };
+}
+
+// Effective print size: use the user-defined size if set, otherwise the auto-calculated size
+function getEffectivePrintSize(img: DesignImage, zone: PrintZone) {
+  if (
+    img.customWidth != null &&
+    img.customHeight != null &&
+    !Number.isNaN(img.customWidth) &&
+    !Number.isNaN(img.customHeight)
+  ) {
+    return { width: img.customWidth, height: img.customHeight };
+  }
+  return calculatePrintSize(img.scale, zone);
+}
+
+// Repeating watermark overlaid on top of uploaded design previews.
+// The mockup is for reference only, so previews are always watermarked.
+const WATERMARK_SVG = encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150"><text x="10" y="82" fill="rgba(255,255,255,0.32)" font-size="15" font-weight="bold" font-family="Arial, sans-serif" transform="rotate(-30 75 75)">ARTNIVERSE</text></svg>`,
+);
+
+function WatermarkOverlay({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={`pointer-events-none absolute inset-0 z-10 ${className || ""}`}
+      style={{
+        backgroundImage: `url("data:image/svg+xml,${WATERMARK_SVG}")`,
+        backgroundRepeat: "repeat",
+      }}
+    />
+  );
 }
 
 export default function NewProductPage() {
@@ -883,6 +918,7 @@ export default function NewProductPage() {
     useState<ProductDefinition | null>(null);
   const [customProductRequest, setCustomProductRequest] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
 
   // Zone selection
   const [activeZoneId, setActiveZoneId] = useState<string>("");
@@ -917,6 +953,16 @@ export default function NewProductPage() {
     }
   }, [selectedProduct]);
 
+  // Filter products by search query (matches Chinese or English name); empty query shows all
+  const normalizedProductSearch = productSearch.trim().toLowerCase();
+  const filteredProducts = normalizedProductSearch
+    ? platformProducts.filter(
+        (product) =>
+          product.nameZh.toLowerCase().includes(normalizedProductSearch) ||
+          product.name.toLowerCase().includes(normalizedProductSearch),
+      )
+    : platformProducts;
+
   // Get active zone
   const activeZone = selectedProduct?.printZones.find(
     (z) => z.id === activeZoneId,
@@ -930,11 +976,42 @@ export default function NewProductPage() {
   // Get selected image
   const selectedImage = designImages.find((img) => img.id === selectedImageId);
 
-  // Calculate current print size based on selected image scale
+  // Calculate current print size (user-defined size takes priority over auto size)
   const currentPrintSize =
     selectedImage && activeZone
-      ? calculatePrintSize(selectedImage.scale, activeZone)
+      ? getEffectivePrintSize(selectedImage, activeZone)
       : null;
+
+  // Local input state for the editable print size fields (kept as strings for smooth typing)
+  const [printWidthInput, setPrintWidthInput] = useState("");
+  const [printHeightInput, setPrintHeightInput] = useState("");
+
+  // Sync the size inputs when the selection, zone, or auto scale changes.
+  // (Editing the inputs updates customWidth/customHeight, which are NOT in the deps,
+  //  so typing stays smooth; the scale slider clears custom sizes and re-syncs here.)
+  useEffect(() => {
+    if (selectedImage && activeZone) {
+      const size = getEffectivePrintSize(selectedImage, activeZone);
+      setPrintWidthInput(String(size.width));
+      setPrintHeightInput(String(size.height));
+    } else {
+      setPrintWidthInput("");
+      setPrintHeightInput("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedImageId, activeZoneId, selectedImage?.scale]);
+
+  // Commit a manually-entered print size (in cm) onto the selected image
+  const commitPrintSize = (widthStr: string, heightStr: string) => {
+    if (!selectedImage || !activeZone) return;
+    const w = parseFloat(widthStr);
+    const h = parseFloat(heightStr);
+    if (Number.isNaN(w) || Number.isNaN(h) || w <= 0 || h <= 0) return;
+    updateImage(selectedImage.id, {
+      customWidth: Math.round(w * 10) / 10,
+      customHeight: Math.round(h * 10) / 10,
+    });
+  };
 
   // Check if print size exceeds max
   const isPrintSizeExceeded =
@@ -953,7 +1030,7 @@ export default function NewProductPage() {
     designImages.forEach((img) => {
       const zone = selectedProduct.printZones.find((z) => z.id === img.zoneId);
       if (zone) {
-        const size = calculatePrintSize(img.scale, zone);
+        const size = getEffectivePrintSize(img, zone);
         maxWidth = Math.max(maxWidth, size.width);
         maxHeight = Math.max(maxHeight, size.height);
       }
@@ -1119,6 +1196,8 @@ export default function NewProductPage() {
         position: { x: 50, y: 50 },
         scale: 100,
         rotation: 0,
+        customWidth: undefined,
+        customHeight: undefined,
       });
     }
   };
@@ -1136,7 +1215,7 @@ export default function NewProductPage() {
   const allDesignsValid = !designImages.some((img) => {
     const zone = selectedProduct?.printZones.find((z) => z.id === img.zoneId);
     if (!zone) return false;
-    const size = calculatePrintSize(img.scale, zone);
+    const size = getEffectivePrintSize(img, zone);
     return size.width > zone.width || size.height > zone.height;
   });
 
@@ -1218,12 +1297,29 @@ export default function NewProductPage() {
         {/* Step 1: Product Selection */}
         {currentStep === 1 && (
           <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
-            <h2 className="mb-6 text-xl font-bold text-foreground">
-              步驟 1: 選擇產品類型
-            </h2>
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-xl font-bold text-foreground">
+                步驟 1: 選擇產品類型
+              </h2>
+              <div className="relative w-full sm:w-64">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  placeholder="搜尋商品名稱"
+                  className="bg-white/5 pl-9"
+                />
+              </div>
+            </div>
+
+            {normalizedProductSearch && filteredProducts.length === 0 && (
+              <p className="mb-4 text-sm text-muted-foreground">
+                找不到符合「{productSearch}」的商品，你可以透過右下方「其他產品」告訴我們你的需求。
+              </p>
+            )}
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {platformProducts.map((product) => {
+              {filteredProducts.map((product) => {
                 const MockupComponent = getMockupComponent(
                   product.id,
                   product.printZones[0]?.id || "",
@@ -1533,7 +1629,7 @@ export default function NewProductPage() {
                     </div>
                   </div>
 
-                  {/* Current Print Size Display */}
+                  {/* Current Print Size - editable by the creator */}
                   {activeZone && (
                     <div
                       className={`rounded-lg border p-4 ${isPrintSizeExceeded ? "border-red-500 bg-red-500/10" : "border-border/50 bg-white/5"}`}
@@ -1541,13 +1637,55 @@ export default function NewProductPage() {
                       <Label className="mb-2 block font-bold text-foreground">
                         當前印刷尺寸
                       </Label>
-                      {currentPrintSize ? (
-                        <div
-                          className={`text-lg font-bold ${isPrintSizeExceeded ? "text-red-500" : "text-foreground"}`}
-                        >
-                          {currentPrintSize.width} x {currentPrintSize.height}{" "}
-                          cm
-                        </div>
+                      {selectedImage && currentPrintSize ? (
+                        <>
+                          <div className="flex items-end gap-2">
+                            <div className="flex-1">
+                              <span className="mb-1 block text-xs text-muted-foreground">
+                                寬 (cm)
+                              </span>
+                              <Input
+                                type="number"
+                                min={0.1}
+                                step={0.1}
+                                value={printWidthInput}
+                                onChange={(e) => {
+                                  setPrintWidthInput(e.target.value);
+                                  commitPrintSize(
+                                    e.target.value,
+                                    printHeightInput,
+                                  );
+                                }}
+                                className={`h-9 bg-white/5 ${isPrintSizeExceeded ? "border-red-500 text-red-500" : ""}`}
+                              />
+                            </div>
+                            <span className="pb-2 text-muted-foreground">
+                              x
+                            </span>
+                            <div className="flex-1">
+                              <span className="mb-1 block text-xs text-muted-foreground">
+                                高 (cm)
+                              </span>
+                              <Input
+                                type="number"
+                                min={0.1}
+                                step={0.1}
+                                value={printHeightInput}
+                                onChange={(e) => {
+                                  setPrintHeightInput(e.target.value);
+                                  commitPrintSize(
+                                    printWidthInput,
+                                    e.target.value,
+                                  );
+                                }}
+                                className={`h-9 bg-white/5 ${isPrintSizeExceeded ? "border-red-500 text-red-500" : ""}`}
+                              />
+                            </div>
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            可自行輸入尺寸；拖曳「縮放」會重新套用自動尺寸
+                          </p>
+                        </>
                       ) : (
                         <div className="text-sm text-muted-foreground">
                           請選擇圖層
@@ -1562,6 +1700,10 @@ export default function NewProductPage() {
                           印刷尺寸超過上限，請縮小圖片
                         </p>
                       )}
+                      <p className="mt-2 flex items-start gap-1 text-xs text-muted-foreground">
+                        <Info className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
+                        此模擬圖僅限參考，建議以實際圖片尺寸為主
+                      </p>
                     </div>
                   )}
                 </div>
@@ -1683,6 +1825,7 @@ export default function NewProductPage() {
                             className="max-h-full max-w-full object-contain drop-shadow-lg"
                             draggable={false}
                           />
+                          <WatermarkOverlay />
                           {selectedImageId === img.id && (
                             <>
                               <div className="absolute -left-1.5 -top-1.5 h-3 w-3 rounded-full bg-primary" />
@@ -1759,6 +1902,8 @@ export default function NewProductPage() {
                             onChange={(e) =>
                               updateImage(selectedImage.id, {
                                 scale: parseInt(e.target.value),
+                                customWidth: undefined,
+                                customHeight: undefined,
                               })
                             }
                             className="w-full accent-primary"
@@ -2235,6 +2380,7 @@ export default function NewProductPage() {
                                       alt="Design preview"
                                       className="max-h-full max-w-full object-contain drop-shadow-lg"
                                     />
+                                    <WatermarkOverlay />
                                   </div>
                                 ))}
                               </div>
