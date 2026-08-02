@@ -365,40 +365,6 @@ export default function ShopPage() {
             </p>
           </div>
         )}
-
-        {/* Category Highlights */}
-        <section className="mt-20">
-          <h2 className="mb-8 text-center text-2xl font-bold text-foreground">
-            探索各空間的
-            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              藝術靈感
-            </span>
-          </h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {categories.slice(1).map((category) => {
-              const Icon = category.icon;
-              return (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/30 p-8 text-left backdrop-blur-sm transition-all hover:border-primary/50 hover:bg-card/50"
-                >
-                  <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 blur-2xl transition-all group-hover:scale-150" />
-                  <Icon className="mb-4 h-10 w-10 text-primary" />
-                  <h3 className="mb-2 text-xl font-bold text-foreground">
-                    {category.name}
-                  </h3>
-                  <p className="mb-4 text-sm text-muted-foreground">
-                    {category.count} 件精選商品
-                  </p>
-                  <span className="text-sm font-medium text-primary">
-                    立即探索 →
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
       </div>
     </div>
   );
