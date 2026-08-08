@@ -19,6 +19,8 @@ interface ProductCardProps {
   category: string;
   stock: number;
   creatorId: string;
+  isFavorited?: boolean;
+  onToggleFavorite?: (id: string) => void;
 }
 
 export function ProductCard({
@@ -29,9 +31,22 @@ export function ProductCard({
   category,
   stock,
   creatorId,
+  isFavorited,
+  onToggleFavorite,
 }: ProductCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
+  const [internalLiked, setInternalLiked] = useState(false);
+  const isControlled = onToggleFavorite !== undefined;
+  const isLiked = isControlled ? !!isFavorited : internalLiked;
   const { toast } = useToast();
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isControlled) {
+      onToggleFavorite(id);
+    } else {
+      setInternalLiked((prev) => !prev);
+    }
+  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -54,10 +69,8 @@ export function ProductCard({
             variant="ghost"
             size="icon"
             className="absolute right-2 top-2 bg-background/50 backdrop-blur-sm hover:bg-background/80"
-            onClick={(e) => {
-              e.preventDefault();
-              setIsLiked(!isLiked);
-            }}
+            onClick={handleToggleFavorite}
+            title={isLiked ? "取消收藏" : "加入收藏"}
           >
             <Heart
               className={`h-4 w-4 ${isLiked ? "fill-red-500 text-red-500" : "text-foreground"}`}
