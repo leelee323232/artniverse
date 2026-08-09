@@ -1,65 +1,157 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Navigation } from "@/components/navigation"
-import { UniverseBackground } from "@/components/universe-background"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { useAuth } from "@/lib/auth-context"
-import { Heart, Users, Package, Star, Bell, BellOff, Trash2 } from "lucide-react"
-import Link from "next/link"
+import { useMemo, useState } from "react";
+import { Navigation } from "@/components/navigation";
+import { UniverseBackground } from "@/components/universe-background";
+import { PlanetCard } from "@/components/planet-card";
+import { ProductCard } from "@/components/product-card";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useAuth } from "@/lib/auth-context";
+import { Heart, Users, Package, Search } from "lucide-react";
+import Link from "next/link";
 
-const mockFavorites = [
+interface FavoriteCreator {
+  id: string;
+  name: string;
+  creator: string;
+  description: string;
+  tags: string[];
+  followers: number;
+  rating: number;
+  image: string;
+  color: string;
+}
+
+interface FavoriteProduct {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  stock: number;
+  creatorId: string;
+}
+
+const mockFavoriteCreators: FavoriteCreator[] = [
   {
     id: "1",
-    name: "星空畫室",
-    avatar: "",
-    followers: 12500,
-    products: 24,
-    rating: 4.9,
+    name: "夢幻星球",
+    creator: "小夢創作室",
+    description: "專注於療癒系插畫與周邊商品設計，帶給你溫暖的視覺體驗",
     tags: ["療癒", "可愛", "插畫"],
-    isNotifying: true,
-    latestProduct: "星空筆記本",
-  },
-  {
-    id: "2",
-    name: "月光工作室",
-    avatar: "",
-    followers: 8700,
-    products: 18,
-    rating: 4.8,
-    tags: ["夢幻", "自然", "水彩"],
-    isNotifying: true,
-    latestProduct: "月光明信片",
+    followers: 12500,
+    rating: 4.9,
+    image: "/placeholder.svg?height=300&width=300",
+    color: "#a78bfa",
   },
   {
     id: "3",
-    name: "森林畫家",
-    avatar: "",
-    followers: 5600,
-    products: 12,
-    rating: 4.7,
-    tags: ["自然", "手繪", "治癒"],
-    isNotifying: false,
-    latestProduct: "森林海報",
+    name: "自然之心",
+    creator: "綠野工作室",
+    description: "從大自然汲取靈感，創造與環境共生的藝術作品",
+    tags: ["自然", "環保", "手作"],
+    followers: 15200,
+    rating: 5.0,
+    image: "/placeholder.svg?height=300&width=300",
+    color: "#34d399",
+  },
+  {
+    id: "6",
+    name: "夢境實驗室",
+    creator: "Dream Lab",
+    description: "超現實主義的視覺探索，打破想像的邊界",
+    tags: ["夢幻", "超現實", "藝術"],
+    followers: 11400,
+    rating: 4.9,
+    image: "/placeholder.svg?height=300&width=300",
+    color: "#c084fc",
+  },
+];
+
+const mockFavoriteProducts: FavoriteProduct[] = [
+  {
+    id: "1",
+    name: "星空露營燈",
+    price: 1280,
+    image: "/cute-notebook-with-stars.jpg",
+    category: "戶外用品",
+    stock: 45,
+    creatorId: "1",
+  },
+  {
+    id: "2",
+    name: "月光明信片組",
+    price: 320,
+    image: "/placeholder.svg?height=300&width=300",
+    category: "文具",
+    stock: 8,
+    creatorId: "2",
+  },
+  {
+    id: "3",
+    name: "森林療癒海報",
+    price: 580,
+    image: "/placeholder.svg?height=300&width=300",
+    category: "掛畫",
+    stock: 20,
+    creatorId: "3",
   },
   {
     id: "4",
-    name: "夢想插畫",
-    avatar: "",
-    followers: 9200,
-    products: 32,
-    rating: 4.9,
-    tags: ["美式", "卡通", "趣味"],
-    isNotifying: false,
-    latestProduct: "趣味貼紙組",
+    name: "夢幻星球貼紙組",
+    price: 150,
+    image: "/placeholder.svg?height=300&width=300",
+    category: "貼紙",
+    stock: 5,
+    creatorId: "1",
   },
-]
+];
 
 export default function FavoritesPage() {
-  const { user } = useAuth()
-  const [favorites, setFavorites] = useState(mockFavorites)
+  const { user } = useAuth();
+  const [creators, setCreators] =
+    useState<FavoriteCreator[]>(mockFavoriteCreators);
+  const [products, setProducts] =
+    useState<FavoriteProduct[]>(mockFavoriteProducts);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const removeCreator = (id: string) => {
+    setCreators((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  const removeProduct = (id: string) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const query = searchQuery.trim().toLowerCase();
+
+  const filteredCreators = useMemo(
+    () =>
+      creators.filter((c) => {
+        if (!query) return true;
+        return (
+          c.name.toLowerCase().includes(query) ||
+          c.creator.toLowerCase().includes(query) ||
+          c.tags.some((tag) => tag.toLowerCase().includes(query))
+        );
+      }),
+    [creators, query],
+  );
+
+  const filteredProducts = useMemo(
+    () =>
+      products.filter((p) => {
+        if (!query) return true;
+        return (
+          p.name.toLowerCase().includes(query) ||
+          p.category.toLowerCase().includes(query)
+        );
+      }),
+    [products, query],
+  );
 
   if (!user) {
     return (
@@ -70,22 +162,14 @@ export default function FavoritesPage() {
           <Card className="border-border/50 bg-card/30 p-8 backdrop-blur-md text-center">
             <p className="mb-4 text-foreground">請先登入以查看收藏名單</p>
             <Link href="/login">
-              <Button className="bg-gradient-to-r from-primary to-secondary">前往登入</Button>
+              <Button className="bg-gradient-to-r from-primary to-secondary">
+                前往登入
+              </Button>
             </Link>
           </Card>
         </div>
       </div>
-    )
-  }
-
-  const toggleNotification = (id: string) => {
-    setFavorites(
-      favorites.map((f) => (f.id === id ? { ...f, isNotifying: !f.isNotifying } : f))
-    )
-  }
-
-  const removeFavorite = (id: string) => {
-    setFavorites(favorites.filter((f) => f.id !== id))
+    );
   }
 
   return (
@@ -94,130 +178,126 @@ export default function FavoritesPage() {
       <Navigation />
 
       <div className="container mx-auto px-4 pt-24 pb-20">
-        <div className="mx-auto max-w-4xl">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">創作者收藏名單</h1>
-              <p className="mt-2 text-muted-foreground">您收藏了 {favorites.length} 位創作者</p>
-            </div>
+        <div className="mx-auto max-w-6xl">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground">我的收藏</h1>
           </div>
 
-          {favorites.length === 0 ? (
-            <Card className="border-border/50 bg-card/30 p-12 backdrop-blur-md text-center">
-              <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="mb-4 text-muted-foreground">您尚未收藏任何創作者</p>
-              <Link href="/explore">
-                <Button className="bg-gradient-to-r from-primary to-secondary">探索創作者</Button>
-              </Link>
-            </Card>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {favorites.map((creator) => (
-                <Card
-                  key={creator.id}
-                  className="border-border/50 bg-card/30 p-6 backdrop-blur-md transition-all hover:bg-card/40"
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Avatar */}
-                    <Link href={`/creator/${creator.id}`}>
-                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-primary to-secondary">
-                        {creator.avatar ? (
-                          <img
-                            src={creator.avatar}
-                            alt={creator.name}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center">
-                            <span className="text-xl font-bold text-primary-foreground">
-                              {creator.name.charAt(0)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </Link>
+          <Tabs defaultValue="creators" className="w-full">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <TabsList className="bg-card/50 backdrop-blur-sm">
+                <TabsTrigger value="creators" className="gap-2">
+                  <Users className="h-4 w-4" />
+                  創作者
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    {creators.length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="products" className="gap-2">
+                  <Package className="h-4 w-4" />
+                  商品
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    {products.length}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
 
-                    {/* Info */}
-                    <div className="flex-1">
-                      <Link href={`/creator/${creator.id}`}>
-                        <h3 className="font-bold text-foreground hover:text-primary">
-                          {creator.name}
-                        </h3>
-                      </Link>
-
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {creator.tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="secondary"
-                            className="bg-primary/20 text-primary text-xs"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-
-                      <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {(creator.followers / 1000).toFixed(1)}K
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Package className="h-3 w-3" />
-                          {creator.products}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
-                          {creator.rating}
-                        </span>
-                      </div>
-
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        最新作品：<span className="text-foreground">{creator.latestProduct}</span>
-                      </p>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-col gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className={creator.isNotifying ? "text-primary" : "text-muted-foreground"}
-                        onClick={() => toggleNotification(creator.id)}
-                        title={creator.isNotifying ? "關閉通知" : "開啟通知"}
-                      >
-                        {creator.isNotifying ? (
-                          <Bell className="h-4 w-4" />
-                        ) : (
-                          <BellOff className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => removeFavorite(creator.id)}
-                        title="取消收藏"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Visit Button */}
-                  <div className="mt-4 flex gap-2">
-                    <Link href={`/creator/${creator.id}`} className="flex-1">
-                      <Button variant="outline" className="w-full bg-transparent">
-                        查看商店
-                      </Button>
-                    </Link>
-                  </div>
-                </Card>
-              ))}
+              {/* Search */}
+              <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="搜尋收藏..."
+                  className="h-11 border-border/50 bg-card/50 pl-10 backdrop-blur-sm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
-          )}
+
+            {/* Creators Tab */}
+            <TabsContent value="creators">
+              {creators.length === 0 ? (
+                <EmptyState
+                  message="您尚未收藏任何創作者"
+                  actionHref="/explore"
+                  actionLabel="探索創作者"
+                />
+              ) : filteredCreators.length === 0 ? (
+                <NoResults onClear={() => setSearchQuery("")} />
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filteredCreators.map((creator) => (
+                    <PlanetCard
+                      key={creator.id}
+                      {...creator}
+                      isFavorited
+                      onToggleFavorite={removeCreator}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Products Tab */}
+            <TabsContent value="products">
+              {products.length === 0 ? (
+                <EmptyState
+                  message="您尚未收藏任何商品"
+                  actionHref="/shop"
+                  actionLabel="逛逛商品"
+                />
+              ) : filteredProducts.length === 0 ? (
+                <NoResults onClear={() => setSearchQuery("")} />
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filteredProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      {...product}
+                      isFavorited
+                      onToggleFavorite={removeProduct}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
-  )
+  );
+}
+
+function EmptyState({
+  message,
+  actionHref,
+  actionLabel,
+}: {
+  message: string;
+  actionHref: string;
+  actionLabel: string;
+}) {
+  return (
+    <Card className="border-border/50 bg-card/30 p-12 backdrop-blur-md text-center">
+      <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+      <p className="mb-4 text-muted-foreground">{message}</p>
+      <Link href={actionHref}>
+        <Button className="bg-gradient-to-r from-primary to-secondary">
+          {actionLabel}
+        </Button>
+      </Link>
+    </Card>
+  );
+}
+
+function NoResults({ onClear }: { onClear: () => void }) {
+  return (
+    <Card className="border-border/50 bg-card/30 p-12 backdrop-blur-md text-center">
+      <p className="mb-4 text-muted-foreground">找不到符合條件的收藏</p>
+      <Button variant="outline" className="bg-transparent" onClick={onClear}>
+        清除搜尋
+      </Button>
+    </Card>
+  );
 }

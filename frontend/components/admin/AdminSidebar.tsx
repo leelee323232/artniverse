@@ -62,7 +62,7 @@ export function AdminSidebar({ open = false, onNavigate }: AdminSidebarProps) {
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   active
                     ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    : "text-muted-foreground hover:bg-primary hover:text-foreground",
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
