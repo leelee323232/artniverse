@@ -28,17 +28,19 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
+
     try {
-      const result = await userAPI.login({ email, password });
-      if (result.data?.access_token) {
-        router.push("/");
-      } else {
-        setError("登入失敗");
+      const result = await login(email, password);
+
+      if (!result.success) {
+        setError(result.error ?? "登入失敗");
+        return;
       }
-    } catch (error) {
-      setError("登入失敗");
+
+      router.replace("/");
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   const handleProviderLogin = async (
