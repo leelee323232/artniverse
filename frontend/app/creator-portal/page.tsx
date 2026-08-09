@@ -301,6 +301,21 @@ export default function CreatorPortalPage() {
   const [newBenefit, setNewBenefit] = useState("");
   const [quoteAmount, setQuoteAmount] = useState(0);
 
+  // Commission request status filter ("all" | "pending" | "quoted" | "paid")
+  const [commissionFilter, setCommissionFilter] = useState<
+    "all" | "pending" | "quoted" | "paid"
+  >("all");
+
+  const filteredCommissionRequests = commissionRequests
+    .filter(
+      (r) => commissionFilter === "all" || r.status === commissionFilter,
+    )
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+
   // Quest dialog state
   const [selectedQuest, setSelectedQuest] = useState<
     (typeof specialQuests)[0] | null
@@ -1263,7 +1278,16 @@ export default function CreatorPortalPage() {
                 <div className="flex gap-2">
                   <Badge
                     variant="outline"
-                    className="border-yellow-500/30 text-yellow-500"
+                    onClick={() =>
+                      setCommissionFilter((prev) =>
+                        prev === "pending" ? "all" : "pending",
+                      )
+                    }
+                    className={`cursor-pointer border-yellow-500/30 text-yellow-500 transition-colors hover:bg-yellow-500/10 ${
+                      commissionFilter === "pending"
+                        ? "bg-yellow-500/20 ring-1 ring-yellow-500/50"
+                        : ""
+                    }`}
                   >
                     {
                       commissionRequests.filter((r) => r.status === "pending")
@@ -1273,7 +1297,16 @@ export default function CreatorPortalPage() {
                   </Badge>
                   <Badge
                     variant="outline"
-                    className="border-blue-500/30 text-blue-500"
+                    onClick={() =>
+                      setCommissionFilter((prev) =>
+                        prev === "quoted" ? "all" : "quoted",
+                      )
+                    }
+                    className={`cursor-pointer border-blue-500/30 text-blue-500 transition-colors hover:bg-blue-500/10 ${
+                      commissionFilter === "quoted"
+                        ? "bg-blue-500/20 ring-1 ring-blue-500/50"
+                        : ""
+                    }`}
                   >
                     {
                       commissionRequests.filter((r) => r.status === "quoted")
@@ -1283,7 +1316,16 @@ export default function CreatorPortalPage() {
                   </Badge>
                   <Badge
                     variant="outline"
-                    className="border-green-500/30 text-green-500"
+                    onClick={() =>
+                      setCommissionFilter((prev) =>
+                        prev === "paid" ? "all" : "paid",
+                      )
+                    }
+                    className={`cursor-pointer border-green-500/30 text-green-500 transition-colors hover:bg-green-500/10 ${
+                      commissionFilter === "paid"
+                        ? "bg-green-500/20 ring-1 ring-green-500/50"
+                        : ""
+                    }`}
                   >
                     {
                       commissionRequests.filter((r) => r.status === "paid")
@@ -1294,7 +1336,7 @@ export default function CreatorPortalPage() {
                 </div>
               </div>
               <div className="space-y-4">
-                {commissionRequests.map((request) => (
+                {filteredCommissionRequests.map((request) => (
                   <div
                     key={request.id}
                     className="rounded-lg border border-border/50 bg-white/5 p-4"
