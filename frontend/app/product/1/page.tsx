@@ -26,6 +26,7 @@ import {
   Check,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { Share } from "@/components/share/share"
 
 const allProducts = [
   {
@@ -499,10 +500,16 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Share */}
-            <Button variant="ghost" size="sm" className="text-muted-foreground">
-              <Share2 className="mr-2 h-4 w-4" />
-              分享商品
-            </Button>
+            <Share
+              title="分享商品"
+              subtitle="喜歡這個商品嗎？點擊下方按鈕分享給身邊的好友吧！"
+              trigger={
+                <Button variant="ghost" size="sm" className="text-muted-foreground">
+                  <Share2 className="mr-2 h-4 w-4" />
+                  分享商品
+                </Button>
+              }
+            />
 
             {/* Service Guarantees */}
             <div className="grid grid-cols-3 gap-4 rounded-xl border border-border/50 bg-card/30 p-4">

@@ -28,7 +28,6 @@ import {
   Square
 } from "lucide-react"
 
-// 💡 前台代碼中定義的 25 項完整功能清單
 const ALL_FEATURES = [
   "創作者基本媒合（一品牌調性配對提案）",
   "基礎貼文文案與Hashtag建議",
@@ -70,7 +69,6 @@ const initialSubscriptionPlans = [
     creatorCount: "1位/月",
     monthlyDesigns: "2款設計",
     sortOrder: 1,
-    // 💡 預設開啟前 3 項與第 7 項
     features: ALL_FEATURES.map((f, i) => ({ name: f, included: [0, 1, 2, 6].includes(i) }))
   },
   {
@@ -85,7 +83,6 @@ const initialSubscriptionPlans = [
     creatorCount: "3位/月",
     monthlyDesigns: "6款設計",
     sortOrder: 2,
-    // 💡 預設開啟除了最後 10 項以外的功能
     features: ALL_FEATURES.map((f, i) => ({ name: f, included: i < 15 }))
   },
   {
@@ -100,7 +97,6 @@ const initialSubscriptionPlans = [
     creatorCount: "6位/月",
     monthlyDesigns: "12款設計",
     sortOrder: 3,
-    // 💡 預設開啟除了最後 4 項以外的功能
     features: ALL_FEATURES.map((f, i) => ({ name: f, included: i < 21 }))
   }
 ]
