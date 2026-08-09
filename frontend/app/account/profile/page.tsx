@@ -152,7 +152,7 @@ export default function ProfilePage() {
               <div>
                 <h2 className="text-xl font-bold text-foreground">{user.name}</h2>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
-                {user.isCreator && (
+                {user.is_creator && (
                   <span className="mt-2 inline-block rounded-full bg-primary/20 px-3 py-1 text-xs text-primary">
                     認證創作者
                   </span>

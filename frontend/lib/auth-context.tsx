@@ -16,7 +16,7 @@ export interface User {
   email: string
   name: string
   avatar: string
-  isCreator: boolean
+  is_creator: boolean
   creatorProfile?: {
     brandName: string
     bio: string

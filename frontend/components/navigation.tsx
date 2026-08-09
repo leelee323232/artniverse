@@ -41,9 +41,9 @@ export function Navigation() {
       router.push("/login");
       return;
     }
-
-    if (user.isCreator) {
-      router.push("/creator-portal");
+    
+    if (user.is_creator) {
+      router.push("/creator-portal")
     } else {
       router.push("/creator-apply");
     }

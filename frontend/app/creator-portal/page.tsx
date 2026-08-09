@@ -544,9 +544,9 @@ export default function CreatorPortalPage() {
     return null;
   }
 
-  if (!user.isCreator) {
-    router.push("/creator-apply");
-    return null;
+  if (!user.is_creator) {
+    router.push("/creator-apply")
+    return null
   }
 
   const handleSaveProfile = async () => {
