@@ -1,29 +1,56 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Heart, Star } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import type React from "react";
+import { useState } from "react";
+import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Heart, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface PlanetCardProps {
-  id: string
-  name: string
-  creator: string
-  description: string
-  tags: string[]
-  followers: number
-  rating: number
-  image: string
-  color: string
+  id: string;
+  name: string;
+  creator: string;
+  description: string;
+  tags: string[];
+  followers: number;
+  rating: number;
+  image: string;
+  color: string;
+  isFavorited?: boolean;
+  onToggleFavorite?: (id: string) => void;
 }
 
-export function PlanetCard({ id, name, creator, description, tags, followers, rating, image, color }: PlanetCardProps) {
-  const [isHovered, setIsHovered] = useState(false)
-  const [isLiked, setIsLiked] = useState(false)
+export function PlanetCard({
+  id,
+  name,
+  creator,
+  description,
+  tags,
+  followers,
+  rating,
+  image,
+  color,
+  isFavorited,
+  onToggleFavorite,
+}: PlanetCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [internalLiked, setInternalLiked] = useState(false);
+  const isControlled = onToggleFavorite !== undefined;
+  const isLiked = isControlled ? !!isFavorited : internalLiked;
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isControlled) {
+      onToggleFavorite(id);
+    } else {
+      setInternalLiked((prev) => !prev);
+    }
+  };
 
   return (
+    // 先都導向 id 1 的創作者頁面
     <Link href={`/creator/1`}>
       <Card
         className="group relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20"
@@ -50,12 +77,12 @@ export function PlanetCard({ id, name, creator, description, tags, followers, ra
             variant="ghost"
             size="icon"
             className="absolute right-2 top-2 z-10 bg-background/50 backdrop-blur-sm hover:bg-background/80"
-            onClick={(e) => {
-              e.preventDefault()
-              setIsLiked(!isLiked)
-            }}
+            onClick={handleToggleFavorite}
+            title={isLiked ? "取消收藏" : "加入收藏"}
           >
-            <Heart className={`h-4 w-4 ${isLiked ? "fill-red-500 text-red-500" : "text-foreground"}`} />
+            <Heart
+              className={`h-4 w-4 ${isLiked ? "fill-red-500 text-red-500" : "text-foreground"}`}
+            />
           </Button>
         </div>
 
@@ -65,7 +92,9 @@ export function PlanetCard({ id, name, creator, description, tags, followers, ra
             <p className="text-sm text-muted-foreground">{creator}</p>
           </div>
 
-          <p className="line-clamp-2 text-sm text-muted-foreground">{description}</p>
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {description}
+          </p>
 
           <div className="flex flex-wrap gap-1">
             {tags.slice(0, 3).map((tag) => (
@@ -80,10 +109,12 @@ export function PlanetCard({ id, name, creator, description, tags, followers, ra
               <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
               <span>{rating}</span>
             </div>
-            <div className="text-sm text-muted-foreground">{followers.toLocaleString()} 追蹤</div>
+            <div className="text-sm text-muted-foreground">
+              {followers.toLocaleString()} 追蹤
+            </div>
           </div>
         </div>
       </Card>
     </Link>
-  )
+  );
 }
