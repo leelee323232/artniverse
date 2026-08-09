@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Search,
+  Shield,
   ShoppingCart,
   User,
   Settings,
@@ -103,6 +104,16 @@ export function Navigation() {
               <ShoppingCart className="h-5 w-5" />
             </Button>
           </Link>
+          <Link href="/admin">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-transparent"
+            >
+              <Shield className="h-4 w-4" />
+              管理後台
+            </Button>
+          </Link>
 
           {user ? (
             <>
@@ -169,7 +180,7 @@ export function Navigation() {
                       className="flex items-center gap-2 cursor-pointer"
                     >
                       <Heart className="h-4 w-4" />
-                      創作者收藏名單
+                      我的收藏
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

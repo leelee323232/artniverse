@@ -50,7 +50,8 @@ export function PlanetCard({
   };
 
   return (
-    <Link href={`/creator/${id}`}>
+    // 先都導向 id 1 的創作者頁面
+    <Link href={`/creator/1`}>
       <Card
         className="group relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20"
         onMouseEnter={() => setIsHovered(true)}
