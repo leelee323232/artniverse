@@ -757,7 +757,7 @@ export default function CreatorPortalPage() {
           </Card>
         </div>
 
-        {/* Main Content Tabs - Order: 商店設定 - 訂單管理 - 商品管理 - 接案請求 - 特殊委託 */}
+        {/* Main Content Tabs - Order: 商店設定 - 訂單管理 - 商品管理 - 接案請求 - 企業委託 */}
         <Tabs defaultValue="profile" className="w-full">
           <TabsList className="mb-6 grid w-full max-w-5xl grid-cols-7">
             <TabsTrigger value="profile">商店設定</TabsTrigger>
@@ -780,7 +780,7 @@ export default function CreatorPortalPage() {
             </TabsTrigger>
             <TabsTrigger value="quests">
               <Scroll className="mr-1 h-4 w-4" />
-              特殊委託
+              企業委託
             </TabsTrigger>
             <TabsTrigger value="events">
               <Calendar className="mr-1 h-4 w-4" />
@@ -1171,9 +1171,6 @@ export default function CreatorPortalPage() {
                       <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                         狀態
                       </th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                        操作
-                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1198,12 +1195,6 @@ export default function CreatorPortalPage() {
                           <Badge className={getStatusColor(order.status)}>
                             {getStatusText(order.status)}
                           </Badge>
-                        </td>
-                        <td className="px-4 py-3">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="mr-1 h-4 w-4" />
-                            查看
-                          </Button>
                         </td>
                       </tr>
                     ))}
@@ -1476,7 +1467,7 @@ export default function CreatorPortalPage() {
                                       <li>客戶點擊連結前往「我的訂單」付款</li>
                                       <li>付款完成後，您將收到通知開始設計</li>
                                       <li>
-                                        完成後由 Artniverse 寄送產品給客戶
+                                        完成後由 ARTNIVERSE 寄送產品給客戶
                                       </li>
                                     </ol>
                                   </div>
@@ -1537,10 +1528,10 @@ export default function CreatorPortalPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">
-                    冒險者公會 - 特殊委託公佈欄
+                    冒險者公會 - 企業委託公佈欄
                   </h2>
                   <p className="text-muted-foreground">
-                    由 Artniverse
+                    由 ARTNIVERSE
                     精選的企業合作案，依照你的風格標籤推薦適合的委託
                   </p>
                 </div>
