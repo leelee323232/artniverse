@@ -24,20 +24,23 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsSubmitting(true);
+    e.preventDefault()
+    setError("")
+    setIsSubmitting(true)
 
-    const result = await login(email, password);
+    try {
+      const result = await login(email, password)
 
-    if (result.success) {
-      router.push("/");
-    } else {
-      setError(result.error || "登入失敗");
+      if (!result.success) {
+        setError(result.error ?? "登入失敗")
+        return
+      }
+
+      router.replace("/")
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setIsSubmitting(false);
-  };
+  }
 
   const handleProviderLogin = async (
     provider: "google" | "facebook" | "apple",

@@ -27,11 +27,14 @@ export function Navigation() {
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    router.push("/");
-  };
-
+  async function handleLogout() {
+    try {
+      await logout();
+      router.replace("/login");
+    } catch {
+      alert("登出失敗，請稍後再試。");
+    }
+  }
   const handleCreatorPortal = () => {
     if (!user) {
       router.push("/login");
