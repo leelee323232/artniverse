@@ -10,17 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
-import {
-  User,
-  Mail,
-  Lock,
-  Phone,
-  Calendar,
-  Eye,
-  EyeOff,
-  Loader2,
-} from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { TheButton } from "@/components/common/TheButton";
+import { userAPI } from "@/apis";
+import axios from "axios";
+
+// email 的基本正規格式檢查
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// 密碼長度需大於 8 個字元
+const PASSWORD_MIN_LENGTH = 8;
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -31,8 +29,6 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    phone: "",
-    birthday: "",
   });
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -44,32 +40,64 @@ export default function RegisterPage() {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 表單驗證放在頁面內處理（UI 層關注點）；API 層只負責傳輸與後端錯誤。
+  const validate = (): string | null => {
+    const name = formData.name.trim();
+    const email = formData.email.trim();
+
+    if (!name) return "請輸入姓名";
+    if (!email) return "請輸入電子郵件";
+    if (!formData.password) return "請輸入密碼";
+    if (!formData.confirmPassword) return "請再次輸入密碼";
+
+    if (!EMAIL_REGEX.test(email)) return "電子郵件格式不正確";
+    if (formData.password.length <= PASSWORD_MIN_LENGTH) {
+      return `密碼長度需大於 ${PASSWORD_MIN_LENGTH} 個字元`;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      return "兩次輸入的密碼不一致";
+    }
+    if (!agreeTerms) return "請先閱讀並同意服務條款與隱私權政策";
+
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("兩次輸入的密碼不一致");
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      setError("密碼長度至少需 6 個字元");
-      return;
-    }
-
-    if (!agreeTerms) {
-      setError("請先閱讀並同意服務條款與隱私權政策");
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     setIsSubmitting(true);
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    setIsSubmitting(false);
-    router.push("/login");
+    try {
+      await userAPI.register({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        password_confirmation: formData.confirmPassword,
+      });
+      router.push("/login");
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        // 後端常見結構：{ message, errors: { email: ["..."] } }
+        const data = err.response?.data as
+          | { message?: string; errors?: Record<string, string[]> }
+          | undefined;
+        const fieldError = data?.errors
+          ? Object.values(data.errors).flat().join("\n")
+          : undefined;
+        setError(fieldError || data?.message || "註冊失敗，請稍後再試");
+      } else {
+        setError("註冊失敗，請稍後再試");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleProviderRegister = async (
@@ -165,9 +193,9 @@ export default function RegisterPage() {
           </div>
 
           {/* Email Register Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {error && (
-              <div className="rounded-lg bg-destructive/20 p-3 text-sm text-destructive">
+              <div className="whitespace-pre-line rounded-lg bg-destructive/20 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -205,44 +233,13 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">聯絡電話</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="0912-345-678"
-                  value={formData.phone}
-                  onChange={(e) => handleChange("phone", e.target.value)}
-                  className="pl-10 bg-white/5"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="birthday">生日</Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="birthday"
-                  type="date"
-                  value={formData.birthday}
-                  onChange={(e) => handleChange("birthday", e.target.value)}
-                  className="pl-10 bg-white/5"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="password">密碼</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="至少 6 個字元"
+                  placeholder="需大於 8 個字元"
                   value={formData.password}
                   onChange={(e) => handleChange("password", e.target.value)}
                   className="pl-10 pr-10 bg-white/5"

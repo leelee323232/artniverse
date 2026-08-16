@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Ticket,
   Scroll,
+  Newspaper,
   type LucideIcon,
 } from "lucide-react";
 
@@ -45,4 +46,5 @@ export const adminNavItems: AdminNavItem[] = [
   { label: "熱門創作者", href: "/admin/featured-creators", icon: Star },
   { label: "熱門商品", href: "/admin/featured-products", icon: Sparkles },
   { label: "優惠碼管理", href: "/admin/coupons", icon: Ticket },
+  { label: "貼文管理", href: "/admin/posts", icon: Newspaper },
 ];

@@ -67,6 +67,7 @@ function DateTimePicker({
 }
 
 type DiscountType = "percentage" | "fixed";
+type TargetType = "creator" | "all_products" | "single_product";
 
 interface PromoCode {
   id: string;
@@ -78,6 +79,7 @@ interface PromoCode {
   endTime: string;        // 結束時間
   maxUses: number | null; // 最大兌換量 (null 為不限)
   currentUses: number;    // 已兌換數量
+  target: TargetType;     // 適用對象
 }
 
 const initialPromoCodes: PromoCode[] = [
@@ -91,6 +93,7 @@ const initialPromoCodes: PromoCode[] = [
     endTime: "2026-07-31T23:59",
     maxUses: 100,
     currentUses: 42,
+    target: "all_products",
   },
   {
     id: "2",
@@ -102,6 +105,7 @@ const initialPromoCodes: PromoCode[] = [
     endTime: "2026-06-25T12:00",
     maxUses: null,
     currentUses: 89,
+    target: "single_product",
   },
 ];
 
@@ -118,6 +122,7 @@ export default function PromoCodesPage() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [maxUsesInput, setMaxUsesInput] = useState<string>("");
+  const [target, setTarget] = useState<TargetType>("all_products");
   const [isEditing, setIsEditing] = useState(false);
 
   // 用時間判斷狀態的函數
@@ -144,6 +149,7 @@ export default function PromoCodesPage() {
     setStartTime("");
     setEndTime("");
     setMaxUsesInput("");
+    setTarget("all_products");
     setIsEditing(false);
     setSelectedPromo({} as PromoCode);
   };
@@ -157,14 +163,14 @@ export default function PromoCodesPage() {
     setStartTime(promo.startTime);
     setEndTime(promo.endTime);
     setMaxUsesInput(promo.maxUses === null ? "" : promo.maxUses.toString());
+    setTarget(promo.target);
     setIsEditing(true);
     setSelectedPromo(promo);
   };
 
   // 防呆
   const isFormValid = () => {
-    const codeRegex = /^[a-zA-Z0-9]+$/;
-    if (!codeRegex.test(code)) return false;
+    if (!code.trim()) return false;
     if (!startTime || !endTime) return false;
     if (new Date(endTime) <= new Date(startTime)) return false; // 結束時間必須晚於啟用時間
     if (value <= 0) return false;
@@ -179,7 +185,7 @@ export default function PromoCodesPage() {
         setPromoCodes((prev) =>
           prev.map((item) =>
             item.id === selectedPromo.id
-              ? { ...item, code: code.toUpperCase(), type, minSubtotal, value, startTime, endTime, maxUses: parsedMaxUses }
+              ? { ...item, code: code.toUpperCase(), type, minSubtotal, value, startTime, endTime, maxUses: parsedMaxUses, target }
               : item
           )
         );
@@ -194,6 +200,7 @@ export default function PromoCodesPage() {
           endTime,
           maxUses: parsedMaxUses,
           currentUses: 0,
+          target,
         };
         setPromoCodes((prev) => [newPromo, ...prev]);
       }
@@ -291,9 +298,9 @@ export default function PromoCodesPage() {
                 <span className="font-medium text-muted-foreground">優惠碼</span>
                 <input
                   type="text"
-                  placeholder="限輸入英數字"
+                  placeholder="輸入優惠碼"
                   value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/[^a-zA-Z0-9]/g, ""))}
+                  onChange={(e) => setCode(e.target.value)}
                   className="col-span-2 bg-transparent border border-border rounded px-2 py-1 text-foreground"
                 />
               </div>
@@ -378,6 +385,20 @@ export default function PromoCodesPage() {
                 <DateTimePicker value={endTime} onChange={setEndTime} placeholder="選擇結束時間" />
               </div>
 
+              {/*適用對象*/}
+              <div className="grid grid-cols-3 border-b border-border/30 pb-2 items-center">
+                <span className="font-medium text-muted-foreground">適用對象</span>
+                <select
+                  value={target}
+                  onChange={(e) => setTarget(e.target.value as TargetType)}
+                  className="col-span-2 bg-background border border-border rounded px-2 py-1 text-foreground outline-none"
+                >
+                  <option value="creator">單一創作者</option>
+                  <option value="all_products">所有產品</option>
+                  <option value="single_product">單一產品</option>
+                </select>
+              </div>
+
               {/*最大兌換量*/}
               <div className="grid grid-cols-3 border-b border-border/30 pb-2 items-center">
                 <span className="font-medium text-muted-foreground">最大兌換量</span>
@@ -385,7 +406,10 @@ export default function PromoCodesPage() {
                   type="number"
                   placeholder="不設限制"
                   value={maxUsesInput}
-                  onChange={(e) => setMaxUsesInput(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "" || Number(v) >= 0) setMaxUsesInput(v);
+                  }}
                   className="col-span-2 bg-transparent border border-border rounded px-2 py-1 text-foreground"
                 />
               </div>

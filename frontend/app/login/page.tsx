@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { TheButton } from "@/components/common/TheButton";
+import { userAPI } from "@/apis/user";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,23 +25,21 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsSubmitting(true)
-
+    e.preventDefault();
+    setError("");
+    setIsSubmitting(true);
     try {
-      const result = await login(email, password)
-
-      if (!result.success) {
-        setError(result.error ?? "登入失敗")
-        return
+      const result = await userAPI.login({ email, password });
+      if (result.data?.access_token) {
+        router.push("/");
+      } else {
+        setError("登入失敗");
       }
-
-      router.replace("/")
-    } finally {
-      setIsSubmitting(false)
+    } catch (error) {
+      setError("登入失敗");
     }
-  }
+    setIsSubmitting(false);
+  };
 
   const handleProviderLogin = async (
     provider: "google" | "facebook" | "apple",
