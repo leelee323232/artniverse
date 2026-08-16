@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Checkbox } from "@/components/ui/checkbox" 
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -15,20 +15,21 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { 
-  Plus, 
-  Trash2, 
-  Edit, 
-  SlidersHorizontal, 
-  CheckCircle, 
-  Flame, 
-  Sparkles, 
+import {
+  Plus,
+  Trash2,
+  Edit,
+  SlidersHorizontal,
+  CheckCircle,
+  Flame,
+  Sparkles,
   Layers,
   CheckSquare,
-  Square
 } from "lucide-react"
+import { CommissionRequestCard } from "@/components/commission/commission-request-card"
+import { CommissionRequestDetailModal } from "@/components/admin/commission-request-detail-modal"
+import { mockCommissionRequests, type CommissionRequest, type CommissionRequestStatus } from "@/types/commission-request"
 
-// 💡 前台代碼中定義的 25 項完整功能清單
 const ALL_FEATURES = [
   "創作者基本媒合（一品牌調性配對提案）",
   "基礎貼文文案與Hashtag建議",
@@ -70,7 +71,6 @@ const initialSubscriptionPlans = [
     creatorCount: "1位/月",
     monthlyDesigns: "2款設計",
     sortOrder: 1,
-    // 💡 預設開啟前 3 項與第 7 項
     features: ALL_FEATURES.map((f, i) => ({ name: f, included: [0, 1, 2, 6].includes(i) }))
   },
   {
@@ -85,7 +85,6 @@ const initialSubscriptionPlans = [
     creatorCount: "3位/月",
     monthlyDesigns: "6款設計",
     sortOrder: 2,
-    // 💡 預設開啟除了最後 10 項以外的功能
     features: ALL_FEATURES.map((f, i) => ({ name: f, included: i < 15 }))
   },
   {
@@ -100,15 +99,42 @@ const initialSubscriptionPlans = [
     creatorCount: "6位/月",
     monthlyDesigns: "12款設計",
     sortOrder: 3,
-    // 💡 預設開啟除了最後 4 項以外的功能
     features: ALL_FEATURES.map((f, i) => ({ name: f, included: i < 21 }))
   }
+]
+
+const STATUS_TABS: { value: CommissionRequestStatus | "all"; label: string }[] = [
+  { value: "all", label: "全部" },
+  { value: "pending", label: "未開始" },
+  { value: "in-progress", label: "進行中" },
+  { value: "completed", label: "已完成" },
 ]
 
 export default function AdminQuestsPage() {
   const [plans, setPlans] = useState(initialSubscriptionPlans)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<typeof initialSubscriptionPlans[0] | null>(null)
+
+  // 委託需求清單狀態
+  const [commissionRequests, setCommissionRequests] = useState<CommissionRequest[]>(mockCommissionRequests)
+  const [activeTab, setActiveTab] = useState<CommissionRequestStatus | "all">("all")
+  const [selectedRequest, setSelectedRequest] = useState<CommissionRequest | null>(null)
+
+  const filteredRequests = activeTab === "all"
+    ? commissionRequests
+    : commissionRequests.filter((r) => r.status === activeTab)
+
+  const handleApprove = (id: string) => {
+    setCommissionRequests((prev) =>
+      prev.map((r) => r.id === id ? { ...r, status: "in-progress" as CommissionRequestStatus } : r)
+    )
+  }
+
+  const handleReject = (id: string) => {
+    setCommissionRequests((prev) =>
+      prev.map((r) => r.id === id ? { ...r, status: "completed" as CommissionRequestStatus } : r)
+    )
+  }
 
   // 表單狀態
   const [formData, setFormData] = useState({
@@ -469,6 +495,64 @@ export default function AdminQuestsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* 委託需求清單 */}
+      <div className="space-y-4 border-t border-border/40 pt-8">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">委託需求清單</h2>
+          <p className="text-sm text-muted-foreground">顧客提交的委託申請，點擊卡片可查看詳情並通過或拒絕。</p>
+        </div>
+
+        {/* 狀態篩選 */}
+        <div className="flex gap-2 flex-wrap">
+          {STATUS_TABS.map((tab) => {
+            const count = tab.value === "all"
+              ? commissionRequests.length
+              : commissionRequests.filter((r) => r.status === tab.value).length
+            return (
+              <button
+                key={tab.value}
+                onClick={() => setActiveTab(tab.value)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  activeTab === tab.value
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border/50 text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                }`}
+              >
+                {tab.label}
+                <span className="ml-1.5 opacity-70">({count})</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* 卡片清單 */}
+        <div className="space-y-3">
+          {filteredRequests.length > 0 ? (
+            filteredRequests.map((req) => (
+              <CommissionRequestCard
+                key={req.id}
+                request={req}
+                onClick={setSelectedRequest}
+              />
+            ))
+          ) : (
+            <Card className="border-border/50 bg-card/30 p-12 text-center backdrop-blur-sm">
+              <p className="text-muted-foreground">此狀態目前沒有委託需求</p>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* 詳情 Modal */}
+      {selectedRequest && (
+        <CommissionRequestDetailModal
+          request={selectedRequest}
+          onClose={() => setSelectedRequest(null)}
+          onApprove={handleApprove}
+          onReject={handleReject}
+        />
+      )}
     </div>
   )
 }

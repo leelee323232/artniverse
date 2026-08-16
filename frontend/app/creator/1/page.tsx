@@ -1,5 +1,6 @@
 "use client";
 
+import { Share } from "@/components/share/share";
 import { useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { UniverseBackground } from "@/components/universe-background";
@@ -529,11 +530,16 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                     </DialogContent>
                   </Dialog>
                 )}
-
-                <Button size="lg" variant="outline" className="bg-transparent">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  分享
-                </Button>
+                  <Share
+                  title="分享創作者"
+                  subtitle="喜歡這位創作者的作品嗎？點擊下方按鈕分享給身邊的好友吧！"
+                  trigger={
+                    <Button size="lg" variant="outline" className="bg-transparent">
+                      <Share2 className="mr-2 h-4 w-4" />
+                      分享
+                    </Button>
+                  }
+                />
               </div>
             </div>
           </div>
