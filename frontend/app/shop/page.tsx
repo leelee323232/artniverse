@@ -174,7 +174,6 @@ export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const filteredProducts = mockProducts.filter((product) => {
     const matchesCategory =
@@ -252,25 +251,6 @@ export default function ShopPage() {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="flex rounded-lg border border-border bg-card/50 p-1">
-                <Button
-                  variant={viewMode === "grid" ? "secondary" : "ghost"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "secondary" : "ghost"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => setViewMode("list")}
-                >
-                  <LayoutList className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
           </div>
 
@@ -332,13 +312,7 @@ export default function ShopPage() {
 
         {/* Products Grid */}
         {sortedProducts.length > 0 ? (
-          <div
-            className={`grid gap-6 ${
-              viewMode === "grid"
-                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                : "grid-cols-1"
-            }`}
-          >
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {sortedProducts.map((product) => (
               <ProductCard
                 key={product.id}
