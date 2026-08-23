@@ -13,6 +13,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -21,7 +22,25 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->instance(
+            RegisterResponseContract::class,
+            new class implements RegisterResponseContract {
+                public function toResponse($request)
+                {
+                    $user = auth('web')->user();
+
+                    return response()->json([
+                        'data' => [
+                            'id' => $user->getKey(),
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'is_creator' => $user->is_creator,
+                            'email_verified_at' => $user->email_verified_at,
+                        ],
+                    ], 201);
+                }
+            }
+        );
     }
 
     /**
