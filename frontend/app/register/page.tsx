@@ -81,7 +81,7 @@ export default function RegisterPage() {
         formData.password,
         formData.confirmPassword,
       );
-      //router.push("/login");
+      router.push("/");
     } catch (err) {
       if (axios.isAxiosError(err)) {
         // 後端常見結構：{ message, errors: { email: ["..."] } }
