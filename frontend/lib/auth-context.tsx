@@ -68,6 +68,13 @@ interface AuthContextType {
   updateCreatorProfile: (
     updates: Partial<User["creatorProfile"]>,
   ) => void
+
+  register: (
+    name: string,
+    email: string,
+    password: string,
+    confirmPassword: string,
+  ) => Promise<{ success: boolean; error?: string }>
 }
 
 const AuthContext =
@@ -314,6 +321,48 @@ export function AuthProvider({
     })
   }
 
+  const register = async (
+  name: string,
+  email: string,
+  password: string,
+  confirmPassword: string,
+) => {
+  setIsLoading(true)
+
+  try {
+    await api.get("/sanctum/csrf-cookie")
+
+    await api.post("/register", {
+      name,
+      email,
+      password,
+      password_confirmation: confirmPassword,
+    })
+
+    const response = await api.get("/api/v1/me")
+    setUser(response.data.data)
+
+    return { success: true }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errors = error.response?.data?.errors
+
+      return {
+        success: false,
+        error:
+          errors?.name?.[0] ??
+          errors?.email?.[0] ??
+          errors?.password?.[0] ??
+          "註冊失敗",
+      }
+    }
+
+    return { success: false, error: "註冊失敗" }
+  } finally {
+    setIsLoading(false)
+  }
+}
+
   return (
     <AuthContext.Provider
       value={{
@@ -325,6 +374,7 @@ export function AuthProvider({
         refreshUser,
         updateUser,
         updateCreatorProfile,
+        register
       }}
     >
       {children}
@@ -343,3 +393,4 @@ export function useAuth() {
 
   return context
 }
+

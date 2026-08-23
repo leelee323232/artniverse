@@ -22,7 +22,7 @@ const PASSWORD_MIN_LENGTH = 8;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { loginWithProvider, isLoading } = useAuth();
+  const { loginWithProvider, isLoading, register } = useAuth();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -75,13 +75,13 @@ export default function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      await userAPI.register({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        password_confirmation: formData.confirmPassword,
-      });
-      router.push("/login");
+      await register(
+        formData.name.trim(),
+        formData.email.trim(),
+        formData.password,
+        formData.confirmPassword,
+      );
+      //router.push("/login");
     } catch (err) {
       if (axios.isAxiosError(err)) {
         // 後端常見結構：{ message, errors: { email: ["..."] } }
