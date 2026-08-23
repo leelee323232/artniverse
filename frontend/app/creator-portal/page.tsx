@@ -307,9 +307,7 @@ export default function CreatorPortalPage() {
   >("all");
 
   const filteredCommissionRequests = commissionRequests
-    .filter(
-      (r) => commissionFilter === "all" || r.status === commissionFilter,
-    )
+    .filter((r) => commissionFilter === "all" || r.status === commissionFilter)
     .slice()
     .sort(
       (a, b) =>
@@ -713,7 +711,7 @@ export default function CreatorPortalPage() {
           <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">總銷售額</p>
+                <p className="text-sm text-muted-foreground">本月銷售額</p>
                 <p className="text-2xl font-bold text-foreground">
                   NT$ {stats.totalSales.toLocaleString()}
                 </p>
@@ -727,7 +725,7 @@ export default function CreatorPortalPage() {
           <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">總訂單數</p>
+                <p className="text-sm text-muted-foreground">本月訂單數</p>
                 <p className="text-2xl font-bold text-foreground">
                   {stats.totalOrders}
                 </p>
