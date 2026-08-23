@@ -215,12 +215,12 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
+          {/* <div className="mt-6 text-center text-sm text-muted-foreground">
             還沒有帳號？{" "}
             <Link href="/register" className="text-primary hover:underline">
               立即註冊
             </Link>
-          </div>
+          </div> */}
 
           {/* Test Account Info */}
           <div className="mt-6 rounded-lg bg-primary/10 p-4 text-sm">
