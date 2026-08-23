@@ -16,6 +16,7 @@ import {
 import {
   Search,
   SlidersHorizontal,
+  Filter,
   Tent,
   Sofa,
   ChefHat,
@@ -35,6 +36,14 @@ const categories = [
   { id: "car", name: "車用", icon: Car, count: 20 },
 ];
 
+// 商品類型：未來會作為參數帶入搜尋 API（selectedProductType）
+const productTypes = [
+  { id: "all", name: "全部類型" },
+  { id: "general", name: "一般商品" },
+  { id: "auction", name: "競標商品" },
+  { id: "presale", name: "預售商品" },
+];
+
 const mockProducts = [
   {
     id: "1",
@@ -43,6 +52,7 @@ const mockProducts = [
     image: "/cute-notebook-with-stars.jpg",
     category: "戶外用品",
     categoryId: "outdoor",
+    productType: "general",
     stock: 45,
     creatorId: "1",
     isNew: true,
@@ -54,6 +64,7 @@ const mockProducts = [
     image: "/dreamy-postcards.jpg",
     category: "客廳",
     categoryId: "living-room",
+    productType: "auction",
     stock: 23,
     creatorId: "2",
     isNew: false,
@@ -65,6 +76,7 @@ const mockProducts = [
     image: "/planet-badges.jpg",
     category: "廚房",
     categoryId: "kitchen",
+    productType: "presale",
     stock: 8,
     creatorId: "3",
     isNew: true,
@@ -76,6 +88,7 @@ const mockProducts = [
     image: "/universe-tote-bag.jpg",
     category: "臥室",
     categoryId: "bedroom",
+    productType: "general",
     stock: 15,
     creatorId: "1",
     isNew: false,
@@ -87,6 +100,7 @@ const mockProducts = [
     image: "/cute-bear-stickers.jpg",
     category: "車用",
     categoryId: "car",
+    productType: "auction",
     stock: 67,
     creatorId: "4",
     isNew: true,
@@ -98,6 +112,7 @@ const mockProducts = [
     image: "/hand-drawn-illustration-poster.jpg",
     category: "戶外用品",
     categoryId: "outdoor",
+    productType: "presale",
     stock: 12,
     creatorId: "2",
     isNew: false,
@@ -109,6 +124,7 @@ const mockProducts = [
     image: "/wedding-invitation-illustration.jpg",
     category: "客廳",
     categoryId: "living-room",
+    productType: "general",
     stock: 5,
     creatorId: "5",
     isNew: true,
@@ -120,6 +136,7 @@ const mockProducts = [
     image: "/children-book-illustration.jpg",
     category: "廚房",
     categoryId: "kitchen",
+    productType: "auction",
     stock: 30,
     creatorId: "3",
     isNew: false,
@@ -131,6 +148,7 @@ const mockProducts = [
     image: "/cute-mascot-design.jpg",
     category: "臥室",
     categoryId: "bedroom",
+    productType: "presale",
     stock: 18,
     creatorId: "1",
     isNew: true,
@@ -142,6 +160,7 @@ const mockProducts = [
     image: "/cute-notebook-with-stars.jpg",
     category: "車用",
     categoryId: "car",
+    productType: "general",
     stock: 42,
     creatorId: "4",
     isNew: false,
@@ -153,6 +172,7 @@ const mockProducts = [
     image: "/dreamy-postcards.jpg",
     category: "戶外用品",
     categoryId: "outdoor",
+    productType: "auction",
     stock: 6,
     creatorId: "2",
     isNew: false,
@@ -164,6 +184,7 @@ const mockProducts = [
     image: "/planet-badges.jpg",
     category: "客廳",
     categoryId: "living-room",
+    productType: "presale",
     stock: 22,
     creatorId: "5",
     isNew: true,
@@ -172,16 +193,20 @@ const mockProducts = [
 
 export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedProductType, setSelectedProductType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
 
   const filteredProducts = mockProducts.filter((product) => {
     const matchesCategory =
       selectedCategory === "all" || product.categoryId === selectedCategory;
+    const matchesProductType =
+      selectedProductType === "all" ||
+      product.productType === selectedProductType;
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return matchesCategory && matchesProductType && matchesSearch;
   });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -289,7 +314,6 @@ export default function ShopPage() {
             </div>
           </div>
         </div>
-
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-sm text-muted-foreground">
@@ -309,36 +333,70 @@ export default function ShopPage() {
             )}
           </p>
         </div>
-
-        {/* Products Grid */}
-        {sortedProducts.length > 0 ? (
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {sortedProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                id={product.id}
-                name={product.name}
-                price={product.price}
-                image={product.image}
-                category={product.category}
-                stock={product.stock}
-                creatorId={product.creatorId}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted/50">
-              <Search className="h-10 w-10 text-muted-foreground" />
+        {/* Products Grid + Product Type Sidebar */}
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-5">
+          {/* Product Type Sidebar */}
+          <aside className="lg:col-span-1">
+            <div className="sticky top-44 rounded-xl border border-border bg-card/50 p-4 backdrop-blur-sm">
+              <div className="mb-3 flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-semibold text-foreground">
+                  商品類型
+                </span>
+              </div>
+              <div className="flex flex-col gap-2">
+                {productTypes.map((type) => {
+                  const isActive = selectedProductType === type.id;
+                  return (
+                    <Button
+                      key={type.id}
+                      variant={isActive ? "default" : "outline"}
+                      className={`w-full justify-start ${
+                        isActive
+                          ? "bg-gradient-to-r from-primary to-secondary"
+                          : "bg-card/50 hover:bg-card"
+                      }`}
+                      onClick={() => setSelectedProductType(type.id)}
+                    >
+                      {type.name}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
-            <h3 className="mb-2 text-lg font-semibold text-foreground">
-              找不到符合的商品
-            </h3>
-            <p className="text-muted-foreground">
-              嘗試調整搜尋條件或瀏覽其他分類
-            </p>
+          </aside>
+          {/* Products */}
+          <div className="lg:col-span-4">
+            {sortedProducts.length > 0 ? (
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                {sortedProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    price={product.price}
+                    image={product.image}
+                    category={product.category}
+                    stock={product.stock}
+                    creatorId={product.creatorId}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted/50">
+                  <Search className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-foreground">
+                  找不到符合的商品
+                </h3>
+                <p className="text-muted-foreground">
+                  嘗試調整搜尋條件或瀏覽其他分類
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
