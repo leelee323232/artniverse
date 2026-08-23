@@ -12,12 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { PostCard, type Post } from "@/components/posts/PostCard";
-import {
-  Plus,
-  Image,
-  Trash2,
-  MessageSquare,
-} from "lucide-react";
+import { Plus, Image, Trash2, MessageSquare } from "lucide-react";
 
 export default function AdminPostsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -26,9 +21,7 @@ export default function AdminPostsPage() {
   const [newPostImages, setNewPostImages] = useState<File[]>([]);
 
   // 選擇圖片
-  const handleImageUpload = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
     const files = Array.from(e.target.files);
@@ -49,16 +42,11 @@ export default function AdminPostsPage() {
       authorAvatar: "",
       isVerified: true,
       content: newPostContent,
-      images: newPostImages.map((file) =>
-        URL.createObjectURL(file)
-      ),
+      images: newPostImages.map((file) => URL.createObjectURL(file)),
       likes: 0,
       isLiked: false,
       comments: [],
-      createdAt: new Date()
-        .toISOString()
-        .replace("T", " ")
-        .substring(0, 16),
+      createdAt: new Date().toISOString().replace("T", " ").substring(0, 16),
     };
 
     setPosts((prev) => [newPost, ...prev]);
@@ -73,30 +61,22 @@ export default function AdminPostsPage() {
 
   // 刪除貼文
   const handleDelete = (postId: string) => {
-    setPosts((prev) =>
-      prev.filter((post) => post.id !== postId)
-    );
+    setPosts((prev) => prev.filter((post) => post.id !== postId));
   };
 
   return (
     <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
       <div className="mb-6 flex items-center justify-between">
-
         {/* 左側標題 */}
         <div>
-          <h1 className="text-xl font-bold text-foreground">
-            過往貼文牆
-          </h1>
+          <h1 className="text-xl font-bold text-foreground">過往貼文牆</h1>
 
           <p className="text-sm text-muted-foreground">
             發佈創作動態、新品花絮，與追蹤粉絲進行零距離留言互動。
           </p>
         </div>
 
-        <Dialog
-          open={isPostModalOpen}
-          onOpenChange={setIsPostModalOpen}
-        >
+        <Dialog open={isPostModalOpen} onOpenChange={setIsPostModalOpen}>
           <DialogTrigger asChild>
             <Button className="gap-1.5 bg-gradient-to-r from-primary to-secondary shadow-lg shadow-primary/20">
               <Plus className="h-4 w-4" />
@@ -117,15 +97,11 @@ export default function AdminPostsPage() {
               sm:max-w-xl
             "
           >
-
             {/* Header */}
             <div className="flex h-14 items-center justify-between border-b border-white/10 px-5">
-
               <Button
                 variant="ghost"
-                onClick={() =>
-                  setIsPostModalOpen(false)
-                }
+                onClick={() => setIsPostModalOpen(false)}
                 className="
                   h-auto
                   p-0
@@ -138,53 +114,41 @@ export default function AdminPostsPage() {
               >
                 取消
               </Button>
-              <h2 className="text-base font-semibold">
-                新貼文
-              </h2>
+              <h2 className="text-base font-semibold">新貼文</h2>
               <div className="w-8" />
             </div>
 
             {/* Content */}
             <div className="max-h-[60vh] overflow-y-auto py-2">
-
               <div className="flex gap-4 px-5 pt-2">
-
                 {/* Avatar */}
                 <div className="flex-shrink-0">
                   <div
                     className="
                       flex
-                      h-11
-                      w-11
+                      h-14
+                      w-14
                       items-center
                       justify-center
                       rounded-full
-                      bg-gradient-to-br
-                      from-violet-500
-                      to-indigo-600
-                      text-base
-                      font-bold
-                      text-white
-                      shadow-md
                     "
                   >
-                    創
+                    <img
+                      src="/images/logos/logo_sm_white.png"
+                      alt="ARTNIVERSE"
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                 </div>
 
                 {/* 右側內容 */}
                 <div className="flex-1">
-
-                  <span className="font-semibold text-white">
-                    創作者
-                  </span>
+                  <span className="font-semibold text-white">ARTNIVERSE</span>
 
                   <Textarea
                     placeholder="有什麼新鮮事？"
                     value={newPostContent}
-                    onChange={(e) =>
-                      setNewPostContent(e.target.value)
-                    }
+                    onChange={(e) => setNewPostContent(e.target.value)}
                     maxLength={500}
                     className="
                       mt-3
@@ -204,7 +168,6 @@ export default function AdminPostsPage() {
 
                   {/* 字數 */}
                   <div className="mt-3 flex items-center gap-3">
-
                     <span className="text-xs text-white/35">
                       {newPostImages.length}/10 張圖片
                     </span>
@@ -218,13 +181,11 @@ export default function AdminPostsPage() {
                     >
                       {newPostContent.length}/500
                     </span>
-
                   </div>
                 </div>
               </div>
 
               <div className="mt-3 px-5">
-
                 <Input
                   id="image-upload"
                   type="file"
@@ -255,7 +216,6 @@ export default function AdminPostsPage() {
 
                 {newPostImages.length > 0 && (
                   <div className="mt-2 grid grid-cols-2 gap-2 overflow-hidden rounded-xl">
-
                     {newPostImages.map((file, index) => (
                       <div
                         key={`${file.name}-${index}`}
@@ -266,7 +226,6 @@ export default function AdminPostsPage() {
                           rounded-xl
                         "
                       >
-
                         <img
                           src={URL.createObjectURL(file)}
                           alt={`預覽 ${index + 1}`}
@@ -288,25 +247,20 @@ export default function AdminPostsPage() {
                           "
                           onClick={() => {
                             setNewPostImages((prev) =>
-                              prev.filter(
-                                (_, i) => i !== index
-                              )
+                              prev.filter((_, i) => i !== index),
                             );
                           }}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
-
                       </div>
                     ))}
-
                   </div>
                 )}
               </div>
             </div>
 
             <DialogFooter className="justify-end px-5 pb-3">
-
               <Button
                 onClick={handleCreatePost}
                 disabled={!newPostContent.trim()}
@@ -320,34 +274,20 @@ export default function AdminPostsPage() {
               >
                 發佈
               </Button>
-
             </DialogFooter>
-
           </DialogContent>
         </Dialog>
       </div>
 
-    {posts.length > 0 ? (
-
-    <div className="w-full space-y-6">
-
-        {posts.map((post) => (
-
-        <div
-            key={post.id}
-            className="relative w-full"
-        >
-
-            <PostCard post={post} />
-
+      {posts.length > 0 ? (
+        <div className="w-full space-y-6">
+          {posts.map((post) => (
+            <div key={post.id} className="relative w-full">
+              <PostCard post={post} />
             </div>
-
           ))}
-
         </div>
-
       ) : (
-
         <div
           className="
             rounded-lg
@@ -358,7 +298,6 @@ export default function AdminPostsPage() {
             text-center
           "
         >
-
           <MessageSquare
             className="
               mx-auto
@@ -372,11 +311,8 @@ export default function AdminPostsPage() {
           <p className="text-sm text-muted-foreground">
             還沒有任何貼文，發佈第一則吧！
           </p>
-
         </div>
-
       )}
-
     </Card>
   );
 }
