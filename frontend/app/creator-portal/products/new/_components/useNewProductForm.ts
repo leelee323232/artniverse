@@ -68,6 +68,10 @@ export function useNewProductForm() {
   const [preOrderQuantity, setPreOrderQuantity] = useState("");
   const [wantPreOrder, setWantPreOrder] = useState(false);
 
+  // Limited edition settings (一般商品限量)
+  const [isLimited, setIsLimited] = useState(false);
+  const [limitedQuantity, setLimitedQuantity] = useState("");
+
   // Note for admin (創作者給管理員的備註)
   const [productNote, setProductNote] = useState("");
 
@@ -385,6 +389,12 @@ export function useNewProductForm() {
       if (!presaleStartDate) submitBlockers.push("請設定預售開始日期");
       if (!presaleEndDate) submitBlockers.push("請設定預售結束日期");
     }
+    // 一般商品啟用限量時，限量數量才是必填
+    if (productType === "general" && isLimited) {
+      if (!limitedQuantity || parseInt(limitedQuantity) <= 0) {
+        submitBlockers.push("請設定限量數量");
+      }
+    }
   }
 
   if (selectedProduct?.hasMinQuantity) {
@@ -464,6 +474,10 @@ export function useNewProductForm() {
     setPreOrderQuantity,
     wantPreOrder,
     setWantPreOrder,
+    isLimited,
+    setIsLimited,
+    limitedQuantity,
+    setLimitedQuantity,
     productNote,
     setProductNote,
     isSubmitting,
