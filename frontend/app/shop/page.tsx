@@ -193,7 +193,7 @@ const mockProducts = [
   },
 ];
 
-export default async function ShopPage() {
+export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedProductType, setSelectedProductType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
