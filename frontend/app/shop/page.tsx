@@ -27,6 +27,8 @@ import {
   LayoutList,
 } from "lucide-react";
 
+import { fetchAllProduct } from "@/lib/shop/shop";
+
 const categories = [
   { id: "all", name: "全部商品", icon: Grid3X3, count: 156 },
   { id: "outdoor", name: "戶外用品", icon: Tent, count: 32 },
@@ -191,13 +193,15 @@ const mockProducts = [
   },
 ];
 
-export default function ShopPage() {
+export default async function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedProductType, setSelectedProductType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
 
-  const filteredProducts = mockProducts.filter((product) => {
+  const webProduct = await fetchAllProduct();
+
+  const filteredProducts = [...mockProducts, ...webProduct].filter((product) => {
     const matchesCategory =
       selectedCategory === "all" || product.categoryId === selectedCategory;
     const matchesProductType =
