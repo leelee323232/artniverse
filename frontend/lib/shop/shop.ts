@@ -11,6 +11,9 @@ export interface Product {
   stock: number
   isNew: number
   creatorId: string
+  currentBackers: number
+  targetBackers: number
+  daysLeft: number
 }
 
 // interface WebProduct {
