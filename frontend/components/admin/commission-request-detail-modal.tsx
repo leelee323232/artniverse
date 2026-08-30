@@ -1,7 +1,9 @@
 "use client"
 
+import type React from "react"
 import { Button } from "@/components/ui/button"
-import { Check, X } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Check, X, Users, Star, UserCheck, FileText } from "lucide-react"
 import type { CommissionRequest } from "@/types/commission-request"
 
 const TYPE_LABEL: Record<string, string> = {
@@ -10,6 +12,12 @@ const TYPE_LABEL: Record<string, string> = {
   product: "周邊商品設計",
   packaging: "包裝設計",
   custom: "客製化專案",
+}
+
+const APPLICANT_CONDITION_CONFIG: Record<string, { label: string; className: string; icon: React.ElementType }> = {
+  all:           { label: "全部人皆可參與",   className: "bg-emerald-500/15 text-emerald-500", icon: Users },
+  "level-above": { label: "指定等級以上的人", className: "bg-amber-500/15 text-amber-500",   icon: Star },
+  direct:        { label: "直接指明合作",     className: "bg-violet-500/15 text-violet-500", icon: UserCheck },
 }
 
 const BUDGET_LABEL: Record<string, string> = {
@@ -53,12 +61,32 @@ export function CommissionRequestDetailModal({ request, onClose, onApprove, onRe
         {/* Content */}
         <div className="p-6 space-y-3 overflow-y-auto">
           <Field label="委託類型" value={TYPE_LABEL[request.type] ?? request.type} />
+          <div className="grid grid-cols-3 border-b border-border/30 pb-3 items-start gap-2">
+            <span className="text-sm font-medium text-muted-foreground pt-0.5">接案人條件</span>
+            <div className="col-span-2 flex flex-col gap-1.5">
+              {(() => {
+                const cfg = APPLICANT_CONDITION_CONFIG[request.applicantCondition]
+                if (!cfg) return <span className="text-sm text-foreground">—</span>
+                const Icon = cfg.icon
+                return (
+                  <Badge className={`${cfg.className} gap-1.5 w-fit`}>
+                    <Icon className="h-3.5 w-3.5" />
+                    {cfg.label}
+                  </Badge>
+                )
+              })()}
+              {request.applicantCondition === "direct" && request.targetCreator && (
+                <span className="text-sm text-foreground">指定創作者：<span className="font-medium">{request.targetCreator}</span></span>
+              )}
+            </div>
+          </div>
           <Field label="專案標題" value={request.title} />
           <div className="border-b border-border/30 pb-3">
             <span className="text-sm font-medium text-muted-foreground">詳細需求說明</span>
             <p className="mt-1 text-sm text-foreground whitespace-pre-wrap">{request.description || "—"}</p>
           </div>
           <Field label="預算範圍" value={BUDGET_LABEL[request.budget] ?? request.budget} />
+          <Field label="分潤%數" value={`${request.revenueShare}%`} />
           <Field label="希望完成日期" value={request.deadline} />
           <Field label="風格偏好" value={request.style} />
           <div className="border-b border-border/30 pb-3">
@@ -70,6 +98,26 @@ export function CommissionRequestDetailModal({ request, onClose, onApprove, onRe
             </div>
           </div>
           <Field label="其他備註" value={request.notes} />
+          <div className="grid grid-cols-3 items-start gap-2 pb-3">
+            <span className="text-sm font-medium text-muted-foreground pt-0.5">企畫書</span>
+            <div className="col-span-2">
+              {request.proposalFiles.length === 0 ? (
+                <span className="text-sm text-foreground">—</span>
+              ) : (
+                <ul className="space-y-2">
+                  {request.proposalFiles.map((file, index) => (
+                    <li key={index} className="flex items-center gap-2 rounded-lg border border-border/40 bg-muted/20 px-3 py-2">
+                      <FileText className="h-4 w-4 shrink-0 text-primary" />
+                      <span className="truncate text-sm text-foreground">{file.name}</span>
+                      <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                        {(file.size / 1024 / 1024).toFixed(1)} MB
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Footer */}

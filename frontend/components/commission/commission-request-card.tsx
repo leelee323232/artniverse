@@ -2,7 +2,8 @@
 
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, DollarSign } from "lucide-react"
+import { Calendar, DollarSign, Users, Star, UserCheck, Percent } from "lucide-react"
+import type React from "react"
 import type { CommissionRequest } from "@/types/commission-request"
 
 const TYPE_LABEL: Record<string, string> = {
@@ -33,6 +34,12 @@ const STATUS_LABEL: Record<string, string> = {
   completed: "已完成",
 }
 
+const APPLICANT_CONDITION_CONFIG: Record<string, { label: string; className: string; icon: React.ElementType }> = {
+  all:         { label: "全部人可參與",     className: "bg-emerald-500/15 text-emerald-500", icon: Users },
+  "level-above": { label: "指定等級以上", className: "bg-amber-500/15 text-amber-500",   icon: Star },
+  direct:      { label: "直接指明合作",     className: "bg-violet-500/15 text-violet-500", icon: UserCheck },
+}
+
 interface CommissionRequestCardProps {
   request: CommissionRequest
   onClick: (request: CommissionRequest) => void
@@ -51,6 +58,19 @@ export function CommissionRequestCard({ request, onClick }: CommissionRequestCar
             <Badge className={STATUS_STYLE[request.status]}>
               {STATUS_LABEL[request.status]}
             </Badge>
+            {(() => {
+              const cfg = APPLICANT_CONDITION_CONFIG[request.applicantCondition]
+              if (!cfg) return null
+              const Icon = cfg.icon
+              return (
+                <Badge className={`${cfg.className} gap-1`}>
+                  <Icon className="h-3 w-3" />
+                  {request.applicantCondition === "direct" && request.targetCreator
+                    ? `指定：${request.targetCreator}`
+                    : cfg.label}
+                </Badge>
+              )
+            })()}
           </div>
           <p className="text-sm text-muted-foreground">{TYPE_LABEL[request.type] ?? request.type}</p>
           <p className="text-sm text-foreground line-clamp-2">{request.description}</p>
@@ -67,6 +87,10 @@ export function CommissionRequestCard({ request, onClick }: CommissionRequestCar
         <div className="flex items-center gap-1.5">
           <DollarSign className="h-4 w-4" />
           <span>{BUDGET_LABEL[request.budget] ?? request.budget}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Percent className="h-4 w-4" />
+          <span>分潤 {request.revenueShare}%</span>
         </div>
         <div className="flex items-center gap-1.5">
           <Calendar className="h-4 w-4" />
