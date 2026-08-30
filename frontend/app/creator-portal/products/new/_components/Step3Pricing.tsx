@@ -28,6 +28,7 @@ import {
   Target,
   CalendarClock,
   FileText,
+  Boxes,
 } from "lucide-react";
 import { getEffectiveScalePercent } from "./lib/print-size";
 import { WatermarkOverlay } from "./WatermarkOverlay";
@@ -63,6 +64,10 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
     setPreOrderQuantity,
     wantPreOrder,
     setWantPreOrder,
+    isLimited,
+    setIsLimited,
+    limitedQuantity,
+    setLimitedQuantity,
     productNote,
     setProductNote,
     designImages,
@@ -263,6 +268,55 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
               <Info className="mr-1 inline h-4 w-4 text-primary" />
               於預售期間內達到設定數量才會發貨；若未達標將全額退費給消費者，退費訂單不計入創作者收益。
             </div>
+          </div>
+        )}
+
+        {/* General product limited-edition settings */}
+        {productType === "general" && (
+          <div className="space-y-4 rounded-lg border border-border/50 bg-white/5 p-4">
+            <div className="flex items-center gap-2">
+              <Boxes className="h-5 w-5 text-primary" />
+              <h3 className="font-bold text-foreground">限量設定</h3>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="is-limited"
+                checked={isLimited}
+                onChange={(e) => {
+                  setIsLimited(e.target.checked);
+                  if (!e.target.checked) setLimitedQuantity("");
+                }}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              <Label htmlFor="is-limited" className="cursor-pointer">
+                此商品為限量商品
+              </Label>
+            </div>
+
+            {isLimited && (
+              <div className="space-y-2">
+                <Label>限量數量</Label>
+                <Input
+                  type="number"
+                  value={limitedQuantity}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "" || Number(v) >= 0) setLimitedQuantity(v);
+                  }}
+                  placeholder="輸入此商品的限量總數"
+                  className="bg-white/5"
+                  min={1}
+                />
+              </div>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              {isLimited
+                ? "限量商品售完後將無法再購買。"
+                : "未啟用限量時，商品可持續販售，無需設定數量。"}
+            </p>
           </div>
         )}
       </div>
@@ -664,6 +718,16 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
                     </span>
                   </div>
                 )}
+              {productType === "general" && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">限量</span>
+                  <span className="text-foreground">
+                    {isLimited
+                      ? `限量 ${limitedQuantity || "-"} 件`
+                      : "不限量"}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
