@@ -9,6 +9,7 @@ type BasicDatePickerProps = {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  showTime?: boolean;
 };
 
 export function BasicDatePicker({
@@ -17,6 +18,7 @@ export function BasicDatePicker({
   placeholder = "請選擇日期",
   disabled,
   className = "",
+  showTime = false,
 }: BasicDatePickerProps) {
   return (
     <DatePicker
@@ -24,7 +26,11 @@ export function BasicDatePicker({
       onChange={onChange}
       placeholderText={placeholder}
       disabled={disabled}
-      dateFormat="yyyy/MM/dd"
+      dateFormat={showTime ? "yyyy/MM/dd HH:mm" : "yyyy/MM/dd"}
+      showTimeSelect={showTime}
+      timeFormat="HH:mm"
+      timeIntervals={30}
+      timeCaption="時間"
       className={`
         h-10 w-full rounded-md border border-gray-100 bg-transparent px-3 text-sm
         text-gray-100 shadow-sm

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { ProductCard } from "@/components/product-card";
+import { PresaleProductCard } from "@/components/presale-product-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +81,9 @@ const mockProducts = [
     stock: 8,
     creatorId: "3",
     isNew: true,
+    currentBackers: 214,
+    targetBackers: 300,
+    daysLeft: 12,
   },
   {
     id: "4",
@@ -116,6 +120,9 @@ const mockProducts = [
     stock: 12,
     creatorId: "2",
     isNew: false,
+    currentBackers: 89,
+    targetBackers: 150,
+    daysLeft: 24,
   },
   {
     id: "7",
@@ -152,6 +159,9 @@ const mockProducts = [
     stock: 18,
     creatorId: "1",
     isNew: true,
+    currentBackers: 512,
+    targetBackers: 500,
+    daysLeft: 5,
   },
   {
     id: "10",
@@ -188,6 +198,9 @@ const mockProducts = [
     stock: 22,
     creatorId: "5",
     isNew: true,
+    currentBackers: 37,
+    targetBackers: 200,
+    daysLeft: 30,
   },
 ];
 
@@ -369,18 +382,32 @@ export default function ShopPage() {
           <div className="lg:col-span-4">
             {sortedProducts.length > 0 ? (
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-                {sortedProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    id={product.id}
-                    name={product.name}
-                    price={product.price}
-                    image={product.image}
-                    category={product.category}
-                    stock={product.stock}
-                    creatorId={product.creatorId}
-                  />
-                ))}
+                {sortedProducts.map((product) =>
+                  product.productType === "presale" ? (
+                    <PresaleProductCard
+                      key={product.id}
+                      id={product.id}
+                      name={product.name}
+                      price={product.price}
+                      image={product.image}
+                      category={product.category}
+                      currentBackers={product.currentBackers ?? 0}
+                      targetBackers={product.targetBackers ?? 1}
+                      daysLeft={product.daysLeft ?? 0}
+                    />
+                  ) : (
+                    <ProductCard
+                      key={product.id}
+                      id={product.id}
+                      name={product.name}
+                      price={product.price}
+                      image={product.image}
+                      category={product.category}
+                      stock={product.stock}
+                      creatorId={product.creatorId}
+                    />
+                  )
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-20">
