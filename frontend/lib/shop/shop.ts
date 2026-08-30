@@ -35,7 +35,7 @@ export interface Product {
 
 
 export async function fetchAllProduct(): Promise<Product[]> {
-  const response = await api.get("/api/v1//product")
+  const response = await api.get("/api/v1/product")
 
   return response.data.data
 }

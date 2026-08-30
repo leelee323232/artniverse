@@ -201,7 +201,7 @@ export default async function ShopPage() {
 
   const webProduct = await fetchAllProduct();
 
-  const filteredProducts = [...mockProducts, ...webProduct].filter((product) => {
+  const filteredProducts = [...mockProducts, ...(Array.isArray(webProduct) ? webProduct : [])].filter((product) => {
     const matchesCategory =
       selectedCategory === "all" || product.categoryId === selectedCategory;
     const matchesProductType =
