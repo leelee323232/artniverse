@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import {
   LayoutList,
 } from "lucide-react";
 
-import { fetchAllProduct } from "@/lib/shop/shop";
+import { fetchAllProduct, Product } from "@/lib/shop/shop";
 
 const categories = [
   { id: "all", name: "全部商品", icon: Grid3X3, count: 156 },
@@ -198,10 +198,23 @@ export default async function ShopPage() {
   const [selectedProductType, setSelectedProductType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [webProducts, setWebProducts] = useState<Product[]>([]);
 
-  const webProduct = await fetchAllProduct();
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await fetchAllProduct();
+        setWebProducts(data);
+      } catch (error) {
+        console.error("取得商品失敗:", error);
+      }
+    };
 
-  const filteredProducts = [...mockProducts, ...(Array.isArray(webProduct) ? webProduct : [])].filter((product) => {
+    loadProducts();
+  }, []);
+
+
+  const filteredProducts = [...mockProducts, ...webProducts].filter((product) => {
     const matchesCategory =
       selectedCategory === "all" || product.categoryId === selectedCategory;
     const matchesProductType =
