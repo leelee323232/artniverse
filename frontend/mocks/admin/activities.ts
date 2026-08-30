@@ -9,6 +9,10 @@ export const mockActivities: Activity[] = [
     sortOrder: 1,
     isActive: true,
     createdAt: "2026-01-01",
+    startTime: "2026-01-01 00:00",
+    endTime: "2026-03-31 23:59",
+    publishStartTime: "2026-01-01 09:00",
+    publishEndTime: "2026-03-31 23:59",
   },
   {
     id: "a-2",
@@ -18,6 +22,10 @@ export const mockActivities: Activity[] = [
     sortOrder: 2,
     isActive: true,
     createdAt: "2026-01-04",
+    startTime: "2026-02-01 10:00",
+    endTime: "2026-04-30 18:00",
+    publishStartTime: "2026-02-01 10:00",
+    publishEndTime: "2026-04-30 18:00",
   },
   {
     id: "a-3",
@@ -27,5 +35,9 @@ export const mockActivities: Activity[] = [
     sortOrder: 3,
     isActive: false,
     createdAt: "2026-01-08",
+    startTime: null,
+    endTime: null,
+    publishStartTime: null,
+    publishEndTime: null,
   },
 ];

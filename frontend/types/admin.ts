@@ -39,6 +39,10 @@ export interface Activity extends AdminBaseEntity {
   title: string;
   linkUrl: string;
   imageUrl: string;
+  startTime: string | null;       // 活動開始時間
+  endTime: string | null;         // 活動結束時間
+  publishStartTime: string | null; // 上架時間
+  publishEndTime: string | null;   // 下架時間
 }
 
 // 熱門創作者

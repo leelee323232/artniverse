@@ -1,5 +1,7 @@
 export type CommissionRequestStatus = "pending" | "in-progress" | "completed"
 
+export type ApplicantCondition = "all" | "level-above" | "direct"
+
 export interface CommissionRequest {
   id: string
   title: string
@@ -15,6 +17,10 @@ export interface CommissionRequest {
   phone: string
   notes: string
   attachments: string[]
+  applicantCondition: ApplicantCondition
+  targetCreator?: string
+  revenueShare: number
+  proposalFiles: { name: string; size: number }[]
 }
 
 export const mockCommissionRequests: CommissionRequest[] = [
@@ -33,6 +39,9 @@ export const mockCommissionRequests: CommissionRequest[] = [
     phone: "0912345678",
     notes: "希望提供 AI 及 PNG 兩種格式",
     attachments: [],
+    applicantCondition: "level-above",
+    revenueShare: 10,
+    proposalFiles: [{ name: "咖啡廳品牌企畫書.pdf", size: 2048000 }],
   },
   {
     id: "REQ-002",
@@ -49,6 +58,10 @@ export const mockCommissionRequests: CommissionRequest[] = [
     phone: "0923456789",
     notes: "",
     attachments: [],
+    applicantCondition: "direct",
+    targetCreator: "小夢創作室",
+    revenueShare: 15,
+    proposalFiles: [],
   },
   {
     id: "REQ-003",
@@ -65,5 +78,11 @@ export const mockCommissionRequests: CommissionRequest[] = [
     phone: "0934567890",
     notes: "T-shirt 需提供白底和黑底兩版",
     attachments: [],
+    applicantCondition: "all",
+    revenueShare: 10,
+    proposalFiles: [
+      { name: "品牌周邊企畫書.pdf", size: 3145728 },
+      { name: "設計參考簡報.pptx", size: 5242880 },
+    ],
   },
 ]

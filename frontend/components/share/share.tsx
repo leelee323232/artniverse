@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactElement } from "react";
+import { usePathname } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -22,12 +23,14 @@ interface ShareProps {
 export function Share({
   title = "與好友分享",
   subtitle = "連結宇宙中的創作，與朋友分享精彩內容！",
-  shareUrl = typeof window !== "undefined" ? window.location.href : "",
+  shareUrl,
   trigger,
   open: externalOpen,
   onOpenChange: externalOnOpenChange,
 }: ShareProps) {
   const [copied, setCopied] = useState(false);
+  const pathname = usePathname();
+  const resolvedUrl = shareUrl ?? (typeof window !== "undefined" ? `${window.location.origin}${pathname}` : "");
 
   const dialogProps =
     externalOpen !== undefined
@@ -36,7 +39,7 @@ export function Share({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(resolvedUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -48,19 +51,19 @@ export function Share({
     {
       name: "Facebook",
       bgColor: "bg-[#1877F2]",
-      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(resolvedUrl)}`,
       icon: <span className="text-white text-2xl font-bold leading-none">f</span>,
     },
     {
       name: "LINE",
       bgColor: "bg-[#06C755]",
-      url: `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}`,
+      url: `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(resolvedUrl)}`,
       icon: <span className="text-white text-[11px] font-bold tracking-tight">LINE</span>,
     },
     {
       name: "Gmail",
       bgColor: "bg-card border border-border/60",
-      url: `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(title)}&body=${encodeURIComponent(`${subtitle}\n\n${shareUrl}`)}`,
+      url: `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(title)}&body=${encodeURIComponent(`${subtitle}\n\n${resolvedUrl}`)}`,
       icon: <Mail className="h-6 w-6 text-[#EA4335] stroke-[2.5]" />,
     },
   ];
@@ -97,7 +100,7 @@ export function Share({
             </label>
             <div className="flex items-center gap-2 rounded-xl bg-background/60 border border-border/50 px-3 py-2.5">
               <span className="flex-1 truncate text-xs text-muted-foreground">
-                {shareUrl}
+                {resolvedUrl}
               </span>
               <button
                 type="button"
