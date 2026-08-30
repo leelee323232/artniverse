@@ -31,4 +31,6 @@ Route::prefix('v1')->group(function (): void {
             [HealthController::class, 'authenticated']
         )->name('api.v1.health.authenticated');
     });
+
+    require __DIR__.'/product.php';
 });
