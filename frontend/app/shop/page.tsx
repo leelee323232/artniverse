@@ -193,6 +193,23 @@ const mockProducts = [
   },
 ];
 
+//過渡時期使用
+function getFirstImage(image: string): string {
+  if (!image) return "";
+
+  try {
+    const parsed = JSON.parse(image);
+
+    if (Array.isArray(parsed)) {
+      return parsed[0] ?? "";
+    }
+
+    return image;
+  } catch {
+    return image;
+  }
+}
+
 export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedProductType, setSelectedProductType] = useState("all");
@@ -392,7 +409,7 @@ export default function ShopPage() {
                     id={product.id}
                     name={product.name}
                     price={product.price}
-                    image={product.image}
+                    image={getFirstImage(product.image)}
                     category={product.category}
                     stock={product.stock}
                     creatorId={product.creatorId}
