@@ -892,7 +892,7 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
               </Dialog>
             </div>
 
-            {/* 過往貼文牆 - 引用創作者入口頁的貼文元件，靠左排列 */}
+            {/* 貼文牆 - 引用創作者入口頁的貼文元件，靠左排列 */}
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-foreground">過往作品</h2>
               <div className="mr-auto max-w-2xl space-y-4">
