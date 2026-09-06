@@ -13,9 +13,21 @@ import {
   getEffectiveScalePercent,
 } from "./lib/print-size";
 
+type ResizeHandle = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+interface ResizeState {
+  imageId: string;
+  handle: ResizeHandle;
+  startX: number;
+  startY: number;
+  startWidth: number;
+  startHeight: number;
+}
+
 export function useNewProductForm() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const templateFileInputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
 
   // Step management
@@ -40,6 +52,12 @@ export function useNewProductForm() {
   // Multiple design uploads - organized by zone
   const [designImages, setDesignImages] = useState<DesignImage[]>([]);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+  const [creatorTemplateFile, setCreatorTemplateFile] = useState<{
+    name: string;
+    size: number;
+    url: string;
+  } | null>(null);
+  const [templateFileUploadError, setTemplateFileUploadError] = useState("");
 
   // Editor state
   const [editorZoom, setEditorZoom] = useState(100);
@@ -47,6 +65,7 @@ export function useNewProductForm() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
@@ -77,6 +96,9 @@ export function useNewProductForm() {
   // Limited edition settings (一般商品限量)
   const [isLimited, setIsLimited] = useState(false);
   const [limitedQuantity, setLimitedQuantity] = useState("");
+  const [isTimedSale, setIsTimedSale] = useState(false);
+  const [saleStartAt, setSaleStartAt] = useState("");
+  const [saleEndAt, setSaleEndAt] = useState("");
 
   // Note for admin (創作者給管理員的備註)
   const [productNote, setProductNote] = useState("");
@@ -130,6 +152,7 @@ export function useNewProductForm() {
   // Local input state for the editable print size fields (kept as strings for smooth typing)
   const [printWidthInput, setPrintWidthInput] = useState("");
   const [printHeightInput, setPrintHeightInput] = useState("");
+  const [rotationInput, setRotationInput] = useState("");
 
   // Sync the size inputs when the selection, zone, or auto scale changes.
   // (Editing the inputs updates customWidth/customHeight, which are NOT in the deps,
@@ -145,6 +168,10 @@ export function useNewProductForm() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedImageId, activeZoneId, selectedImage?.scale]);
+
+  useEffect(() => {
+    setRotationInput(selectedImage ? String(selectedImage.rotation) : "");
+  }, [selectedImageId, selectedImage?.rotation]);
 
   // Update image properties
   const updateImage = (id: string, updates: Partial<DesignImage>) => {
@@ -163,6 +190,13 @@ export function useNewProductForm() {
       customWidth: Math.round(w * 10) / 10,
       customHeight: Math.round(h * 10) / 10,
     });
+  };
+
+  const commitRotation = (rotationStr: string) => {
+    if (!selectedImage) return;
+    const rotation = Number(rotationStr);
+    if (!Number.isFinite(rotation)) return;
+    updateImage(selectedImage.id, { rotation });
   };
 
   // Check if print size exceeds max
@@ -261,6 +295,29 @@ export function useNewProductForm() {
     }
   };
 
+  const handleTemplateFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    if (!extension || !["ai", "psd", "pdf", "svg", "zip"].includes(extension)) {
+      setTemplateFileUploadError("請上傳 AI、PSD、PDF、SVG 或 ZIP 格式的刀模檔");
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setTemplateFileUploadError("刀模檔案不可超過 20MB");
+      return;
+    }
+
+    setCreatorTemplateFile({
+      name: file.name,
+      size: file.size,
+      url: URL.createObjectURL(file),
+    });
+    setTemplateFileUploadError("");
+    if (templateFileInputRef.current) templateFileInputRef.current.value = "";
+  };
+
   // Delete image
   const deleteImage = (id: string) => {
     setDesignImages((prev) => prev.filter((img) => img.id !== id));
@@ -291,9 +348,64 @@ export function useNewProductForm() {
     });
   };
 
+  const handleResizeStart = (
+    e: React.MouseEvent,
+    imageId: string,
+    handle: ResizeHandle,
+  ) => {
+    if (editorTool !== "select" || !activeZone) return;
+    e.stopPropagation();
+    e.preventDefault();
+
+    const rect = editorRef.current?.getBoundingClientRect();
+    const image = designImages.find((img) => img.id === imageId);
+    if (!rect || !image) return;
+
+    const size = getEffectivePrintSize(image, activeZone);
+    setSelectedImageId(imageId);
+    setIsDragging(false);
+    setResizeState({
+      imageId,
+      handle,
+      startX: e.clientX,
+      startY: e.clientY,
+      startWidth: size.width,
+      startHeight: size.height,
+    });
+  };
+
   // Handle mouse move for dragging or panning
   const handleEditorMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && selectedImageId && editorTool === "select") {
+    if (resizeState && activeZone && editorTool === "select") {
+      const rect = editorRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const horizontalDirection = resizeState.handle.includes("left") ? -1 : 1;
+      const verticalDirection = resizeState.handle.includes("top") ? -1 : 1;
+      const widthDelta =
+        ((e.clientX - resizeState.startX) / rect.width) *
+        activeZone.width *
+        horizontalDirection;
+      const heightDelta =
+        ((e.clientY - resizeState.startY) / rect.height) *
+        activeZone.height *
+        verticalDirection;
+      const aspectRatio = resizeState.startWidth / resizeState.startHeight;
+      const proposedWidth = resizeState.startWidth + widthDelta;
+      const proposedHeight = resizeState.startHeight + heightDelta;
+      const widthFromHeight = proposedHeight * aspectRatio;
+      const useWidth = Math.abs(widthDelta) >= Math.abs(heightDelta);
+      const maxWidth = Math.min(activeZone.width, activeZone.height * aspectRatio);
+      const width = Math.max(
+        0.1,
+        Math.min(maxWidth, useWidth ? proposedWidth : widthFromHeight),
+      );
+
+      updateImage(resizeState.imageId, {
+        customWidth: Math.round(width * 10) / 10,
+        customHeight: Math.round((width / aspectRatio) * 10) / 10,
+      });
+    } else if (isDragging && selectedImageId && editorTool === "select") {
       const rect = editorRef.current?.getBoundingClientRect();
       if (!rect) return;
 
@@ -317,6 +429,7 @@ export function useNewProductForm() {
   // Handle mouse up
   const handleEditorMouseUp = () => {
     setIsDragging(false);
+    setResizeState(null);
     setIsPanning(false);
   };
 
@@ -349,6 +462,50 @@ export function useNewProductForm() {
 
   // Submit application
   const handleSubmit = async () => {
+    const designFiles = designImages.map((image) => {
+      const zone = selectedProduct?.printZones.find(
+        (item) => item.id === image.zoneId,
+      );
+      const size = zone ? getEffectivePrintSize(image, zone) : null;
+
+      return {
+        zoneId: image.zoneId,
+        fileName: image.file.name,
+        fileType: image.file.type,
+        fileSize: image.file.size,
+        position: image.position,
+        rotation: image.rotation,
+        uploadedImageSize: size
+          ? { widthCm: size.width, heightCm: size.height }
+          : null,
+      };
+    });
+
+    const payload = {
+      productType,
+      designSource: selectedProduct?.designSource ?? "image",
+      productName: productName.trim(),
+      productDescription: productDescription.trim(),
+      selectedProductId: selectedProduct?.id ?? null,
+      customProductRequest: customProductRequest.trim() || null,
+      sellingPrice: sellingPrice ? Number(sellingPrice) : null,
+      preOrderQuantity: preOrderQuantity ? Number(preOrderQuantity) : null,
+      isTimedSale,
+      saleStartAt: isTimedSale ? saleStartAt || null : null,
+      saleEndAt: isTimedSale ? saleEndAt || null : null,
+      isLimited,
+      limitedQuantity: isLimited && limitedQuantity ? Number(limitedQuantity) : null,
+      designFiles,
+      templateFile: creatorTemplateFile
+        ? {
+            fileName: creatorTemplateFile.name,
+            fileSize: creatorTemplateFile.size,
+          }
+        : null,
+      productNote: productNote.trim() || null,
+    };
+
+    console.log("[Product application payload]", payload);
     setIsSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, 2000));
     setIsSubmitting(false);
@@ -356,7 +513,7 @@ export function useNewProductForm() {
   };
 
   // Validation - check all zones have at least one image or no zones exceed size
-  const hasAnyDesigns = designImages.length > 0;
+  const hasAnyDesigns = designImages.length > 0 || creatorTemplateFile;
   const allDesignsValid = !designImages.some((img) => {
     const zone = selectedProduct?.printZones.find((z) => z.id === img.zoneId);
     if (!zone) return false;
@@ -401,6 +558,13 @@ export function useNewProductForm() {
         submitBlockers.push("請設定限量數量");
       }
     }
+    if (productType === "general" && isTimedSale) {
+      if (!saleStartAt) submitBlockers.push("請設定限時販售開始時間");
+      if (!saleEndAt) submitBlockers.push("請設定限時販售結束時間");
+      if (saleStartAt && saleEndAt && new Date(saleEndAt) <= new Date(saleStartAt)) {
+        submitBlockers.push("限時販售結束時間需晚於開始時間");
+      }
+    }
   }
 
   if (selectedProduct?.hasMinQuantity) {
@@ -430,6 +594,7 @@ export function useNewProductForm() {
   return {
     router,
     fileInputRef,
+    templateFileInputRef,
     editorRef,
     currentStep,
     setCurrentStep,
@@ -447,6 +612,9 @@ export function useNewProductForm() {
     setDesignImages,
     selectedImageId,
     setSelectedImageId,
+    creatorTemplateFile,
+    setCreatorTemplateFile,
+    templateFileUploadError,
     editorZoom,
     setEditorZoom,
     editorTool,
@@ -484,6 +652,12 @@ export function useNewProductForm() {
     setIsLimited,
     limitedQuantity,
     setLimitedQuantity,
+    isTimedSale,
+    setIsTimedSale,
+    saleStartAt,
+    setSaleStartAt,
+    saleEndAt,
+    setSaleEndAt,
     productNote,
     setProductNote,
     isSubmitting,
@@ -500,13 +674,18 @@ export function useNewProductForm() {
     setPrintWidthInput,
     printHeightInput,
     setPrintHeightInput,
+    rotationInput,
+    setRotationInput,
     updateImage,
     commitPrintSize,
+    commitRotation,
     isPrintSizeExceeded,
     costs,
     handleFileUpload,
+    handleTemplateFileUpload,
     deleteImage,
     handleImageMouseDown,
+    handleResizeStart,
     handleEditorMouseMove,
     handleEditorMouseUp,
     handleEditorMouseDown,

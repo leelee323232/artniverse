@@ -21,8 +21,12 @@ import {
   Layers,
   Hand,
   MousePointer,
+  Download,
+  FileText,
+  Upload,
+  X,
 } from "lucide-react";
-import { getEffectiveScalePercent } from "./lib/print-size";
+import { getEffectivePrintSize, getEffectiveScalePercent } from "./lib/print-size";
 import { WatermarkOverlay } from "./WatermarkOverlay";
 import type { NewProductForm } from "./useNewProductForm";
 
@@ -38,7 +42,12 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
     setActiveZoneId,
     activeZoneImages,
     fileInputRef,
+    templateFileInputRef,
     handleFileUpload,
+    handleTemplateFileUpload,
+    creatorTemplateFile,
+    setCreatorTemplateFile,
+    templateFileUploadError,
     selectedImageId,
     setSelectedImageId,
     deleteImage,
@@ -49,7 +58,10 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
     setPrintWidthInput,
     printHeightInput,
     setPrintHeightInput,
+    rotationInput,
+    setRotationInput,
     commitPrintSize,
+    commitRotation,
     editorTool,
     setEditorTool,
     editorZoom,
@@ -61,6 +73,7 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
     handleEditorMouseMove,
     handleEditorMouseUp,
     handleImageMouseDown,
+    handleResizeStart,
     ActiveMockup,
     effectiveScalePercent,
     updateImage,
@@ -70,8 +83,14 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
     allDesignsValid,
   } = form;
 
+  const templateFile = creatorTemplateFile ?? selectedProduct?.templateFile;
+  const designSource = selectedProduct?.designSource ?? "image";
+  const requiresTemplateFile = designSource === "templateFile";
+
   return (
-    <div className={`${isFullscreen ? "fixed inset-0 z-50 bg-background" : ""}`}>
+    <div
+      className={`${isFullscreen ? "fixed inset-0 z-50 bg-background" : ""}`}
+    >
       <Card
         className={`border-border/50 bg-card/30 backdrop-blur-sm ${isFullscreen ? "h-full rounded-none border-0" : "p-6"}`}
       >
@@ -109,7 +128,7 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
           {/* Left Panel: Zone Selection, Upload & Layers */}
           <div className="space-y-4 overflow-y-auto">
             {/* Zone Selection */}
-            {selectedProduct && selectedProduct.printZones.length > 1 && (
+            {designSource === "image" && selectedProduct && selectedProduct.printZones.length > 1 && (
               <div className="rounded-lg border border-border/50 bg-white/5 p-4">
                 <Label className="mb-3 block font-bold text-foreground">
                   選擇印刷區域
@@ -144,7 +163,87 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
               </div>
             )}
 
+            {/* Die-line File */}
+            {designSource === "templateFile" && (
+            <div className="rounded-lg border border-border/50 bg-white/5 p-4">
+              <Label className="mb-3 flex items-center gap-2 font-bold text-foreground">
+                <FileText className="h-4 w-4" />
+                刀模檔案
+              </Label>
+              {creatorTemplateFile ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2 rounded-md bg-primary/10 p-2">
+                    <span className="min-w-0 truncate text-sm text-foreground">
+                      {creatorTemplateFile.name}
+                    </span>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <a
+                        href={creatorTemplateFile.url}
+                        download={creatorTemplateFile.name}
+                        className="rounded p-1 text-primary hover:bg-primary/10"
+                        aria-label="下載刀模檔案"
+                      >
+                        <Download className="h-4 w-4" />
+                      </a>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => setCreatorTemplateFile(null)}
+                        aria-label="移除刀模檔案"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    此檔案會隨商品開發申請提供給審核端下載。
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => templateFileInputRef.current?.click()}
+                    className="w-full bg-transparent"
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    上傳刀模檔案
+                  </Button>
+                  <input
+                    ref={templateFileInputRef}
+                    type="file"
+                    accept=".ai,.psd,.pdf,.svg,.zip"
+                    onChange={handleTemplateFileUpload}
+                    className="hidden"
+                  />
+                </>
+              )}
+              {templateFileUploadError ? (
+                <p className="mt-2 text-xs text-destructive">
+                  {templateFileUploadError}
+                </p>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  支援 AI、PSD、PDF、SVG、ZIP；單檔上限 20MB
+                </p>
+              )}
+              {!creatorTemplateFile && selectedProduct?.templateFile && (
+                <a
+                  href={selectedProduct.templateFile.url}
+                  download={selectedProduct.templateFile.name}
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  下載平台提供的刀模
+                </a>
+              )}
+            </div>
+            )}
+
             {/* Upload Button */}
+            {designSource === "image" && (
+            <>
             <div className="rounded-lg border border-border/50 bg-white/5 p-4">
               <Label className="mb-3 flex items-center gap-2 font-bold text-foreground">
                 <ImagePlus className="h-4 w-4" />
@@ -268,7 +367,9 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
                     </p>
                   </>
                 ) : (
-                  <div className="text-sm text-muted-foreground">請選擇圖層</div>
+                  <div className="text-sm text-muted-foreground">
+                    請選擇圖層
+                  </div>
                 )}
                 <div className="mt-2 text-xs text-muted-foreground">
                   最大: {activeZone.width} x {activeZone.height} cm
@@ -285,10 +386,33 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
                 </p>
               </div>
             )}
+            </>
+            )}
           </div>
 
           {/* Center: Canvas Editor */}
           <div className="flex flex-col">
+            {designSource === "templateFile" ? (
+              <div className="flex min-h-[500px] flex-1 flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-8 text-center">
+                <FileText className="mb-4 h-12 w-12 text-primary" />
+                <p className="max-w-md text-base text-foreground">
+                  此商品模板要求上傳刀模檔案，不提供設計圖片上傳與效果圖編輯。
+                </p>
+                {templateFile ? (
+                  <Button asChild className="mt-6">
+                    <a href={templateFile.url} download={templateFile.name}>
+                      <Download className="mr-2 h-4 w-4" />
+                      下載刀模
+                    </a>
+                  </Button>
+                ) : (
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    請先於左側上傳刀模檔案。
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
             {/* Editor Toolbar */}
             <div className="mb-2 flex items-center justify-between rounded-lg border border-border/50 bg-white/5 px-3 py-2">
               <div className="flex items-center gap-2">
@@ -343,9 +467,7 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
             {/* Canvas Area */}
             <div
               className={`flex flex-1 items-center justify-center overflow-hidden rounded-xl border-2 border-border/50 bg-[#1a1a1a] ${
-                editorTool === "pan"
-                  ? "cursor-grab active:cursor-grabbing"
-                  : ""
+                editorTool === "pan" ? "cursor-grab active:cursor-grabbing" : ""
               }`}
               style={{ minHeight: isFullscreen ? "auto" : "500px" }}
             >
@@ -370,50 +492,80 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
                       zoneHighlight="#a855f7"
                     />
                   ) : (
-                    <div className="flex h-3/4 w-3/4 items-center justify-center rounded-lg bg-white/10">
-                      <Package className="h-24 w-24 text-muted-foreground/30" />
+                    <div className="flex h-3/4 w-3/4 flex-col items-center justify-center gap-3 rounded-lg bg-white/10 p-5 text-center">
+                      <Package className="h-16 w-16 text-muted-foreground/30" />
+                      {requiresTemplateFile ? (
+                        <a
+                          href={templateFile?.url}
+                          download={templateFile?.name}
+                          className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                        >
+                          <Download className="h-4 w-4" />
+                          請下載刀模
+                        </a>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          尚無效果圖
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
 
                 {/* Design Images for active zone */}
-                {activeZoneImages.map((img) => (
+                {designSource === "image" && activeZoneImages.map((img) => (
                   <div
                     key={img.id}
                     className={`absolute cursor-move ${selectedImageId === img.id ? "ring-2 ring-primary" : ""}`}
                     style={{
                       left: `${img.position.x}%`,
                       top: `${img.position.y}%`,
-                      transform: `translate(-50%, -50%) scale(${
-                        (activeZone
-                          ? getEffectiveScalePercent(img, activeZone)
-                          : img.scale) / 100
-                      }) rotate(${img.rotation}deg)`,
-                      maxWidth: "50%",
-                      maxHeight: "50%",
+                      width: activeZone
+                        ? `${(getEffectivePrintSize(img, activeZone).width / activeZone.width) * 100}%`
+                        : "50%",
+                      height: activeZone
+                        ? `${(getEffectivePrintSize(img, activeZone).height / activeZone.height) * 100}%`
+                        : "50%",
+                      transform: `translate(-50%, -50%) rotate(${img.rotation}deg)`,
                     }}
                     onMouseDown={(e) => handleImageMouseDown(e, img.id)}
                   >
                     <img
                       src={img.url}
                       alt="Design"
-                      className="max-h-full max-w-full object-contain drop-shadow-lg"
+                      className="h-full w-full object-contain drop-shadow-lg"
                       draggable={false}
                     />
                     <WatermarkOverlay />
                     {selectedImageId === img.id && (
                       <>
-                        <div className="absolute -left-1.5 -top-1.5 h-3 w-3 rounded-full bg-primary" />
-                        <div className="absolute -right-1.5 -top-1.5 h-3 w-3 rounded-full bg-primary" />
-                        <div className="absolute -bottom-1.5 -left-1.5 h-3 w-3 rounded-full bg-primary" />
-                        <div className="absolute -bottom-1.5 -right-1.5 h-3 w-3 rounded-full bg-primary" />
+                        {[
+                          ["top-left", "-left-1.5 -top-1.5 cursor-nwse-resize"],
+                          ["top-right", "-right-1.5 -top-1.5 cursor-nesw-resize"],
+                          ["bottom-left", "-bottom-1.5 -left-1.5 cursor-nesw-resize"],
+                          ["bottom-right", "-bottom-1.5 -right-1.5 cursor-nwse-resize"],
+                        ].map(([handle, position]) => (
+                          <button
+                            key={handle}
+                            type="button"
+                            aria-label={`使用${handle}調整圖片尺寸`}
+                            onMouseDown={(event) =>
+                              handleResizeStart(
+                                event,
+                                img.id,
+                                handle as "top-left" | "top-right" | "bottom-left" | "bottom-right",
+                              )
+                            }
+                            className={`absolute z-10 h-3 w-3 rounded-full border border-background bg-primary ${position}`}
+                          />
+                        ))}
                       </>
                     )}
                   </div>
                 ))}
 
                 {/* Empty state */}
-                {activeZoneImages.length === 0 && (
+                {designSource === "image" && activeZoneImages.length === 0 && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="rounded-lg bg-black/50 px-4 py-3 text-center">
                       <ImagePlus className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
@@ -431,6 +583,8 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
               選擇工具: 拖曳圖片移動位置 | 平移工具: 拖曳畫布移動視角 |
               使用右側面板調整尺寸與旋轉
             </div>
+              </>
+            )}
           </div>
 
           {/* Right Panel: Image Properties */}
@@ -473,10 +627,7 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
                       type="range"
                       min="10"
                       max="200"
-                      value={Math.min(
-                        200,
-                        Math.max(10, effectiveScalePercent),
-                      )}
+                      value={Math.min(200, Math.max(10, effectiveScalePercent))}
                       onChange={(e) =>
                         updateImage(selectedImage.id, {
                           scale: parseInt(e.target.value),
@@ -503,9 +654,21 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
                       <span className="text-sm text-muted-foreground">
                         旋轉
                       </span>
-                      <span className="text-sm text-foreground">
-                        {selectedImage.rotation}°
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          value={rotationInput}
+                          onChange={(e) => {
+                            setRotationInput(e.target.value);
+                            commitRotation(e.target.value);
+                          }}
+                          className="h-8 w-24 text-right text-sm"
+                          aria-label="旋轉角度"
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          度
+                        </span>
+                      </div>
                     </div>
                     <input
                       type="range"

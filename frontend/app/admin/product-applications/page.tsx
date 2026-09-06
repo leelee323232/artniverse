@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, Check, X, RefreshCw, Package } from "lucide-react";
+import {
+  Eye,
+  Check,
+  X,
+  RefreshCw,
+  Package,
+  Download,
+  FileText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { mockProductApplications } from "@/mocks/admin/productApplications";
@@ -67,6 +75,8 @@ export default function ProductApplicationsPage() {
   };
 
   const formatMoney = (value: number) => `NT$ ${value.toLocaleString()}`;
+  const formatFileSize = (size: number) =>
+    `${(size / 1024 / 1024).toFixed(size >= 1024 * 1024 ? 1 : 2)} MB`;
 
   return (
     <div>
@@ -192,6 +202,68 @@ export default function ProductApplicationsPage() {
                 </div>
               </div>
 
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-foreground">
+                  審核檔案
+                </h4>
+                {selectedApp.designs.map((design, index) => (
+                  <div
+                    key={`${design.zoneName}-${index}`}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-muted/20 p-3"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <FileText className="h-4 w-4 shrink-0 text-primary" />
+                      <span className="truncate text-sm text-foreground">
+                        {design.zoneName}效果圖
+                      </span>
+                    </div>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 bg-transparent"
+                    >
+                      <a
+                        href={design.imageUrl}
+                        download={`${design.zoneName}效果圖.png`}
+                      >
+                        <Download className="mr-1 h-4 w-4" />
+                        下載
+                      </a>
+                    </Button>
+                  </div>
+                ))}
+                {selectedApp.templateFile ? (
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <FileText className="h-4 w-4 shrink-0 text-primary" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {selectedApp.templateFile.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          刀模檔案 ·{" "}
+                          {formatFileSize(selectedApp.templateFile.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button asChild size="sm" className="shrink-0">
+                      <a
+                        href={selectedApp.templateFile.url}
+                        download={selectedApp.templateFile.name}
+                      >
+                        <Download className="mr-1 h-4 w-4" />
+                        下載
+                      </a>
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    此商品未提供刀模檔案。
+                  </p>
+                )}
+              </div>
+
               {/* 產品資訊 */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-foreground">
@@ -227,9 +299,9 @@ export default function ProductApplicationsPage() {
                   </div>
                 )}
                 <div className="grid grid-cols-3 border-b border-border/30 pb-2">
-                  <span className="font-medium">最大印刷尺寸</span>
+                  <span className="font-medium">上傳圖片尺寸</span>
                   <span className="col-span-2 text-foreground">
-                    {selectedApp.printSize}
+                    {selectedApp.uploadedImageSize}
                   </span>
                 </div>
                 {selectedApp.preOrderQuantity ? (

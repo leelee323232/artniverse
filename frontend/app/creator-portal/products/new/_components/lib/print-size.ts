@@ -24,17 +24,30 @@ export function calculatePrintSize(scale: number, zone: PrintZone) {
   };
 }
 
-// Effective print size: use the user-defined size if set, otherwise the auto-calculated size
+// Each manually entered dimension independently overrides its automatic value.
+// This lets a creator edit only the height without resetting the width.
 export function getEffectivePrintSize(img: DesignImage, zone: PrintZone) {
-  if (
-    img.customWidth != null &&
-    img.customHeight != null &&
-    !Number.isNaN(img.customWidth) &&
-    !Number.isNaN(img.customHeight)
-  ) {
-    return { width: img.customWidth, height: img.customHeight };
-  }
-  return calculatePrintSize(img.scale, zone);
+  const automaticSize = calculatePrintSize(img.scale, zone);
+  return {
+    width:
+      img.customWidth != null && !Number.isNaN(img.customWidth)
+        ? img.customWidth
+        : automaticSize.width,
+    height:
+      img.customHeight != null && !Number.isNaN(img.customHeight)
+        ? img.customHeight
+        : automaticSize.height,
+  };
+}
+
+// Height and width can be set independently, so the editor needs separate
+// horizontal and vertical scale values rather than one uniform scale.
+export function getEffectiveScaleFactors(img: DesignImage, zone: PrintZone) {
+  const size = getEffectivePrintSize(img, zone);
+  return {
+    x: (size.width * 200) / zone.width,
+    y: (size.height * 200) / zone.height,
+  };
 }
 
 // Effective uniform scale (%) derived from the effective print size.

@@ -16,14 +16,21 @@ export interface ProductDefinition {
   baseCost: number;
   minOrder: number;
   hasMinQuantity: boolean;
+  // 決定創作者新增商品時需提交的設計檔案種類。
+  designSource: "image" | "templateFile";
   printZones: PrintZone[];
   specs: string[];
+  templateFile?: {
+    name: string;
+    url: string;
+  };
 }
 
 // Predefined products with print zones
 export const platformProducts: ProductDefinition[] = [
   {
     id: "tshirt",
+    designSource: "image",
     name: "T-Shirt",
     nameZh: "T恤",
     category: "服飾",
@@ -55,6 +62,7 @@ export const platformProducts: ProductDefinition[] = [
   },
   {
     id: "hoodie",
+    designSource: "templateFile",
     name: "Hoodie",
     nameZh: "連帽衫",
     category: "服飾",
@@ -114,6 +122,7 @@ export const platformProducts: ProductDefinition[] = [
   // },
   {
     id: "tote-bag",
+    designSource: "image",
     name: "Tote Bag",
     nameZh: "帆布袋",
     category: "包袋",
@@ -140,6 +149,7 @@ export const platformProducts: ProductDefinition[] = [
   },
   {
     id: "phone-case",
+    designSource: "templateFile",
     name: "Phone Case",
     nameZh: "手機殼",
     category: "3C配件",
@@ -159,6 +169,7 @@ export const platformProducts: ProductDefinition[] = [
   },
   {
     id: "poster",
+    designSource: "image",
     name: "Poster",
     nameZh: "海報",
     category: "印刷品",
@@ -178,6 +189,7 @@ export const platformProducts: ProductDefinition[] = [
   },
   {
     id: "sticker-pack",
+    designSource: "templateFile",
     name: "Sticker Pack",
     nameZh: "貼紙組",
     category: "印刷品",
@@ -194,9 +206,15 @@ export const platformProducts: ProductDefinition[] = [
       },
     ],
     specs: ["尺寸: 可客製", "材質: 防水貼紙", "每組5-10張"],
+    // 這個商品沒有可直接套用的效果圖，創作者需依刀模製作設計。
+    templateFile: {
+      name: "貼紙組刀模.ai",
+      url: "data:text/plain;charset=utf-8,%E8%B2%BC%E7%B4%99%E7%B5%84%E5%88%80%E6%A8%A1%E6%AA%94%E6%A1%88%EF%BC%88%E7%A4%BA%E7%AF%84%EF%BC%89",
+    },
   },
   {
     id: "notebook",
+    designSource: "image",
     name: "Notebook",
     nameZh: "筆記本",
     category: "文具",
@@ -216,6 +234,7 @@ export const platformProducts: ProductDefinition[] = [
   },
   {
     id: "pillow",
+    designSource: "image",
     name: "Pillow",
     nameZh: "抱枕",
     category: "家居",
@@ -242,6 +261,7 @@ export const platformProducts: ProductDefinition[] = [
   },
   {
     id: "canvas",
+    designSource: "image",
     name: "Canvas Print",
     nameZh: "無框畫",
     category: "家居",
