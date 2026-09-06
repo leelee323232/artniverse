@@ -299,7 +299,7 @@ export default function ProductApplicationsPage() {
                   </div>
                 )}
                 <div className="grid grid-cols-3 border-b border-border/30 pb-2">
-                  <span className="font-medium">上傳圖片尺寸</span>
+                  <span className="font-medium">印刷尺寸</span>
                   <span className="col-span-2 text-foreground">
                     {selectedApp.uploadedImageSize}
                   </span>

@@ -26,6 +26,13 @@ export interface ProductDefinition {
   };
 }
 
+// 管理後台與創作者端共用相同的模板欄位；後續 API 可直接以此契約交換資料。
+export interface ProductTemplate extends ProductDefinition {
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+}
+
 // Predefined products with print zones
 export const platformProducts: ProductDefinition[] = [
   {
