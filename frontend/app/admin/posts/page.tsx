@@ -69,7 +69,7 @@ export default function AdminPostsPage() {
       <div className="mb-6 flex items-center justify-between">
         {/* 左側標題 */}
         <div>
-          <h1 className="text-xl font-bold text-foreground">過往貼文牆</h1>
+          <h1 className="text-xl font-bold text-foreground">貼文牆</h1>
 
           <p className="text-sm text-muted-foreground">
             發佈創作動態、新品花絮，與追蹤粉絲進行零距離留言互動。
