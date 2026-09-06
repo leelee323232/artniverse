@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Package,
+  PanelsTopLeft,
   PackagePlus,
   Users,
   Image as ImageIcon,
@@ -24,6 +25,7 @@ export interface AdminNavItem {
 export const adminNavItems: AdminNavItem[] = [
   { label: "後台首頁", href: "/admin", icon: LayoutDashboard },
   { label: "商品管理", href: "/admin/products", icon: Package },
+  { label: "商品模板管理", href: "/admin/product-templates", icon: PanelsTopLeft },
   {
     label: "商品開發申請審核",
     href: "/admin/product-applications",

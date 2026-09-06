@@ -24,6 +24,13 @@ export interface Product extends AdminBaseEntity {
   imageUrl: string;
   categoryId: string;
   stock: number;
+  templateFile?: ProductFile;
+}
+
+export interface ProductFile {
+  name: string;
+  size: number;
+  url: string;
 }
 
 // 創作者
@@ -82,7 +89,13 @@ export interface ProductApplication {
   isCustomProduct?: boolean; // 是否為客製化產品需求
   customRequest?: string; // 客製化產品描述
   designs: ProductApplicationDesign[]; // 各印刷區域設計圖
-  printSize: string; // 最大印刷尺寸，例如「15 x 20 cm」
+  uploadedImageSize: string; // 創作者上傳圖片的實際印刷尺寸，例如「15 x 20 cm」
+  templateFile?: ProductFile; // 平台提供、供創作者與審核端下載的模板檔
+  isTimedSale?: boolean; // 是否啟用限時販售
+  saleStartAt?: string; // 限時販售開始時間（ISO 8601）
+  saleEndAt?: string; // 限時販售結束時間（ISO 8601）
+  isLimited?: boolean; // 是否啟用限量販售
+  limitedQuantity?: number; // 啟用限量時的可售總數
 
   // 價格與成本
   baseCost: number; // 產品基本成本

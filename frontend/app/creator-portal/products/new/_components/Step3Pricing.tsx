@@ -29,6 +29,7 @@ import {
   CalendarClock,
   FileText,
   Boxes,
+  Download,
 } from "lucide-react";
 import { getEffectiveScalePercent } from "./lib/print-size";
 import { WatermarkOverlay } from "./WatermarkOverlay";
@@ -68,9 +69,16 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
     setIsLimited,
     limitedQuantity,
     setLimitedQuantity,
+    isTimedSale,
+    setIsTimedSale,
+    saleStartAt,
+    setSaleStartAt,
+    saleEndAt,
+    setSaleEndAt,
     productNote,
     setProductNote,
     designImages,
+    creatorTemplateFile,
     getMockupComponent,
     customProductRequest,
     canSubmit,
@@ -79,6 +87,9 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
     handleSubmit,
     setCurrentStep,
   } = form;
+
+  const isTemplateFileSource = selectedProduct?.designSource === "templateFile";
+  const templatePreviewFile = creatorTemplateFile ?? selectedProduct?.templateFile;
 
   return (
     <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
@@ -90,48 +101,49 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
       <div className="mb-6 space-y-4">
         {/* Type selector + name + description */}
         <div className="space-y-4 rounded-lg border border-border/50 bg-white/5 p-4">
-          <div>
-            <Label className="mb-2 flex items-center gap-2 font-bold text-foreground">
-              <Layers className="h-5 w-5 text-primary" />
-              商品類型
-            </Label>
-            <Select
-              value={productType}
-              onValueChange={(v) =>
-                setProductType(v as "general" | "auction" | "presale")
-              }
-            >
-              <SelectTrigger className="bg-white/5">
-                <SelectValue placeholder="選擇商品類型" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="general">一般商品</SelectItem>
-                <SelectItem value="auction">競標商品</SelectItem>
-                <SelectItem value="presale">預售商品</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {productType === "auction"
-                ? "競標商品：設定時間內價高者得，適合畫作、陶藝等原創作品。"
-                : productType === "presale"
-                  ? "預售商品：於期間內達到設定數量才會發貨，未達標則退費。"
-                  : "一般商品：以固定售價販售。"}
-            </p>
-          </div>
+          <div className="flex gap-4 space-y-2">
+            <div className="w-1/2">
+              <Label className="mb-2 flex items-center gap-2 font-bold text-foreground">
+                {/* <Layers className="h-4 w-4 text-primary" /> */}
+                商品類型
+              </Label>
+              <Select
+                value={productType}
+                onValueChange={(v) =>
+                  setProductType(v as "general" | "auction" | "presale")
+                }
+              >
+                <SelectTrigger className="bg-white/5">
+                  <SelectValue placeholder="選擇商品類型" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">一般商品</SelectItem>
+                  <SelectItem value="auction">競標商品</SelectItem>
+                  <SelectItem value="presale">預售商品</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {productType === "auction"
+                  ? "競標商品：設定時間內價高者得，適合畫作、陶藝等原創作品。"
+                  : productType === "presale"
+                    ? "預售商品：於期間內達到設定數量才會發貨，未達標則退費。"
+                    : "一般商品：以固定售價販售。"}
+              </p>
+            </div>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              產品名稱
-            </Label>
-            <Input
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
-              placeholder="輸入產品名稱"
-              className="bg-white/5"
-            />
+            <div className="w-1/2">
+              <Label className="mb-2 flex items-center gap-2 font-bold text-foreground">
+                {/* <FileText className="h-4 w-4 text-muted-foreground" /> */}
+                產品名稱
+              </Label>
+              <Input
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                placeholder="輸入產品名稱"
+                className="bg-white/5 h-10"
+              />
+            </div>
           </div>
-
           <div className="space-y-2">
             <Label>商品說明</Label>
             <Textarea
@@ -153,8 +165,7 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
 
             <div className="rounded-lg bg-amber-500/10 p-3 text-sm text-amber-500">
               <AlertCircle className="mr-1 inline h-4 w-4" />
-              競標商品需與您已申請通過的 IP
-              一致（例如：畫作、陶藝等原創作品）。
+              競標商品需與您已申請通過的 IP 一致（例如：畫作、陶藝等原創作品）。
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -271,52 +282,113 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
           </div>
         )}
 
-        {/* General product limited-edition settings */}
+        {/* General product timed sale and limited-edition settings */}
         {productType === "general" && (
-          <div className="space-y-4 rounded-lg border border-border/50 bg-white/5 p-4">
+          <div className="space-y-5 rounded-lg border border-border/50 bg-white/5 p-4">
             <div className="flex items-center gap-2">
-              <Boxes className="h-5 w-5 text-primary" />
-              <h3 className="font-bold text-foreground">限量設定</h3>
+              <CalendarClock className="h-5 w-5 text-primary" />
+              <h3 className="font-bold text-foreground">限時設定</h3>
             </div>
 
             <div className="flex items-center gap-3">
               <input
                 type="checkbox"
-                id="is-limited"
-                checked={isLimited}
+                id="is-timed-sale"
+                checked={isTimedSale}
                 onChange={(e) => {
-                  setIsLimited(e.target.checked);
-                  if (!e.target.checked) setLimitedQuantity("");
+                  setIsTimedSale(e.target.checked);
+                  if (e.target.checked) {
+                    setIsLimited(false);
+                    setLimitedQuantity("");
+                  } else {
+                    setSaleStartAt("");
+                    setSaleEndAt("");
+                  }
                 }}
                 className="h-4 w-4 rounded border-border accent-primary"
               />
-              <Label htmlFor="is-limited" className="cursor-pointer">
-                此商品為限量商品
+              <Label htmlFor="is-timed-sale" className="cursor-pointer">
+                此商品限時販售
               </Label>
             </div>
 
-            {isLimited && (
-              <div className="space-y-2">
-                <Label>限量數量</Label>
-                <Input
-                  type="number"
-                  value={limitedQuantity}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v === "" || Number(v) >= 0) setLimitedQuantity(v);
-                  }}
-                  placeholder="輸入此商品的限量總數"
-                  className="bg-white/5"
-                  min={1}
-                />
+            {isTimedSale && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="sale-start-at">開始時間</Label>
+                  <Input
+                    id="sale-start-at"
+                    type="datetime-local"
+                    value={saleStartAt}
+                    onChange={(e) => setSaleStartAt(e.target.value)}
+                    className="bg-white/5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sale-end-at">結束時間</Label>
+                  <Input
+                    id="sale-end-at"
+                    type="datetime-local"
+                    value={saleEndAt}
+                    min={saleStartAt || undefined}
+                    onChange={(e) => setSaleEndAt(e.target.value)}
+                    className="bg-white/5"
+                  />
+                </div>
               </div>
             )}
+            {/* 限量設定 */}
+            <div className="border-t border-border/50 pt-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Boxes className="h-5 w-5 text-primary" />
+                <h3 className="font-bold text-foreground">限量設定</h3>
+              </div>
 
-            <p className="text-xs text-muted-foreground">
-              {isLimited
-                ? "限量商品售完後將無法再購買。"
-                : "未啟用限量時，商品可持續販售，無需設定數量。"}
-            </p>
+              <div className="flex items-center gap-3  mb-2">
+                <input
+                  type="checkbox"
+                  id="is-limited"
+                checked={isLimited}
+                onChange={(e) => {
+                  setIsLimited(e.target.checked);
+                  if (e.target.checked) {
+                    setIsTimedSale(false);
+                    setSaleStartAt("");
+                    setSaleEndAt("");
+                  } else {
+                    setLimitedQuantity("");
+                  }
+                }}
+                  className="h-4 w-4 rounded border-border accent-primary"
+                />
+                <Label htmlFor="is-limited" className="cursor-pointer">
+                  此商品為限量商品
+                </Label>
+              </div>
+
+              {isLimited && (
+                <div className="space-y-2">
+                  <Label className="mb-2">限量數量</Label>
+                  <Input
+                    type="number"
+                    value={limitedQuantity}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "" || Number(v) >= 0) setLimitedQuantity(v);
+                    }}
+                    placeholder="輸入此商品的限量總數"
+                    className="bg-white/5"
+                    min={1}
+                  />
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                {isLimited
+                  ? "限量商品售完後將無法再購買。"
+                  : "未啟用限量時，商品可持續販售，無需設定數量。"}
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -324,6 +396,111 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Left: Pricing Info */}
         <div className="space-y-4">
+          {/* Pre-order Option */}
+          <div className="rounded-lg border border-border/50 bg-white/5 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <ShoppingBag className="h-5 w-5 text-primary" />
+              <h3 className="font-bold text-foreground">預先備貨</h3>
+            </div>
+
+            {selectedProduct?.hasMinQuantity ? (
+              <div className="space-y-3">
+                <div className="rounded-lg bg-yellow-500/10 p-3">
+                  <p className="text-sm text-yellow-500">
+                    <AlertCircle className="mr-1 inline h-4 w-4" />
+                    此產品有最低製作量 {selectedProduct.minOrder}{" "}
+                    件，請填寫預製數量
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>預製數量 (最少 {selectedProduct.minOrder} 件)</Label>
+                  <Input
+                    type="number"
+                    value={preOrderQuantity}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "" || Number(v) >= 0) setPreOrderQuantity(v);
+                    }}
+                    placeholder={`最少 ${selectedProduct.minOrder} 件`}
+                    className="bg-white/5"
+                    min={selectedProduct.minOrder}
+                  />
+                </div>
+                {preOrderQuantity &&
+                  parseInt(preOrderQuantity) >= selectedProduct.minOrder &&
+                  costs && (
+                    <div className="rounded-lg bg-primary/10 p-3">
+                      <p className="text-sm text-muted-foreground">預製費用:</p>
+                      <p className="text-xl font-bold text-foreground">
+                        NT${" "}
+                        {(
+                          costs.stockingCost * parseInt(preOrderQuantity)
+                        ).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        申請通過後需先支付此費用
+                      </p>
+                    </div>
+                  )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="want-preorder"
+                    checked={wantPreOrder}
+                    onChange={(e) => setWantPreOrder(e.target.checked)}
+                    className="h-4 w-4 rounded border-border accent-primary"
+                  />
+                  <Label htmlFor="want-preorder" className="cursor-pointer">
+                    我想預先備貨 (可選)
+                  </Label>
+                </div>
+                {wantPreOrder && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>預製數量</Label>
+                      <Input
+                        type="number"
+                        value={preOrderQuantity}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === "" || Number(v) >= 0)
+                            setPreOrderQuantity(v);
+                        }}
+                        placeholder="輸入數量"
+                        className="bg-white/5"
+                        min={1}
+                      />
+                    </div>
+                    {preOrderQuantity &&
+                      parseInt(preOrderQuantity) > 0 &&
+                      costs && (
+                        <div className="rounded-lg bg-primary/10 p-3">
+                          <p className="text-sm text-muted-foreground">
+                            預製費用:
+                          </p>
+                          <p className="text-xl font-bold text-foreground">
+                            NT${" "}
+                            {(
+                              costs.stockingCost * parseInt(preOrderQuantity)
+                            ).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            申請通過後需先支付此費用
+                          </p>
+                        </div>
+                      )}
+                  </>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  此產品支援單件生產，您可以選擇不預先備貨，接到訂單後再製作
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Cost Breakdown */}
           <div className="rounded-lg border border-border/50 bg-white/5 p-4">
             <div className="mb-4 flex items-center gap-2">
@@ -482,111 +659,6 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
               )}
           </div>
 
-          {/* Pre-order Option */}
-          <div className="rounded-lg border border-border/50 bg-white/5 p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <ShoppingBag className="h-5 w-5 text-primary" />
-              <h3 className="font-bold text-foreground">預先備貨</h3>
-            </div>
-
-            {selectedProduct?.hasMinQuantity ? (
-              <div className="space-y-3">
-                <div className="rounded-lg bg-yellow-500/10 p-3">
-                  <p className="text-sm text-yellow-500">
-                    <AlertCircle className="mr-1 inline h-4 w-4" />
-                    此產品有最低製作量 {selectedProduct.minOrder}{" "}
-                    件，請填寫預製數量
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label>預製數量 (最少 {selectedProduct.minOrder} 件)</Label>
-                  <Input
-                    type="number"
-                    value={preOrderQuantity}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (v === "" || Number(v) >= 0) setPreOrderQuantity(v);
-                    }}
-                    placeholder={`最少 ${selectedProduct.minOrder} 件`}
-                    className="bg-white/5"
-                    min={selectedProduct.minOrder}
-                  />
-                </div>
-                {preOrderQuantity &&
-                  parseInt(preOrderQuantity) >= selectedProduct.minOrder &&
-                  costs && (
-                    <div className="rounded-lg bg-primary/10 p-3">
-                      <p className="text-sm text-muted-foreground">預製費用:</p>
-                      <p className="text-xl font-bold text-foreground">
-                        NT${" "}
-                        {(
-                          costs.stockingCost * parseInt(preOrderQuantity)
-                        ).toLocaleString()}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        申請通過後需先支付此費用
-                      </p>
-                    </div>
-                  )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="want-preorder"
-                    checked={wantPreOrder}
-                    onChange={(e) => setWantPreOrder(e.target.checked)}
-                    className="h-4 w-4 rounded border-border accent-primary"
-                  />
-                  <Label htmlFor="want-preorder" className="cursor-pointer">
-                    我想預先備貨 (可選)
-                  </Label>
-                </div>
-                {wantPreOrder && (
-                  <>
-                    <div className="space-y-2">
-                      <Label>預製數量</Label>
-                      <Input
-                        type="number"
-                        value={preOrderQuantity}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          if (v === "" || Number(v) >= 0)
-                            setPreOrderQuantity(v);
-                        }}
-                        placeholder="輸入數量"
-                        className="bg-white/5"
-                        min={1}
-                      />
-                    </div>
-                    {preOrderQuantity &&
-                      parseInt(preOrderQuantity) > 0 &&
-                      costs && (
-                        <div className="rounded-lg bg-primary/10 p-3">
-                          <p className="text-sm text-muted-foreground">
-                            預製費用:
-                          </p>
-                          <p className="text-xl font-bold text-foreground">
-                            NT${" "}
-                            {(
-                              costs.stockingCost * parseInt(preOrderQuantity)
-                            ).toLocaleString()}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            申請通過後需先支付此費用
-                          </p>
-                        </div>
-                      )}
-                  </>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  此產品支援單件生產，您可以選擇不預先備貨，接到訂單後再製作
-                </p>
-              </div>
-            )}
-          </div>
-
           {/* Product Note for Admin */}
           <div className="rounded-lg border border-border/50 bg-white/5 p-4">
             <div className="mb-3 flex items-center gap-2">
@@ -613,7 +685,24 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
             {/* Show all zones with their designs */}
             {selectedProduct && (
               <div className="space-y-4">
-                {selectedProduct.printZones.map((zone) => {
+                {isTemplateFileSource ? (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-center">
+                    <FileText className="mx-auto mb-3 h-10 w-10 text-primary" />
+                    <p className="text-sm text-muted-foreground">
+                      此商品以刀模檔案作為設計來源，不提供效果圖預覽。
+                    </p>
+                    {templatePreviewFile ? (
+                      <Button asChild variant="outline" size="sm" className="mt-4 bg-transparent">
+                        <a href={templatePreviewFile.url} download={templatePreviewFile.name}>
+                          <Download className="mr-2 h-4 w-4" />
+                          下載刀模檔案
+                        </a>
+                      </Button>
+                    ) : (
+                      <p className="mt-3 text-xs text-muted-foreground">尚未上傳刀模檔案</p>
+                    )}
+                  </div>
+                ) : selectedProduct.printZones.map((zone) => {
                   const zoneImages = designImages.filter(
                     (img) => img.zoneId === zone.id,
                   );
@@ -719,14 +808,24 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
                   </div>
                 )}
               {productType === "general" && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">限量</span>
-                  <span className="text-foreground">
-                    {isLimited
-                      ? `限量 ${limitedQuantity || "-"} 件`
-                      : "不限量"}
-                  </span>
-                </div>
+                <>
+                  <div className="flex justify-between gap-3">
+                    <span className="text-muted-foreground">限時</span>
+                    <span className="text-right text-foreground">
+                      {isTimedSale
+                        ? `${saleStartAt || "-"} 至 ${saleEndAt || "-"}`
+                        : "不限時"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">限量</span>
+                    <span className="text-foreground">
+                      {isLimited
+                        ? `限量 ${limitedQuantity || "-"} 件`
+                        : "不限量"}
+                    </span>
+                  </div>
+                </>
               )}
             </div>
           </div>
