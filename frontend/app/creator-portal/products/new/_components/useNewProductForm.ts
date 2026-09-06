@@ -21,6 +21,12 @@ export function useNewProductForm() {
   // Step management
   const [currentStep, setCurrentStep] = useState(1);
 
+  // Scroll back to the top whenever the step changes so the user doesn't need
+  // to manually scroll up after clicking "下一步" / "上一步".
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentStep]);
+
   // Product selection
   const [selectedProduct, setSelectedProduct] =
     useState<ProductDefinition | null>(null);
