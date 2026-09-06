@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Eye, Check, X, CalendarIcon } from "lucide-react";
+import { mockProductCategories } from "@/mocks/admin/productCategories";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -95,7 +96,7 @@ function DateTimePicker({
 }
 
 type DiscountType = "percentage" | "fixed";
-type TargetType = "creator" | "all_products" | "single_product";
+type TargetType = "all_products" | "single_category";
 
 interface PromoCode {
   id: string;
@@ -108,6 +109,7 @@ interface PromoCode {
   maxUses: number | null; // 最大兌換量 (null 為不限)
   currentUses: number; // 已兌換數量
   target: TargetType; // 適用對象
+  categoryId?: string; // 單一類別時的商品類別
 }
 
 const initialPromoCodes: PromoCode[] = [
@@ -133,7 +135,8 @@ const initialPromoCodes: PromoCode[] = [
     endTime: "2026-06-25T12:00",
     maxUses: null,
     currentUses: 89,
-    target: "single_product",
+    target: "single_category",
+    categoryId: "pc-1",
   },
 ];
 
@@ -153,6 +156,7 @@ export default function PromoCodesPage() {
   const [endTime, setEndTime] = useState("");
   const [maxUsesInput, setMaxUsesInput] = useState<string>("");
   const [target, setTarget] = useState<TargetType>("all_products");
+  const [categoryId, setCategoryId] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
 
   // 用時間判斷狀態的函數
@@ -192,6 +196,7 @@ export default function PromoCodesPage() {
     setEndTime("");
     setMaxUsesInput("");
     setTarget("all_products");
+    setCategoryId("");
     setIsEditing(false);
     setSelectedPromo({} as PromoCode);
   };
@@ -206,6 +211,7 @@ export default function PromoCodesPage() {
     setEndTime(promo.endTime);
     setMaxUsesInput(promo.maxUses === null ? "" : promo.maxUses.toString());
     setTarget(promo.target);
+    setCategoryId(promo.categoryId ?? "");
     setIsEditing(true);
     setSelectedPromo(promo);
   };
@@ -214,8 +220,9 @@ export default function PromoCodesPage() {
   const isFormValid = () => {
     if (!code.trim()) return false;
     if (!startTime || !endTime) return false;
-    if (new Date(endTime) <= new Date(startTime)) return false; // 結束時間必須晚於啟用時間
+    if (new Date(endTime) <= new Date(startTime)) return false;
     if (value <= 0) return false;
+    if (target === "single_category" && !categoryId) return false;
     return true;
   };
 
@@ -238,6 +245,7 @@ export default function PromoCodesPage() {
                   endTime,
                   maxUses: parsedMaxUses,
                   target,
+                  categoryId: target === "single_category" ? categoryId : undefined,
                 }
               : item,
           ),
@@ -254,6 +262,7 @@ export default function PromoCodesPage() {
           maxUses: parsedMaxUses,
           currentUses: 0,
           target,
+          categoryId: target === "single_category" ? categoryId : undefined,
         };
         setPromoCodes((prev) => [newPromo, ...prev]);
       }
@@ -504,14 +513,39 @@ export default function PromoCodesPage() {
                 </span>
                 <select
                   value={target}
-                  onChange={(e) => setTarget(e.target.value as TargetType)}
+                  onChange={(e) => {
+                    setTarget(e.target.value as TargetType);
+                    setCategoryId("");
+                  }}
                   className="col-span-2 bg-background border border-border rounded px-2 py-1 text-foreground outline-none"
                 >
-                  <option value="creator">單一創作者</option>
                   <option value="all_products">所有產品</option>
-                  <option value="single_product">單一產品</option>
+                  <option value="single_category">單一類別</option>
                 </select>
               </div>
+
+              {/*商品類別（單一類別時顯示）*/}
+              {target === "single_category" && (
+                <div className="grid grid-cols-3 border-b border-border/30 pb-2 items-center">
+                  <span className="font-medium text-muted-foreground">
+                    商品類別
+                  </span>
+                  <select
+                    value={categoryId}
+                    onChange={(e) => setCategoryId(e.target.value)}
+                    className="col-span-2 bg-background border border-border rounded px-2 py-1 text-foreground outline-none"
+                  >
+                    <option value="">請選擇類別</option>
+                    {mockProductCategories
+                      .filter((c) => c.isActive)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
 
               {/*最大兌換量*/}
               <div className="grid grid-cols-3 border-b border-border/30 pb-2 items-center">

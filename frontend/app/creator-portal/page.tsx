@@ -339,7 +339,7 @@ export default function CreatorPortalPage() {
         authorAvatar: "",
         isVerified: true,
         content:
-          "好高興今天把「過往貼文牆」功能做出來了！✨\n完美的 Threads 串文排版，還能動態增加最多 10 張圖片網址！\n大家如果覺得排版不錯，歡迎在下面留言分享看法喔！🚀",
+          "好高興今天把「貼文牆」功能做出來了！✨\n完美的 Threads 串文排版，還能動態增加最多 10 張圖片網址！\n大家如果覺得排版不錯，歡迎在下面留言分享看法喔！🚀",
         images: ["/cute-notebook-with-stars.jpg", "/dreamy-postcards.jpg"],
         likes: 88,
         isLiked: false,
@@ -799,7 +799,7 @@ export default function CreatorPortalPage() {
               <Calendar className="mr-1 h-4 w-4" />
               活動管理
             </TabsTrigger>
-            <TabsTrigger value="posts">過往貼文</TabsTrigger>
+            <TabsTrigger value="posts">上傳貼文</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab with Super Subscription */}
@@ -2010,13 +2010,12 @@ export default function CreatorPortalPage() {
             </Card>
           </TabsContent>
 
-          {/* 過往貼文 Tab — 完美打造 Threads 貼文牆與發佈彈窗 */}
           <TabsContent value="posts" className="space-y-6">
             <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-foreground">
-                    過往貼文牆
+                    貼文牆
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     發佈創作動態、新品花絮，與追蹤粉絲進行零距離留言互動。

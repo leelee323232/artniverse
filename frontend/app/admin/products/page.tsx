@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Download, FileText, Plus, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -21,7 +21,7 @@ import { StatusToggle } from "@/components/admin/StatusToggle";
 import { useAdminCrud } from "@/lib/admin/useAdminCrud";
 import { mockProducts } from "@/mocks/admin/products";
 import { mockProductCategories } from "@/mocks/admin/productCategories";
-import type { Product } from "@/types/admin";
+import type { Product, ProductFile } from "@/types/admin";
 
 interface FormState {
   name: string;
@@ -29,6 +29,7 @@ interface FormState {
   price: string;
   stock: string;
   imageUrl: string;
+  templateFile: ProductFile | null;
   sortOrder: string;
   isActive: boolean;
 }
@@ -39,6 +40,7 @@ const emptyForm: FormState = {
   price: "0",
   stock: "0",
   imageUrl: "",
+  templateFile: null,
   sortOrder: "1",
   isActive: true,
 };
@@ -64,6 +66,7 @@ export default function ProductsPage() {
         price: String(e.price),
         stock: String(e.stock),
         imageUrl: e.imageUrl,
+        templateFile: e.templateFile ?? null,
         sortOrder: String(e.sortOrder),
         isActive: e.isActive,
       });
@@ -94,9 +97,31 @@ export default function ProductsPage() {
       price: Number(form.price),
       stock: Number(form.stock),
       imageUrl: form.imageUrl.trim(),
+      templateFile: form.templateFile ?? undefined,
       sortOrder: Number(form.sortOrder),
       isActive: form.isActive,
     });
+  };
+
+  const handleTemplateFileUpload = (file?: File) => {
+    if (!file) return;
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    if (!extension || !["ai", "psd", "pdf", "svg", "zip"].includes(extension)) {
+      setErrors((prev) => ({
+        ...prev,
+        templateFile: "請上傳 AI、PSD、PDF、SVG 或 ZIP 格式的刀模檔",
+      }));
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, templateFile: "刀模檔案不可超過 20MB" }));
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      templateFile: { name: file.name, size: file.size, url: URL.createObjectURL(file) },
+    }));
+    setErrors((prev) => ({ ...prev, templateFile: "" }));
   };
 
   const handleDelete = (item: Product) => {
@@ -128,6 +153,24 @@ export default function ProductsPage() {
     },
     { key: "price", header: "價格", render: (i) => `NT$ ${i.price}` },
     { key: "stock", header: "庫存", className: "text-muted-foreground", render: (i) => i.stock },
+    {
+      key: "dieLine",
+      header: "刀模檔",
+      render: (i) =>
+        i.templateFile ? (
+          <a
+            href={i.templateFile.url}
+            download={i.templateFile.name}
+            onClick={(event) => event.stopPropagation()}
+            className="inline-flex max-w-36 items-center gap-1 truncate text-primary hover:underline"
+          >
+            <Download className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{i.templateFile.name}</span>
+          </a>
+        ) : (
+          "—"
+        ),
+    },
     { key: "status", header: "狀態", render: (i) => <StatusToggle active={i.isActive} onToggle={() => crud.toggleActive(i)} /> },
     {
       key: "actions",
@@ -221,6 +264,40 @@ export default function ProductsPage() {
             onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
             placeholder="https://..."
           />
+        </AdminField>
+
+        <AdminField label="刀模檔案" htmlFor="templateFile" error={errors.templateFile}>
+          <div className="rounded-lg border border-dashed border-border p-3">
+            {form.templateFile ? (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <FileText className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="truncate text-sm">{form.templateFile.name}</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="移除刀模檔案"
+                  onClick={() => setForm((prev) => ({ ...prev, templateFile: null }))}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <label htmlFor="templateFile" className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+                <Upload className="h-4 w-4" />
+                上傳刀模檔案（AI、PSD、PDF、SVG、ZIP；單檔上限 20MB）
+              </label>
+            )}
+            <Input
+              id="templateFile"
+              type="file"
+              accept=".ai,.psd,.pdf,.svg,.zip"
+              onChange={(event) => handleTemplateFileUpload(event.target.files?.[0])}
+              className="sr-only"
+            />
+          </div>
         </AdminField>
 
         <AdminField label="排序" htmlFor="sortOrder" required error={errors.sortOrder}>
