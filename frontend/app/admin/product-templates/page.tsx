@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Pencil, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { FileText, Pencil, Plus, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,9 +22,15 @@ import { AdminField } from "@/components/admin/AdminField";
 import { StatusToggle } from "@/components/admin/StatusToggle";
 import { useAdminCrud } from "@/lib/admin/useAdminCrud";
 import { mockProductTemplates } from "@/mocks/admin/productTemplates";
+import {
+  getProductTemplates,
+  saveProductTemplates,
+} from "@/app/creator-portal/products/new/_components/data/product-template-store";
 import type {
+  ProductOptionGroup,
   ProductTemplate,
   PrintZone,
+  StockDiscountTier,
 } from "@/app/creator-portal/products/new/_components/data/platform-products";
 
 interface FormState {
@@ -36,6 +42,8 @@ interface FormState {
   hasMinQuantity: boolean;
   designSource: "image" | "templateFile";
   specs: string;
+  optionGroupsInput: string;
+  stockDiscountTiersInput: string;
   // 僅供 textarea 編輯使用；送出後會解析成與創作者端相同的 PrintZone[]。
   printZonesInput: string;
   templateFileName: string;
@@ -53,6 +61,8 @@ const emptyForm: FormState = {
   hasMinQuantity: false,
   designSource: "image",
   specs: "",
+  optionGroupsInput: "[]",
+  stockDiscountTiersInput: "[]",
   printZonesInput: "",
   templateFileName: "",
   templateFileUrl: "",
@@ -101,10 +111,38 @@ const parsePrintZones = (value: string): PrintZone[] =>
     })
     .filter((zone): zone is PrintZone => zone !== null);
 
+const parseJsonArray = <T,>(value: string): T[] | null => {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? (parsed as T[]) : null;
+  } catch {
+    return null;
+  }
+};
+
 export default function ProductTemplatesPage() {
   const crud = useAdminCrud<ProductTemplate>("pt", mockProductTemplates);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [storageReady, setStorageReady] = useState(false);
+  const templateFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (crud.loading || storageReady) return;
+    const savedTemplates = getProductTemplates().map((template, index) => ({
+      ...template,
+      isActive: true,
+      sortOrder: index + 1,
+      createdAt: "2026-09-12",
+    }));
+    crud.replaceItems(savedTemplates);
+    setStorageReady(true);
+  }, [crud, storageReady]);
+
+  useEffect(() => {
+    if (!storageReady || crud.loading) return;
+    saveProductTemplates(crud.items);
+  }, [crud.items, crud.loading, storageReady]);
 
   useEffect(() => {
     const template = crud.editingItem;
@@ -121,6 +159,12 @@ export default function ProductTemplatesPage() {
         hasMinQuantity: template.hasMinQuantity,
         designSource: template.designSource,
         specs: template.specs.join("\n"),
+        optionGroupsInput: JSON.stringify(template.optionGroups ?? [], null, 2),
+        stockDiscountTiersInput: JSON.stringify(
+          template.stockDiscountTiers ?? [],
+          null,
+          2,
+        ),
         printZonesInput: printZonesToText(template.printZones),
         templateFileName: template.templateFile?.name ?? "",
         templateFileUrl: template.templateFile?.url ?? "",
@@ -133,6 +177,12 @@ export default function ProductTemplatesPage() {
 
   const handleSubmit = () => {
     const printZones = parsePrintZones(form.printZonesInput);
+    const optionGroups = parseJsonArray<ProductOptionGroup>(
+      form.optionGroupsInput,
+    );
+    const stockDiscountTiers = parseJsonArray<StockDiscountTier>(
+      form.stockDiscountTiersInput,
+    );
     const errors: Record<string, string> = {};
     if (!form.name.trim()) errors.name = "請輸入英文名稱";
     if (!form.nameZh.trim()) errors.nameZh = "請輸入中文名稱";
@@ -140,6 +190,8 @@ export default function ProductTemplatesPage() {
     if (Number.isNaN(Number(form.baseCost))) errors.baseCost = "請輸入有效成本";
     if (!printZones.length)
       errors.printZones = "至少新增一個印刷區域（名稱|寬|高|x|y|w|h）";
+    if (!stockDiscountTiers)
+      errors.stockDiscountTiers = "優惠級距需為 JSON 陣列";
     if (form.designSource === "templateFile" && !form.templateFileUrl.trim()) {
       errors.templateFileUrl = "模板檔案模式需提供模板檔案網址";
     }
@@ -158,6 +210,8 @@ export default function ProductTemplatesPage() {
         .split("\n")
         .map((item) => item.trim())
         .filter(Boolean),
+      optionGroups: optionGroups ?? [],
+      stockDiscountTiers: stockDiscountTiers ?? [],
       printZones,
       templateFile:
         form.designSource === "templateFile"
@@ -169,6 +223,32 @@ export default function ProductTemplatesPage() {
       sortOrder: Number(form.sortOrder) || 1,
       isActive: form.isActive,
     });
+  };
+
+  const handleTemplateFileUpload = (file?: File) => {
+    if (!file) return;
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    if (!extension || !["png", "ai", "psd", "stl"].includes(extension)) {
+      setErrors((current) => ({
+        ...current,
+        templateFileUrl: "請上傳去背檔、AI、PS 或 STL 檔案",
+      }));
+      return;
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      setErrors((current) => ({
+        ...current,
+        templateFileUrl: "檔案不可超過 20MB",
+      }));
+      return;
+    }
+    setForm((current) => ({
+      ...current,
+      templateFileName: file.name,
+      templateFileUrl: URL.createObjectURL(file),
+    }));
+    setErrors((current) => ({ ...current, templateFileUrl: "" }));
+    if (templateFileInputRef.current) templateFileInputRef.current.value = "";
   };
 
   const columns: AdminTableColumn<ProductTemplate>[] = [
@@ -365,35 +445,65 @@ export default function ProductTemplatesPage() {
             為印刷區域在效果圖中的寬高比例，皆使用 0–100 的百分比。
           </p>
         </AdminField>
-        {/* {form.designSource === "templateFile" && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <AdminField label="模板檔案名稱" htmlFor="templateFileName">
+        {form.designSource === "templateFile" && (
+          <AdminField
+            label="上傳刀模基底檔案"
+            htmlFor="templateFile"
+            required
+            error={errors.templateFileUrl}
+          >
+            <div className="rounded-lg border border-dashed border-border p-3">
+              {form.templateFileUrl ? (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <FileText className="h-4 w-4 shrink-0 text-primary" />
+                    <span className="truncate text-sm">
+                      {form.templateFileName || "商品模板檔案"}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="移除刀模基底檔案"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        templateFileName: "",
+                        templateFileUrl: "",
+                      })
+                    }
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full bg-transparent"
+                  onClick={() => templateFileInputRef.current?.click()}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  上傳刀模基底檔案
+                </Button>
+              )}
               <Input
-                id="templateFileName"
-                value={form.templateFileName}
+                id="templateFile"
+                ref={templateFileInputRef}
+                type="file"
+                accept=".png,.ai,.psd,.stl"
                 onChange={(event) =>
-                  setForm({ ...form, templateFileName: event.target.value })
+                  handleTemplateFileUpload(event.target.files?.[0])
                 }
-                placeholder="例如：貼紙組刀模.ai"
+                className="sr-only"
               />
-            </AdminField>
-            <AdminField
-              label="模板檔案網址"
-              htmlFor="templateFileUrl"
-              required
-              error={errors.templateFileUrl}
-            >
-              <Input
-                id="templateFileUrl"
-                value={form.templateFileUrl}
-                onChange={(event) =>
-                  setForm({ ...form, templateFileUrl: event.target.value })
-                }
-                placeholder="https://..."
-              />
-            </AdminField>
-          </div>
-        )} */}
+              <p className="mt-2 text-xs text-muted-foreground">
+                支援去背檔、AI、PS、STL；單檔上限 20MB。
+              </p>
+            </div>
+          </AdminField>
+        )}
       </AdminModal>
     </div>
   );

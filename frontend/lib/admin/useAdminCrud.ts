@@ -18,6 +18,7 @@ interface UseAdminCrudResult<T extends AdminBaseEntity> {
   isModalOpen: boolean;
   editingItem: T | null;
   reload: () => Promise<void>;
+  replaceItems: (items: T[]) => void;
   openCreate: () => void;
   openEdit: (item: T) => void;
   closeModal: () => void;
@@ -65,6 +66,10 @@ export function useAdminCrud<T extends AdminBaseEntity>(
   const openCreate = useCallback(() => {
     setEditingItem(null);
     setIsModalOpen(true);
+  }, []);
+
+  const replaceItems = useCallback((nextItems: T[]) => {
+    setItems(sortBySortOrder(nextItems));
   }, []);
 
   const openEdit = useCallback((item: T) => {
@@ -131,6 +136,7 @@ export function useAdminCrud<T extends AdminBaseEntity>(
       isModalOpen,
       editingItem,
       reload,
+      replaceItems,
       openCreate,
       openEdit,
       closeModal,
@@ -147,6 +153,7 @@ export function useAdminCrud<T extends AdminBaseEntity>(
       isModalOpen,
       editingItem,
       reload,
+      replaceItems,
       openCreate,
       openEdit,
       closeModal,
