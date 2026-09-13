@@ -106,10 +106,10 @@ export default function ProductsPage() {
   const handleTemplateFileUpload = (file?: File) => {
     if (!file) return;
     const extension = file.name.split(".").pop()?.toLowerCase();
-    if (!extension || !["ai", "psd", "pdf", "svg", "zip"].includes(extension)) {
+    if (!extension || !["png", "ai", "psd", "stl"].includes(extension)) {
       setErrors((prev) => ({
         ...prev,
-        templateFile: "請上傳 AI、PSD、PDF、SVG 或 ZIP 格式的刀模檔",
+        templateFile: "請上傳去背檔、AI、PS 或 STL 格式的刀模檔",
       }));
       return;
     }
@@ -287,13 +287,13 @@ export default function ProductsPage() {
             ) : (
               <label htmlFor="templateFile" className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                 <Upload className="h-4 w-4" />
-                上傳刀模檔案（AI、PSD、PDF、SVG、ZIP；單檔上限 20MB）
+                上傳刀模檔案（去背檔、AI、PS、STL；單檔上限 20MB）
               </label>
             )}
             <Input
               id="templateFile"
               type="file"
-              accept=".ai,.psd,.pdf,.svg,.zip"
+              accept=".png,.ai,.psd,.stl"
               onChange={(event) => handleTemplateFileUpload(event.target.files?.[0])}
               className="sr-only"
             />

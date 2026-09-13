@@ -7,6 +7,25 @@ export interface PrintZone {
   position: { x: number; y: number; w: number; h: number }; // percentage position on mockup
 }
 
+export interface ProductOption {
+  id: string;
+  label: string;
+  colorHex?: string;
+  priceAdjustment?: number;
+}
+
+export interface ProductOptionGroup {
+  id: string;
+  name: string;
+  type: "select" | "color";
+  options: ProductOption[];
+}
+
+export interface StockDiscountTier {
+  minQuantity: number;
+  discountPercent: number;
+}
+
 // Product definition with zones
 export interface ProductDefinition {
   id: string;
@@ -20,6 +39,10 @@ export interface ProductDefinition {
   designSource: "image" | "templateFile";
   printZones: PrintZone[];
   specs: string[];
+  // 可由後台維護的尺寸、款式、顏色等選項；預留價格加價與色塊顯示資料。
+  optionGroups?: ProductOptionGroup[];
+  // 依備貨數量套用的折扣級距。
+  stockDiscountTiers?: StockDiscountTier[];
   templateFile?: {
     name: string;
     url: string;
@@ -65,6 +88,28 @@ export const platformProducts: ProductDefinition[] = [
       "重量: 180g",
       "尺寸: XS-3XL",
       "顏色: 黑/白/灰/海軍藍",
+    ],
+    optionGroups: [
+      {
+        id: "size",
+        name: "尺寸",
+        type: "select",
+        options: ["XS", "S", "M", "L", "XL", "2XL", "3XL"].map((label) => ({ id: label.toLowerCase(), label })),
+      },
+      {
+        id: "color",
+        name: "顏色",
+        type: "color",
+        options: [
+          { id: "black", label: "黑", colorHex: "#1f2937" },
+          { id: "white", label: "白", colorHex: "#ffffff" },
+          { id: "gray", label: "灰", colorHex: "#9ca3af" },
+        ],
+      },
+    ],
+    stockDiscountTiers: [
+      { minQuantity: 10, discountPercent: 5 },
+      { minQuantity: 50, discountPercent: 10 },
     ],
   },
   {

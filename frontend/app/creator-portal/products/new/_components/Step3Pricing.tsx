@@ -403,6 +403,19 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
               <h3 className="font-bold text-foreground">預先備貨</h3>
             </div>
 
+            {(selectedProduct?.stockDiscountTiers?.length ?? 0) > 0 && (
+              <div className="mb-3 rounded-lg bg-emerald-500/10 p-3 text-sm">
+                <p className="mb-1 font-medium text-foreground">備貨數量折扣</p>
+                <p className="text-muted-foreground">
+                  {selectedProduct?.stockDiscountTiers
+                    ?.slice()
+                    .sort((a, b) => a.minQuantity - b.minQuantity)
+                    .map((tier) => `${tier.minQuantity} 件以上 ${tier.discountPercent}%`)
+                    .join("、")}
+                </p>
+              </div>
+            )}
+
             {selectedProduct?.hasMinQuantity ? (
               <div className="space-y-3">
                 <div className="rounded-lg bg-yellow-500/10 p-3">
@@ -439,6 +452,7 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         申請通過後需先支付此費用
+                        {costs.stockDiscountPercent > 0 && `（已套用 ${costs.stockDiscountPercent}% 折扣）`}
                       </p>
                     </div>
                   )}
@@ -489,6 +503,7 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
                           </p>
                           <p className="text-xs text-muted-foreground">
                             申請通過後需先支付此費用
+                            {costs.stockDiscountPercent > 0 && `（已套用 ${costs.stockDiscountPercent}% 折扣）`}
                           </p>
                         </div>
                       )}
