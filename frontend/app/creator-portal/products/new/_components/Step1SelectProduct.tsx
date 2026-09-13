@@ -182,10 +182,15 @@ export function Step1SelectProduct({ form }: { form: NewProductForm }) {
                   </div>
                 ))}
               </div>
-              {selectedProduct.hasMinQuantity && (
+              {selectedProduct.minOrder > 1 ? (
                 <p className="mt-3 text-sm text-yellow-500">
                   <AlertCircle className="mr-1 inline h-4 w-4" />
                   此產品有最低製作量 {selectedProduct.minOrder} 件
+                </p>
+              ) : (
+                <p className="mt-3 text-sm text-emerald-500">
+                  <Check className="mr-1 inline h-4 w-4" />
+                  此產品可無庫存販售
                 </p>
               )}
             </div>

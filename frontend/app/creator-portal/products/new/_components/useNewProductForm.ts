@@ -6,6 +6,7 @@ import {
   platformProducts,
   type ProductDefinition,
 } from "./data/platform-products";
+import { getProductTemplates } from "./data/product-template-store";
 import { ProductMockups } from "./data/product-mockups";
 import {
   type DesignImage,
@@ -45,6 +46,12 @@ export function useNewProductForm() {
   const [customProductRequest, setCustomProductRequest] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [productSearch, setProductSearch] = useState("");
+  const [productTemplates, setProductTemplates] =
+    useState<ProductDefinition[]>(platformProducts);
+
+  useEffect(() => {
+    setProductTemplates(getProductTemplates());
+  }, []);
 
   // Zone selection
   const [activeZoneId, setActiveZoneId] = useState<string>("");
@@ -117,12 +124,12 @@ export function useNewProductForm() {
   // Filter products by search query (matches Chinese or English name); empty query shows all
   const normalizedProductSearch = productSearch.trim().toLowerCase();
   const filteredProducts = normalizedProductSearch
-    ? platformProducts.filter(
+    ? productTemplates.filter(
         (product) =>
           product.nameZh.toLowerCase().includes(normalizedProductSearch) ||
           product.name.toLowerCase().includes(normalizedProductSearch),
       )
-    : platformProducts;
+    : productTemplates;
 
   // Get active zone
   const activeZone = selectedProduct?.printZones.find(
@@ -237,7 +244,16 @@ export function useNewProductForm() {
         : 0; // 2. 印刷費用
 
     const productionCost = baseCost + printingCost; // 生產成本 = 1 + 2
-    const stockingCost = Math.round(productionCost * 1.3); // 3. 備貨成本 = (1+2) * 130%
+    const requestedStock = Number(preOrderQuantity) || 0;
+    const stockDiscountPercent = Math.max(
+      0,
+      ...(selectedProduct.stockDiscountTiers ?? [])
+        .filter((tier) => requestedStock >= tier.minQuantity)
+        .map((tier) => tier.discountPercent),
+    );
+    const stockingCost = Math.round(
+      productionCost * 1.3 * (1 - stockDiscountPercent / 100),
+    ); // 3. 備貨成本 = (1+2) * 130% - 適用的備貨折扣
 
     const price = sellingPrice ? parseFloat(sellingPrice) : 0;
     // 4. 無備貨的自然流量訂單分潤 = (售價 - 生產成本) * 20%
@@ -254,10 +270,11 @@ export function useNewProductForm() {
       stockingCost,
       passiveIncome,
       stockingProfit,
+      stockDiscountPercent,
       totalPrintWidth: totalPrint.width,
       totalPrintHeight: totalPrint.height,
     };
-  }, [selectedProduct, getTotalPrintArea, sellingPrice]);
+  }, [selectedProduct, getTotalPrintArea, sellingPrice, preOrderQuantity]);
 
   const costs = calculateCosts();
 
@@ -266,7 +283,17 @@ export function useNewProductForm() {
     const files = e.target.files;
     if (!files || !activeZoneId) return;
 
-    Array.from(files).forEach((file) => {
+    const remainingSlots = Math.max(0, 10 - designImages.length);
+    if (remainingSlots === 0) {
+      alert("設計圖片最多可上傳 10 張");
+      return;
+    }
+    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      alert(`設計圖片最多可上傳 10 張，這次僅加入前 ${remainingSlots} 張`);
+    }
+
+    filesToUpload.forEach((file) => {
       if (!file.type.includes("png")) {
         alert("請上傳PNG透明去背圖片");
         return;
@@ -300,8 +327,8 @@ export function useNewProductForm() {
     if (!file) return;
 
     const extension = file.name.split(".").pop()?.toLowerCase();
-    if (!extension || !["ai", "psd", "pdf", "svg", "zip"].includes(extension)) {
-      setTemplateFileUploadError("請上傳 AI、PSD、PDF、SVG 或 ZIP 格式的刀模檔");
+    if (!extension || !["png", "ai", "psd", "stl"].includes(extension)) {
+      setTemplateFileUploadError("請上傳去背檔、AI、PS 或 STL 格式的刀模檔");
       return;
     }
     if (file.size > 20 * 1024 * 1024) {

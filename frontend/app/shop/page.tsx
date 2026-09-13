@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { ProductCard } from "@/components/product-card";
 import { PresaleProductCard } from "@/components/presale-product-card";
+import { AuctionProductCard } from "@/components/auction-product-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +72,11 @@ const mockProducts = [
     stock: 23,
     creatorId: "2",
     isNew: false,
+    creatorName: "星河工作室",
+    startingPrice: 880,
+    currentBid: 2400,
+    minBidIncrement: 200,
+    hoursLeft: 18,
   },
   {
     id: "3",
@@ -110,6 +116,11 @@ const mockProducts = [
     stock: 67,
     creatorId: "4",
     isNew: true,
+    creatorName: "宇宙香氛坊",
+    startingPrice: 450,
+    currentBid: 450,
+    minBidIncrement: 100,
+    hoursLeft: 72,
   },
   {
     id: "6",
@@ -149,6 +160,11 @@ const mockProducts = [
     stock: 30,
     creatorId: "3",
     isNew: false,
+    creatorName: "陶藝星人",
+    startingPrice: 1280,
+    currentBid: 8500,
+    minBidIncrement: 500,
+    hoursLeft: 48,
   },
   {
     id: "9",
@@ -188,6 +204,11 @@ const mockProducts = [
     stock: 6,
     creatorId: "2",
     isNew: false,
+    creatorName: "野地創作所",
+    startingPrice: 4580,
+    currentBid: 12000,
+    minBidIncrement: 1000,
+    hoursLeft: 5,
   },
   {
     id: "12",
@@ -428,6 +449,19 @@ export default function ShopPage() {
                       currentBackers={product.currentBackers ?? 0}
                       targetBackers={product.targetBackers ?? 1}
                       daysLeft={product.daysLeft ?? 0}
+                    />
+                  ) : product.productType === "auction" ? (
+                    <AuctionProductCard
+                      key={product.id}
+                      id={product.id}
+                      name={product.name}
+                      image={product.image}
+                      category={product.category}
+                      creatorName={product.creatorName ?? ""}
+                      startingPrice={product.startingPrice ?? product.price}
+                      currentBid={product.currentBid ?? product.price}
+                      minBidIncrement={product.minBidIncrement ?? 100}
+                      hoursLeft={product.hoursLeft ?? 0}
                     />
                   ) : (
                     <ProductCard

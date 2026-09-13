@@ -218,7 +218,7 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
                     <input
                       ref={templateFileInputRef}
                       type="file"
-                      accept=".ai,.psd,.pdf,.svg,.zip"
+                      accept=".png,.ai,.psd,.stl"
                       onChange={handleTemplateFileUpload}
                       className="hidden"
                     />
@@ -230,7 +230,7 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
                   </p>
                 ) : (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    支援 AI、PSD、PDF、SVG、ZIP；單檔上限 20MB
+                    支援去背檔、AI、PS、STL；單檔上限 20MB
                   </p>
                 )}
                 {!creatorTemplateFile && selectedProduct?.templateFile && (
@@ -271,7 +271,7 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
                     className="hidden"
                   />
                   <p className="mt-2 text-xs text-muted-foreground">
-                    支援多張 PNG 透明去背圖片
+                    支援多張 PNG 透明去背圖片，最多 10 張
                   </p>
                 </div>
 
@@ -411,18 +411,18 @@ export function Step2Editor({ form }: { form: NewProductForm }) {
                   <br />
                   不提供設計圖片上傳與效果圖編輯。
                 </p>
-                <Button className="mt-6">
-                  <Download className="mr-2 h-4 w-4" />
-                  下載刀模檔案
-                </Button>
-                {/* {templateFile && ( */}
-                {/* <Button asChild className="mt-6">
+                {templateFile ? (
+                  <Button asChild className="mt-6">
                     <a href={templateFile.url} download={templateFile.name}>
                       <Download className="mr-2 h-4 w-4" />
                       下載刀模檔案
                     </a>
-                  </Button> */}
-                {/* )} */}
+                  </Button>
+                ) : (
+                  <p className="mt-6 text-sm text-muted-foreground">
+                    此模板尚未設定刀模基底檔案，請聯絡管理員。
+                  </p>
+                )}
               </div>
             ) : (
               <>
