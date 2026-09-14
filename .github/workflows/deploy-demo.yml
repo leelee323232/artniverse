@@ -1,4 +1,4 @@
-name: Deploy to SiteGround
+name: Deploy to SiteGround 
 
 on:
   push:
