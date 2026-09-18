@@ -22,6 +22,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth-context";
+import { BasicDatePicker } from "@/components/ui/date-picker";
 import {
   // getEvents, // 等接後端 API 時再啟用
   // createEvents, // 等接後端 API 時再啟用
@@ -261,9 +262,54 @@ const specialQuests = [
 ];
 
 interface EventFormRow {
-  name: string;
-  time: string;
+  title: string;
   address: string;
+  startTime: Date | null;
+  endTime: Date | null;
+  boothStartTime: Date | null;
+  boothEndTime: Date | null;
+  note: string;
+}
+
+const EMPTY_EVENT_FORM: EventFormRow = {
+  title: "",
+  address: "",
+  startTime: null,
+  endTime: null,
+  boothStartTime: null,
+  boothEndTime: null,
+  note: "",
+};
+
+function toDateTimeString(d: Date | null) {
+  if (!d) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${y}/${m}/${day} ${h}:${min}`;
+}
+
+function validateEventFormRow(row: EventFormRow) {
+  const errors: Record<string, string> = {};
+  if (!row.title.trim()) errors.title = "請輸入活動名稱";
+  if (!row.address.trim()) errors.address = "請輸入地址";
+  if (!row.startTime) errors.startTime = "請選擇活動開始時間";
+  if (!row.endTime) errors.endTime = "請選擇活動結束時間";
+  if (row.startTime && row.endTime && row.endTime <= row.startTime) {
+    errors.endTime = "結束時間必須晚於開始時間";
+  }
+  if (!row.boothStartTime) errors.boothStartTime = "請選擇擺攤開始時間";
+  if (!row.boothEndTime) errors.boothEndTime = "請選擇擺攤結束時間";
+  if (
+    row.boothStartTime &&
+    row.boothEndTime &&
+    row.boothEndTime <= row.boothStartTime
+  ) {
+    errors.boothEndTime = "結束時間必須晚於開始時間";
+  }
+  return errors;
 }
 
 export default function CreatorPortalPage() {
@@ -365,17 +411,25 @@ export default function CreatorPortalPage() {
   const [events, setEvents] = useState<EventApplication[]>([
     {
       id: "EVT-001",
-      name: "星空市集擺攤",
-      time: "2026-08-20 10:00",
+      title: "星空市集擺攤",
       address: "台北市信義區松壽路 12 號",
+      startTime: "2026/08/20 09:00",
+      endTime: "2026/08/20 18:00",
+      boothStartTime: "2026/08/20 10:00",
+      boothEndTime: "2026/08/20 17:00",
+      note: "需自備桌巾與展示架",
       status: "approved",
       createdAt: "2026-07-10",
     },
     {
       id: "EVT-002",
-      name: "療癒插畫粉絲見面會",
-      time: "2026-09-05 14:00",
+      title: "療癒插畫粉絲見面會",
       address: "台中市西區美術館路 2 號",
+      startTime: "2026/09/05 13:00",
+      endTime: "2026/09/05 18:00",
+      boothStartTime: "2026/09/05 14:00",
+      boothEndTime: "2026/09/05 17:00",
+      note: "",
       status: "pending",
       createdAt: "2026-07-18",
     },
@@ -402,11 +456,14 @@ export default function CreatorPortalPage() {
   // }, []);
 
   const [eventForms, setEventForms] = useState<EventFormRow[]>([
-    { name: "", time: "", address: "" },
+    { ...EMPTY_EVENT_FORM },
   ]);
+  const [eventFormErrors, setEventFormErrors] = useState<
+    Record<number, Record<string, string>>
+  >({});
 
   const addEventForm = () => {
-    setEventForms((prev) => [...prev, { name: "", time: "", address: "" }]);
+    setEventForms((prev) => [...prev, { ...EMPTY_EVENT_FORM }]);
   };
 
   const removeEventForm = (index: number) => {
@@ -415,26 +472,42 @@ export default function CreatorPortalPage() {
     );
   };
 
-  const updateEventForm = (
+  const updateEventForm = <K extends keyof EventFormRow>(
     index: number,
-    field: keyof EventFormRow,
-    value: string,
+    field: K,
+    value: EventFormRow[K],
   ) => {
     setEventForms((prev) =>
       prev.map((row, i) => (i === index ? { ...row, [field]: value } : row)),
     );
+    setEventFormErrors((prev) => {
+      if (!prev[index]?.[field as string]) return prev;
+      const nextRow = { ...prev[index] };
+      delete nextRow[field as string];
+      return { ...prev, [index]: nextRow };
+    });
   };
 
   // 送出申請：目前先直接加入本地列表，狀態為「申請中」。
   // 之後接上後端時，改為呼叫 createEvents() 並重新 loadEvents()，並在此處理錯誤邏輯。
   const handleSubmitEvents = async () => {
-    const validRows = eventForms
-      .filter((row) => row.name.trim() && row.time.trim() && row.address.trim())
-      .map((row) => ({
-        name: row.name.trim(),
-        time: row.time.trim(),
-        address: row.address.trim(),
-      }));
+    const nextErrors: Record<number, Record<string, string>> = {};
+    eventForms.forEach((row, index) => {
+      const errors = validateEventFormRow(row);
+      if (Object.keys(errors).length > 0) nextErrors[index] = errors;
+    });
+    setEventFormErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+
+    const validRows = eventForms.map((row) => ({
+      title: row.title.trim(),
+      address: row.address.trim(),
+      startTime: toDateTimeString(row.startTime),
+      endTime: toDateTimeString(row.endTime),
+      boothStartTime: toDateTimeString(row.boothStartTime),
+      boothEndTime: toDateTimeString(row.boothEndTime),
+      note: row.note.trim(),
+    }));
     if (validRows.length === 0) return;
 
     setIsSubmittingEvents(true);
@@ -443,9 +516,13 @@ export default function CreatorPortalPage() {
     const now = Date.now();
     const newEvents: EventApplication[] = validRows.map((row, i) => ({
       id: `EVT-${now}-${i}`,
-      name: row.name,
-      time: row.time,
+      title: row.title,
       address: row.address,
+      startTime: row.startTime,
+      endTime: row.endTime,
+      boothStartTime: row.boothStartTime,
+      boothEndTime: row.boothEndTime,
+      note: row.note,
       status: "pending",
       createdAt: new Date().toISOString().substring(0, 10),
     }));
@@ -459,7 +536,8 @@ export default function CreatorPortalPage() {
     //   console.error(err);
     // }
 
-    setEventForms([{ name: "", time: "", address: "" }]);
+    setEventForms([{ ...EMPTY_EVENT_FORM }]);
+    setEventFormErrors({});
     setIsEventModalOpen(false);
     setIsSubmittingEvents(false);
   };
@@ -1789,7 +1867,10 @@ export default function CreatorPortalPage() {
                 {/* 彈出式新增活動視窗 */}
                 <Dialog
                   open={isEventModalOpen}
-                  onOpenChange={setIsEventModalOpen}
+                  onOpenChange={(open) => {
+                    setIsEventModalOpen(open);
+                    if (!open) setEventFormErrors({});
+                  }}
                 >
                   <DialogTrigger asChild>
                     <Button className="gap-1.5 bg-gradient-to-r from-primary to-secondary shadow-lg shadow-primary/20">
@@ -1835,45 +1916,125 @@ export default function CreatorPortalPage() {
                             <div className="space-y-2">
                               <Label>活動名稱</Label>
                               <Input
-                                value={form.name}
+                                value={form.title}
                                 onChange={(e) =>
-                                  updateEventForm(index, "name", e.target.value)
+                                  updateEventForm(
+                                    index,
+                                    "title",
+                                    e.target.value,
+                                  )
                                 }
                                 placeholder="例如：星空市集擺攤"
                                 className="bg-white/5"
                               />
+                              {eventFormErrors[index]?.title && (
+                                <p className="text-xs text-destructive">
+                                  {eventFormErrors[index].title}
+                                </p>
+                              )}
                             </div>
                             <div className="grid gap-3 md:grid-cols-2">
                               <div className="space-y-2">
-                                <Label>時間</Label>
-                                <Input
-                                  type="datetime-local"
-                                  value={form.time}
-                                  onChange={(e) =>
-                                    updateEventForm(
-                                      index,
-                                      "time",
-                                      e.target.value,
-                                    )
+                                <Label>活動開始時間</Label>
+                                <BasicDatePicker
+                                  showTime
+                                  value={form.startTime}
+                                  onChange={(d) =>
+                                    updateEventForm(index, "startTime", d)
                                   }
+                                  placeholder="請選擇開始時間"
                                   className="bg-white/5"
                                 />
+                                {eventFormErrors[index]?.startTime && (
+                                  <p className="text-xs text-destructive">
+                                    {eventFormErrors[index].startTime}
+                                  </p>
+                                )}
                               </div>
                               <div className="space-y-2">
-                                <Label>地址</Label>
-                                <Input
-                                  value={form.address}
-                                  onChange={(e) =>
-                                    updateEventForm(
-                                      index,
-                                      "address",
-                                      e.target.value,
-                                    )
+                                <Label>活動結束時間</Label>
+                                <BasicDatePicker
+                                  showTime
+                                  value={form.endTime}
+                                  onChange={(d) =>
+                                    updateEventForm(index, "endTime", d)
                                   }
-                                  placeholder="例如：台北市信義區松壽路 12 號"
+                                  placeholder="請選擇結束時間"
                                   className="bg-white/5"
                                 />
+                                {eventFormErrors[index]?.endTime && (
+                                  <p className="text-xs text-destructive">
+                                    {eventFormErrors[index].endTime}
+                                  </p>
+                                )}
                               </div>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <div className="space-y-2">
+                                <Label>擺攤開始時間</Label>
+                                <BasicDatePicker
+                                  showTime
+                                  value={form.boothStartTime}
+                                  onChange={(d) =>
+                                    updateEventForm(index, "boothStartTime", d)
+                                  }
+                                  placeholder="請選擇擺攤開始時間"
+                                  className="bg-white/5"
+                                />
+                                {eventFormErrors[index]?.boothStartTime && (
+                                  <p className="text-xs text-destructive">
+                                    {eventFormErrors[index].boothStartTime}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                <Label>擺攤結束時間</Label>
+                                <BasicDatePicker
+                                  showTime
+                                  value={form.boothEndTime}
+                                  onChange={(d) =>
+                                    updateEventForm(index, "boothEndTime", d)
+                                  }
+                                  placeholder="請選擇擺攤結束時間"
+                                  className="bg-white/5"
+                                />
+                                {eventFormErrors[index]?.boothEndTime && (
+                                  <p className="text-xs text-destructive">
+                                    {eventFormErrors[index].boothEndTime}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>地址</Label>
+                              <Input
+                                value={form.address}
+                                onChange={(e) =>
+                                  updateEventForm(
+                                    index,
+                                    "address",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="例如：台北市信義區松壽路 12 號"
+                                className="bg-white/5"
+                              />
+                              {eventFormErrors[index]?.address && (
+                                <p className="text-xs text-destructive">
+                                  {eventFormErrors[index].address}
+                                </p>
+                              )}
+                            </div>
+                            <div className="space-y-2">
+                              <Label>備註</Label>
+                              <Textarea
+                                value={form.note}
+                                onChange={(e) =>
+                                  updateEventForm(index, "note", e.target.value)
+                                }
+                                placeholder="選填，例如特殊需求或注意事項"
+                                className="min-h-20 bg-white/5"
+                              />
                             </div>
                           </div>
                         </div>
@@ -1945,10 +2106,16 @@ export default function CreatorPortalPage() {
                           活動名稱
                         </th>
                         <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                          時間
+                          活動時間
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          擺攤時間
                         </th>
                         <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                           地址
+                        </th>
+                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                          備註
                         </th>
                         <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                           申請日期
@@ -1962,19 +2129,28 @@ export default function CreatorPortalPage() {
                       {events.map((evt) => (
                         <tr key={evt.id} className="border-b border-border/30">
                           <td className="px-4 py-3 text-sm font-medium text-foreground">
-                            {evt.name}
+                            {evt.title}
                           </td>
-                          <td className="px-4 py-3 text-sm text-muted-foreground">
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1.5">
-                              <Clock className="h-3.5 w-3.5" />
-                              {evt.time}
+                              <Clock className="h-3.5 w-3.5 shrink-0" />
+                              {evt.startTime} ~ {evt.endTime}
                             </span>
                           </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">
+                            {evt.boothStartTime} ~ {evt.boothEndTime}
+                          </td>
                           <td className="px-4 py-3 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1.5">
-                              <MapPin className="h-3.5 w-3.5" />
+                              <MapPin className="h-3.5 w-3.5 shrink-0" />
                               {evt.address}
                             </span>
+                          </td>
+                          <td
+                            className="max-w-[12rem] truncate px-4 py-3 text-sm text-muted-foreground"
+                            title={evt.note || undefined}
+                          >
+                            {evt.note || "—"}
                           </td>
                           <td className="px-4 py-3 text-sm text-muted-foreground">
                             {evt.createdAt}

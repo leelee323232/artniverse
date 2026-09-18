@@ -6,6 +6,12 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Users, Clock } from "lucide-react";
 import { TheCard } from "@/components/common/TheCard";
+import {
+  PRESALE_STATUS_LABEL,
+  getDaysLeft,
+  getPresaleProgress,
+  getPresaleStatus,
+} from "@/lib/products/status";
 
 interface PresaleProductCardProps {
   id: string;
@@ -15,10 +21,19 @@ interface PresaleProductCardProps {
   category: string;
   currentBackers: number;
   targetBackers: number;
-  daysLeft: number;
+  presaleStartTime?: string | null;
+  presaleEndTime?: string | null;
+  daysLeft?: number;
   isFavorited?: boolean;
   onToggleFavorite?: (id: string) => void;
 }
+
+const STATUS_BADGE_CLASS = {
+  live: "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white",
+  upcoming: "bg-sky-500 text-white",
+  success: "bg-emerald-500 text-white",
+  failed: "bg-muted text-muted-foreground",
+} as const;
 
 export function PresaleProductCard({
   id,
@@ -28,7 +43,9 @@ export function PresaleProductCard({
   category,
   currentBackers,
   targetBackers,
-  daysLeft,
+  presaleStartTime,
+  presaleEndTime,
+  daysLeft: daysLeftProp,
   isFavorited,
   onToggleFavorite,
 }: PresaleProductCardProps) {
@@ -45,9 +62,17 @@ export function PresaleProductCard({
     }
   };
 
-  const progress = Math.min(Math.round((currentBackers / targetBackers) * 100), 999);
-  const isGoalReached = currentBackers >= targetBackers;
-  const isUrgent = daysLeft <= 7;
+  const status = getPresaleStatus(
+    presaleStartTime,
+    presaleEndTime,
+    currentBackers,
+    targetBackers,
+  );
+  const progress = getPresaleProgress(currentBackers, targetBackers);
+  const isGoalReached = currentBackers >= targetBackers && targetBackers > 0;
+  const daysLeft =
+    presaleEndTime != null ? getDaysLeft(presaleEndTime) : (daysLeftProp ?? 0);
+  const isUrgent = status === "live" && daysLeft <= 7;
 
   return (
     <TheCard className="group relative overflow-hidden border-violet-500/40 bg-card/50 pt-0 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-violet-500/70 hover:shadow-xl hover:shadow-violet-500/20">
@@ -63,14 +88,14 @@ export function PresaleProductCard({
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
 
-          {/* 預購 badge */}
           <div className="absolute left-2 top-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-2.5 py-1 text-xs font-bold text-white shadow-md">
-              預購中
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold shadow-md ${STATUS_BADGE_CLASS[status]}`}
+            >
+              {PRESALE_STATUS_LABEL[status]}
             </span>
           </div>
 
-          {/* 緊迫提示 */}
           {isUrgent && (
             <div className="absolute right-2 top-2">
               <span className="inline-flex items-center gap-1 rounded-full bg-destructive px-2 py-1 text-xs font-bold text-white">
@@ -119,7 +144,7 @@ export function PresaleProductCard({
                 <span className={`font-bold ${isGoalReached ? "text-emerald-500" : "text-violet-400"}`}>
                   {progress}%
                 </span>
-                {isGoalReached && (
+                {isGoalReached && status !== "failed" && (
                   <span className="font-medium text-emerald-500">已達標</span>
                 )}
               </div>
@@ -132,7 +157,7 @@ export function PresaleProductCard({
                 <span className="font-bold text-foreground">{currentBackers.toLocaleString()}</span>
                 <span className="text-muted-foreground">/ {targetBackers.toLocaleString()} 人</span>
               </div>
-              {!isUrgent && (
+              {status === "live" && !isUrgent && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3.5 w-3.5" />
                   <span>{daysLeft} 天</span>
