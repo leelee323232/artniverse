@@ -13,15 +13,54 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
+import {
+  AdminTable,
+  type AdminTableColumn,
+} from "@/components/admin/AdminTable";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { AdminField } from "@/components/admin/AdminField";
+import { Badge } from "@/components/ui/badge";
 import { AdminRowActions } from "@/components/admin/AdminRowActions";
 import { StatusToggle } from "@/components/admin/StatusToggle";
 import { useAdminCrud } from "@/lib/admin/useAdminCrud";
 import { mockProducts } from "@/mocks/admin/products";
 import { mockProductCategories } from "@/mocks/admin/productCategories";
-import type { Product, ProductFile } from "@/types/admin";
+import type { Product, ProductFile, ProductType } from "@/types/admin";
+import {
+  AUCTION_STATUS_LABEL,
+  PRESALE_STATUS_LABEL,
+  formatProductDateTime,
+  getAuctionPrices,
+  getAuctionStatus,
+  getPresaleProgress,
+  getPresaleStatus,
+} from "@/lib/products/status";
+
+const PRODUCT_TABS: { id: ProductType; label: string }[] = [
+  { id: "general", label: "一般商品" },
+  { id: "auction", label: "競標商品" },
+  { id: "presale", label: "預售商品" },
+];
+
+const PRESALE_PIN_ORDER: Record<string, number> = {
+  success: 0,
+  failed: 1,
+  live: 2,
+  upcoming: 3,
+};
+
+const AUCTION_BADGE_CLASS = {
+  live: "bg-amber-500/15 text-amber-500 hover:bg-amber-500/15",
+  upcoming: "bg-sky-500/15 text-sky-500 hover:bg-sky-500/15",
+  ended: "bg-muted text-muted-foreground hover:bg-muted",
+} as const;
+
+const PRESALE_BADGE_CLASS = {
+  live: "bg-violet-500/15 text-violet-400 hover:bg-violet-500/15",
+  upcoming: "bg-sky-500/15 text-sky-500 hover:bg-sky-500/15",
+  success: "bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/15",
+  failed: "bg-muted text-muted-foreground hover:bg-muted",
+} as const;
 
 interface FormState {
   name: string;
@@ -32,6 +71,7 @@ interface FormState {
   templateFile: ProductFile | null;
   sortOrder: string;
   isActive: boolean;
+  description: string;
 }
 
 const emptyForm: FormState = {
@@ -40,6 +80,7 @@ const emptyForm: FormState = {
   price: "0",
   stock: "0",
   imageUrl: "",
+  description: "",
   templateFile: null,
   sortOrder: "1",
   isActive: true,
@@ -49,6 +90,7 @@ export default function ProductsPage() {
   const crud = useAdminCrud<Product>("p", mockProducts);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [productTab, setProductTab] = useState<ProductType>("general");
 
   const categoryNameMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -69,6 +111,7 @@ export default function ProductsPage() {
         templateFile: e.templateFile ?? null,
         sortOrder: String(e.sortOrder),
         isActive: e.isActive,
+        description: e.description ?? "",
       });
     } else {
       setForm({ ...emptyForm, sortOrder: String(crud.items.length + 1) });
@@ -97,31 +140,12 @@ export default function ProductsPage() {
       price: Number(form.price),
       stock: Number(form.stock),
       imageUrl: form.imageUrl.trim(),
+      description: form.description.trim(),
       templateFile: form.templateFile ?? undefined,
       sortOrder: Number(form.sortOrder),
       isActive: form.isActive,
+      productType: crud.editingItem?.productType ?? productTab,
     });
-  };
-
-  const handleTemplateFileUpload = (file?: File) => {
-    if (!file) return;
-    const extension = file.name.split(".").pop()?.toLowerCase();
-    if (!extension || !["png", "ai", "psd", "stl"].includes(extension)) {
-      setErrors((prev) => ({
-        ...prev,
-        templateFile: "請上傳去背檔、AI、PS 或 STL 格式的刀模檔",
-      }));
-      return;
-    }
-    if (file.size > 20 * 1024 * 1024) {
-      setErrors((prev) => ({ ...prev, templateFile: "刀模檔案不可超過 20MB" }));
-      return;
-    }
-    setForm((prev) => ({
-      ...prev,
-      templateFile: { name: file.name, size: file.size, url: URL.createObjectURL(file) },
-    }));
-    setErrors((prev) => ({ ...prev, templateFile: "" }));
   };
 
   const handleDelete = (item: Product) => {
@@ -130,65 +154,184 @@ export default function ProductsPage() {
     }
   };
 
-  const columns: AdminTableColumn<Product>[] = [
-    {
-      key: "image",
-      header: "圖片",
-      className: "w-16",
-      render: (i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={i.imageUrl}
-          alt={i.name}
-          className="h-12 w-12 rounded-md object-cover"
-        />
-      ),
-    },
-    { key: "name", header: "商品名稱", render: (i) => <span className="font-medium">{i.name}</span> },
-    {
-      key: "category",
-      header: "類別",
-      className: "text-muted-foreground",
-      render: (i) => categoryNameMap[i.categoryId] ?? "—",
-    },
+  const imageColumn: AdminTableColumn<Product> = {
+    key: "image",
+    header: "圖片",
+    className: "w-16",
+    render: (i) => (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={i.imageUrl}
+        alt={i.name}
+        className="h-12 w-12 rounded-md object-cover"
+      />
+    ),
+  };
+  const nameColumn: AdminTableColumn<Product> = {
+    key: "name",
+    header: "商品名稱",
+    render: (i) => <span className="font-medium">{i.name}</span>,
+  };
+  const categoryColumn: AdminTableColumn<Product> = {
+    key: "category",
+    header: "類別",
+    className: "text-muted-foreground",
+    render: (i) => categoryNameMap[i.categoryId] ?? "—",
+  };
+  const actionsColumn: AdminTableColumn<Product> = {
+    key: "actions",
+    header: "操作",
+    headClassName: "text-right",
+    render: (i) => (
+      <AdminRowActions
+        onEdit={() => crud.openEdit(i)}
+        onDelete={() => handleDelete(i)}
+      />
+    ),
+  };
+
+  const generalColumns: AdminTableColumn<Product>[] = [
+    imageColumn,
+    nameColumn,
+    categoryColumn,
     { key: "price", header: "價格", render: (i) => `NT$ ${i.price}` },
-    { key: "stock", header: "庫存", className: "text-muted-foreground", render: (i) => i.stock },
     {
-      key: "dieLine",
-      header: "刀模檔",
-      render: (i) =>
-        i.templateFile ? (
-          <a
-            href={i.templateFile.url}
-            download={i.templateFile.name}
-            onClick={(event) => event.stopPropagation()}
-            className="inline-flex max-w-36 items-center gap-1 truncate text-primary hover:underline"
-          >
-            <Download className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{i.templateFile.name}</span>
-          </a>
-        ) : (
-          "—"
-        ),
+      key: "stock",
+      header: "庫存",
+      className: "text-muted-foreground",
+      render: (i) => i.stock,
     },
-    { key: "status", header: "狀態", render: (i) => <StatusToggle active={i.isActive} onToggle={() => crud.toggleActive(i)} /> },
     {
-      key: "actions",
-      header: "操作",
-      headClassName: "text-right",
+      key: "status",
+      header: "狀態",
       render: (i) => (
-        <AdminRowActions
-          onEdit={() => crud.openEdit(i)}
-          onDelete={() => handleDelete(i)}
+        <StatusToggle
+          active={i.isActive}
+          onToggle={() => crud.toggleActive(i)}
         />
       ),
     },
+    actionsColumn,
   ];
+
+  const auctionColumns: AdminTableColumn<Product>[] = [
+    imageColumn,
+    nameColumn,
+    categoryColumn,
+    {
+      key: "auctionTime",
+      header: "競標起迄",
+      render: (i) => (
+        <span className="whitespace-nowrap text-sm text-muted-foreground">
+          {formatProductDateTime(i.auctionStartTime)} ~{" "}
+          {formatProductDateTime(i.auctionEndTime)}
+        </span>
+      ),
+    },
+    {
+      key: "bid",
+      header: "喊價狀況",
+      render: (i) => {
+        const prices = getAuctionPrices(i);
+        return (
+          <div className="text-sm">
+            <div>目前 NT$ {prices.currentBid.toLocaleString()}</div>
+            <div className="text-muted-foreground">
+              每次 +NT$ {prices.minBidIncrement.toLocaleString()}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "auctionStatus",
+      header: "狀態",
+      render: (i) => {
+        const status = getAuctionStatus(i.auctionStartTime, i.auctionEndTime);
+        return (
+          <Badge className={AUCTION_BADGE_CLASS[status]}>
+            {AUCTION_STATUS_LABEL[status]}
+          </Badge>
+        );
+      },
+    },
+    actionsColumn,
+  ];
+
+  const presaleColumns: AdminTableColumn<Product>[] = [
+    imageColumn,
+    nameColumn,
+    categoryColumn,
+    {
+      key: "backers",
+      header: "預購人數",
+      render: (i) => (
+        <span className="text-sm">
+          {(i.currentBackers ?? 0).toLocaleString()} /{" "}
+          {(i.targetBackers ?? 0).toLocaleString()} 人
+        </span>
+      ),
+    },
+    {
+      key: "progress",
+      header: "達標百分比",
+      render: (i) => (
+        <span className="text-sm font-medium">
+          {getPresaleProgress(i.currentBackers, i.targetBackers)}%
+        </span>
+      ),
+    },
+    {
+      key: "presaleStatus",
+      header: "狀態",
+      render: (i) => {
+        const status = getPresaleStatus(
+          i.presaleStartTime,
+          i.presaleEndTime,
+          i.currentBackers,
+          i.targetBackers,
+        );
+        return (
+          <Badge className={PRESALE_BADGE_CLASS[status]}>
+            {PRESALE_STATUS_LABEL[status]}
+          </Badge>
+        );
+      },
+    },
+    actionsColumn,
+  ];
+
+  const columns =
+    productTab === "auction"
+      ? auctionColumns
+      : productTab === "presale"
+        ? presaleColumns
+        : generalColumns;
+
+  const tabItems = useMemo(() => {
+    const items = crud.items.filter((item) => item.productType === productTab);
+    if (productTab !== "presale") return items;
+    return [...items].sort((a, b) => {
+      const aStatus = getPresaleStatus(
+        a.presaleStartTime,
+        a.presaleEndTime,
+        a.currentBackers,
+        a.targetBackers,
+      );
+      const bStatus = getPresaleStatus(
+        b.presaleStartTime,
+        b.presaleEndTime,
+        b.currentBackers,
+        b.targetBackers,
+      );
+      return PRESALE_PIN_ORDER[aStatus] - PRESALE_PIN_ORDER[bStatus];
+    });
+  }, [crud.items, productTab]);
 
   return (
     <div>
       <AdminPageHeader
-        title="產品管理"
+        title="商品管理"
         description="管理平台上架商品。"
         action={
           <Button onClick={crud.openCreate} className="gap-2">
@@ -198,11 +341,32 @@ export default function ProductsPage() {
         }
       />
 
+      <div className="mb-4 flex gap-5 border-b border-border">
+        {PRODUCT_TABS.map((tab) => {
+          const active = productTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setProductTab(tab.id)}
+              className={`-mb-px border-b-2 pb-2 text-sm font-medium transition-colors ${
+                active
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
       <AdminTable
         columns={columns}
-        items={crud.items}
+        items={tabItems}
         loading={crud.loading}
         error={crud.error}
+        emptyText="目前沒有此類型商品"
       />
 
       <AdminModal
@@ -211,7 +375,19 @@ export default function ProductsPage() {
         onClose={crud.closeModal}
         onSubmit={handleSubmit}
       >
-        <AdminField label="商品名稱" htmlFor="name" required error={errors.name}>
+        <div className="flex items-center justify-between rounded-lg border border-border p-3">
+          <span className="text-sm font-medium">是否啟用</span>
+          <Switch
+            checked={form.isActive}
+            onCheckedChange={(v) => setForm({ ...form, isActive: v })}
+          />
+        </div>
+        <AdminField
+          label="商品名稱"
+          htmlFor="name"
+          required
+          error={errors.name}
+        >
           <Input
             id="name"
             value={form.name}
@@ -257,7 +433,12 @@ export default function ProductsPage() {
           </AdminField>
         </div>
 
-        <AdminField label="圖片網址" htmlFor="imageUrl" required error={errors.imageUrl}>
+        <AdminField
+          label="圖片網址"
+          htmlFor="imageUrl"
+          required
+          error={errors.imageUrl}
+        >
           <Input
             id="imageUrl"
             value={form.imageUrl}
@@ -266,41 +447,12 @@ export default function ProductsPage() {
           />
         </AdminField>
 
-        <AdminField label="刀模檔案" htmlFor="templateFile" error={errors.templateFile}>
-          <div className="rounded-lg border border-dashed border-border p-3">
-            {form.templateFile ? (
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-2">
-                  <FileText className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="truncate text-sm">{form.templateFile.name}</span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="移除刀模檔案"
-                  onClick={() => setForm((prev) => ({ ...prev, templateFile: null }))}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <label htmlFor="templateFile" className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                <Upload className="h-4 w-4" />
-                上傳刀模檔案（去背檔、AI、PS、STL；單檔上限 20MB）
-              </label>
-            )}
-            <Input
-              id="templateFile"
-              type="file"
-              accept=".png,.ai,.psd,.stl"
-              onChange={(event) => handleTemplateFileUpload(event.target.files?.[0])}
-              className="sr-only"
-            />
-          </div>
-        </AdminField>
-
-        <AdminField label="排序" htmlFor="sortOrder" required error={errors.sortOrder}>
+        <AdminField
+          label="排序"
+          htmlFor="sortOrder"
+          required
+          error={errors.sortOrder}
+        >
           <Input
             id="sortOrder"
             type="number"
@@ -309,13 +461,19 @@ export default function ProductsPage() {
           />
         </AdminField>
 
-        <div className="flex items-center justify-between rounded-lg border border-border p-3">
-          <span className="text-sm font-medium">是否啟用</span>
-          <Switch
-            checked={form.isActive}
-            onCheckedChange={(v) => setForm({ ...form, isActive: v })}
+        <AdminField
+          label="商品描述"
+          htmlFor="description"
+          error={errors.description}
+        >
+          <textarea
+            id="description"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="請輸入商品描述"
+            className="h-24 w-full rounded-md border border-border p-2"
           />
-        </div>
+        </AdminField>
       </AdminModal>
     </div>
   );

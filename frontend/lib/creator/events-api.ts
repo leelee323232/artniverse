@@ -1,18 +1,31 @@
 export type EventStatus = "approved" | "pending" | "ended" | "cancelled";
 
+/**
+ * 與組員活動 JSON 對齊的欄位：title / startTime / endTime
+ * 新增欄位：address / boothStartTime / boothEndTime / note
+ * 組員已定義但創作者申請表單尚未做：linkUrl / imageUrl / sortOrder / publishStartTime / isActive / publishEndTime
+ */
 export interface EventApplication {
   id: string;
-  name: string;
-  time: string;
+  title: string;
   address: string;
+  startTime: string;
+  endTime: string;
+  boothStartTime: string;
+  boothEndTime: string;
+  note: string;
   status: EventStatus;
   createdAt: string;
 }
 
 export interface EventApplicationInput {
-  name: string;
-  time: string;
+  title: string;
   address: string;
+  startTime: string;
+  endTime: string;
+  boothStartTime: string;
+  boothEndTime: string;
+  note: string;
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
