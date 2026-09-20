@@ -538,7 +538,7 @@ export default function ProductDetailPage() {
             {recommendedProducts.map((item) => (
               <a
                 key={item.id}
-                href={`/product/${item.id}`}
+                href="/product/1/"
                 className="flex-shrink-0"
                 style={{ scrollSnapAlign: "start" }}
               >

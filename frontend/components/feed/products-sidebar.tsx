@@ -186,7 +186,7 @@ export function ProductsSidebar({
             {recommendedProducts.map((product) => (
               <a
                 key={product.id}
-                href={`/product/${product.id}`}
+                href="/product/1/"
                 className="group w-40 shrink-0"
               >
                 <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
@@ -266,7 +266,7 @@ export function ProductsSidebar({
           {recommendedProducts.map((product) => (
             <a
               key={product.id}
-              href={`/product/${product.id}`}
+              href="/product/1/"
               className="flex gap-3 p-2 rounded-xl hover:bg-muted/50 transition-colors group"
             >
               <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-muted">

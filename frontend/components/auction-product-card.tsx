@@ -88,7 +88,7 @@ export function AuctionProductCard({
       {/* 頂部識別色條 */}
       <div className="h-1 w-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500" />
 
-      <a href={`/product/${id}`}>
+      <a href="/product/1/">
         {/* 商品圖 */}
         <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img
