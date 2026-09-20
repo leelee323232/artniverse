@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
+import {
+  AdminTable,
+  type AdminTableColumn,
+} from "@/components/admin/AdminTable";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminRowActions } from "@/components/admin/AdminRowActions";
@@ -67,10 +70,33 @@ export default function ProductCategoriesPage() {
   };
 
   const columns: AdminTableColumn<ProductCategory>[] = [
-    { key: "sortOrder", header: "排序", className: "w-16 text-muted-foreground", render: (i) => i.sortOrder },
-    { key: "name", header: "類別名稱", render: (i) => <span className="font-medium">{i.name}</span> },
-    { key: "status", header: "狀態", render: (i) => <StatusToggle active={i.isActive} onToggle={() => crud.toggleActive(i)} /> },
-    { key: "createdAt", header: "建立時間", className: "text-muted-foreground", render: (i) => i.createdAt },
+    {
+      key: "sortOrder",
+      header: "排序",
+      className: "w-16 text-muted-foreground",
+      render: (i) => i.sortOrder,
+    },
+    {
+      key: "name",
+      header: "類別名稱",
+      render: (i) => <span className="font-medium">{i.name}</span>,
+    },
+    {
+      key: "status",
+      header: "狀態",
+      render: (i) => (
+        <StatusToggle
+          active={i.isActive}
+          onToggle={() => crud.toggleActive(i)}
+        />
+      ),
+    },
+    {
+      key: "createdAt",
+      header: "建立時間",
+      className: "text-muted-foreground",
+      render: (i) => i.createdAt,
+    },
     {
       key: "actions",
       header: "操作",
@@ -93,7 +119,7 @@ export default function ProductCategoriesPage() {
   return (
     <div>
       <AdminPageHeader
-        title="產品類別管理"
+        title="商品類別管理"
         description="管理前台商品分類，可調整排序與啟用狀態。"
         action={
           <Button onClick={crud.openCreate} className="gap-2">
@@ -116,7 +142,12 @@ export default function ProductCategoriesPage() {
         onClose={crud.closeModal}
         onSubmit={handleSubmit}
       >
-        <AdminField label="類別名稱" htmlFor="name" required error={errors.name}>
+        <AdminField
+          label="類別名稱"
+          htmlFor="name"
+          required
+          error={errors.name}
+        >
           <Input
             id="name"
             value={form.name}
@@ -125,7 +156,12 @@ export default function ProductCategoriesPage() {
           />
         </AdminField>
 
-        <AdminField label="排序" htmlFor="sortOrder" required error={errors.sortOrder}>
+        <AdminField
+          label="排序"
+          htmlFor="sortOrder"
+          required
+          error={errors.sortOrder}
+        >
           <Input
             id="sortOrder"
             type="number"

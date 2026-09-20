@@ -17,6 +17,12 @@ export interface CreatorCategory extends AdminBaseEntity {
   name: string;
 }
 
+export type ProductType = "general" | "auction" | "presale";
+
+export type AuctionStatus = "upcoming" | "live" | "ended";
+
+export type PresaleStatus = "upcoming" | "live" | "success" | "failed";
+
 // 產品
 export interface Product extends AdminBaseEntity {
   name: string;
@@ -24,7 +30,20 @@ export interface Product extends AdminBaseEntity {
   imageUrl: string;
   categoryId: string;
   stock: number;
+  description?: string;
   templateFile?: ProductFile;
+  productType: ProductType;
+  creatorId?: string;
+  creatorName?: string;
+  startingPrice?: number;
+  currentBid?: number;
+  minBidIncrement?: number;
+  auctionStartTime?: string | null;
+  auctionEndTime?: string | null;
+  currentBackers?: number;
+  targetBackers?: number;
+  presaleStartTime?: string | null;
+  presaleEndTime?: string | null;
 }
 
 export interface ProductFile {
@@ -50,6 +69,10 @@ export interface Activity extends AdminBaseEntity {
   endTime: string | null;         // 活動結束時間
   publishStartTime: string | null; // 上架時間
   publishEndTime: string | null;   // 下架時間
+  address?: string;               // 地址（創作者活動申請新增）
+  boothStartTime?: string | null; // 擺攤開始時間
+  boothEndTime?: string | null;   // 擺攤結束時間
+  note?: string;                  // 備註
 }
 
 // 熱門創作者
