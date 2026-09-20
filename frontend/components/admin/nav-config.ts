@@ -25,7 +25,11 @@ export interface AdminNavItem {
 export const adminNavItems: AdminNavItem[] = [
   { label: "後台首頁", href: "/admin", icon: LayoutDashboard },
   { label: "商品管理", href: "/admin/products", icon: Package },
-  { label: "商品模板管理", href: "/admin/product-templates", icon: PanelsTopLeft },
+  {
+    label: "商品模板管理",
+    href: "/admin/product-templates",
+    icon: PanelsTopLeft,
+  },
   {
     label: "商品開發申請審核",
     href: "/admin/product-applications",
@@ -37,9 +41,9 @@ export const adminNavItems: AdminNavItem[] = [
     href: "/admin/creator-applications",
     icon: ClipboardList,
   },
-  { label: "企業委託管理", href: "/admin/quests", icon: Scroll }, 
+  { label: "企業委託管理", href: "/admin/quests", icon: Scroll },
   { label: "活動區塊管理", href: "/admin/activities", icon: ImageIcon },
-  { label: "產品類別管理", href: "/admin/product-categories", icon: Tags },
+  { label: "商品類別管理", href: "/admin/product-categories", icon: Tags },
   {
     label: "創作者類別管理",
     href: "/admin/creator-categories",

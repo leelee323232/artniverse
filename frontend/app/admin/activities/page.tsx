@@ -67,16 +67,21 @@ const emptyEditForm: EditFormState = {
 
 export default function ActivitiesPage() {
   const crud = useAdminCrud<Activity>("a", mockActivities);
-  const [createForm, setCreateForm] = useState<CreateFormState>(emptyCreateForm);
+  const [createForm, setCreateForm] =
+    useState<CreateFormState>(emptyCreateForm);
   const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
   const [editForm, setEditForm] = useState<EditFormState>(emptyEditForm);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
-  const parseDate = (s: string | null) => (s ? new Date(s.replace("/", "-").replace("/", "-")) : null);
+  const parseDate = (s: string | null) =>
+    s ? new Date(s.replace("/", "-").replace("/", "-")) : null;
 
   useEffect(() => {
     if (!crud.isModalOpen || crud.editingItem) return;
-    setCreateForm({ ...emptyCreateForm, sortOrder: String(crud.items.length + 1) });
+    setCreateForm({
+      ...emptyCreateForm,
+      sortOrder: String(crud.items.length + 1),
+    });
     setCreateErrors({});
   }, [crud.isModalOpen, crud.editingItem, crud.items.length]);
 
@@ -100,12 +105,18 @@ export default function ActivitiesPage() {
     const next: Record<string, string> = {};
     if (!createForm.title.trim()) next.title = "請輸入活動名稱";
     if (!createForm.linkUrl.trim()) next.linkUrl = "請輸入連結";
-    if (!createForm.imageUrl.trim()) next.imageUrl = "請輸入圖片網址";
-    if (createForm.sortOrder === "" || Number.isNaN(Number(createForm.sortOrder)))
+    if (
+      createForm.sortOrder === "" ||
+      Number.isNaN(Number(createForm.sortOrder))
+    )
       next.sortOrder = "排序必須是數字";
     if (!createForm.startTime) next.startTime = "請選擇活動開始時間";
     if (!createForm.endTime) next.endTime = "請選擇活動結束時間";
-    if (createForm.startTime && createForm.endTime && createForm.endTime <= createForm.startTime)
+    if (
+      createForm.startTime &&
+      createForm.endTime &&
+      createForm.endTime <= createForm.startTime
+    )
       next.endTime = "結束時間必須晚於開始時間";
     if (!createForm.publishStartTime) next.publishStartTime = "請選擇上架時間";
     if (!createForm.publishEndTime) next.publishEndTime = "請選擇下架時間";
@@ -123,12 +134,15 @@ export default function ActivitiesPage() {
     const next: Record<string, string> = {};
     if (!editForm.title.trim()) next.title = "請輸入活動名稱";
     if (!editForm.linkUrl.trim()) next.linkUrl = "請輸入連結";
-    if (!editForm.imageUrl.trim()) next.imageUrl = "請輸入圖片網址";
     if (editForm.sortOrder === "" || Number.isNaN(Number(editForm.sortOrder)))
       next.sortOrder = "排序必須是數字";
     if (!editForm.startTime) next.startTime = "請選擇活動開始時間";
     if (!editForm.endTime) next.endTime = "請選擇活動結束時間";
-    if (editForm.startTime && editForm.endTime && editForm.endTime <= editForm.startTime)
+    if (
+      editForm.startTime &&
+      editForm.endTime &&
+      editForm.endTime <= editForm.startTime
+    )
       next.endTime = "結束時間必須晚於開始時間";
     if (!editForm.publishStartTime) next.publishStartTime = "請選擇上架時間";
     setEditErrors(next);
@@ -136,7 +150,9 @@ export default function ActivitiesPage() {
   };
 
   const toDateString = (d: Date | null) =>
-    d ? `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}` : null;
+    d
+      ? `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+      : null;
 
   const handleCreateSubmit = () => {
     if (!validateCreate()) return;
@@ -180,19 +196,6 @@ export default function ActivitiesPage() {
       header: "排序",
       className: "w-16 text-muted-foreground",
       render: (i) => i.sortOrder,
-    },
-    {
-      key: "image",
-      header: "圖片",
-      className: "w-32",
-      render: (i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={i.imageUrl}
-          alt={i.title}
-          className="h-12 w-28 rounded-md object-cover"
-        />
-      ),
     },
     {
       key: "title",
@@ -267,45 +270,62 @@ export default function ActivitiesPage() {
         onClose={crud.closeModal}
         onSubmit={handleCreateSubmit}
       >
-        <AdminField label="活動名稱" htmlFor="c-title" required error={createErrors.title}>
+        <AdminField
+          label="活動名稱"
+          htmlFor="c-title"
+          required
+          error={createErrors.title}
+        >
           <Input
             id="c-title"
             value={createForm.title}
-            onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+            onChange={(e) =>
+              setCreateForm({ ...createForm, title: e.target.value })
+            }
             placeholder="例如：新會員首購 9 折"
           />
         </AdminField>
 
-        <AdminField label="連結" htmlFor="c-linkUrl" required error={createErrors.linkUrl}>
+        <AdminField
+          label="連結"
+          htmlFor="c-linkUrl"
+          required
+          error={createErrors.linkUrl}
+        >
           <Input
             id="c-linkUrl"
             value={createForm.linkUrl}
-            onChange={(e) => setCreateForm({ ...createForm, linkUrl: e.target.value })}
+            onChange={(e) =>
+              setCreateForm({ ...createForm, linkUrl: e.target.value })
+            }
             placeholder="例如：/shop"
           />
         </AdminField>
 
-        <AdminField label="圖片網址" htmlFor="c-imageUrl" required error={createErrors.imageUrl}>
-          <Input
-            id="c-imageUrl"
-            value={createForm.imageUrl}
-            onChange={(e) => setCreateForm({ ...createForm, imageUrl: e.target.value })}
-            placeholder="https://..."
-          />
-        </AdminField>
-
-        <AdminField label="排序" htmlFor="c-sortOrder" required error={createErrors.sortOrder}>
+        <AdminField
+          label="排序"
+          htmlFor="c-sortOrder"
+          required
+          error={createErrors.sortOrder}
+        >
           <Input
             id="c-sortOrder"
             type="number"
             value={createForm.sortOrder}
-            onChange={(e) => setCreateForm({ ...createForm, sortOrder: e.target.value })}
+            onChange={(e) =>
+              setCreateForm({ ...createForm, sortOrder: e.target.value })
+            }
           />
         </AdminField>
 
         <div className="flex gap-4">
           <div className="flex-1">
-            <AdminField label="活動開始時間" htmlFor="c-startTime" required error={createErrors.startTime}>
+            <AdminField
+              label="活動開始時間"
+              htmlFor="c-startTime"
+              required
+              error={createErrors.startTime}
+            >
               <BasicDatePicker
                 showTime
                 value={createForm.startTime}
@@ -315,7 +335,12 @@ export default function ActivitiesPage() {
             </AdminField>
           </div>
           <div className="flex-1">
-            <AdminField label="活動結束時間" htmlFor="c-endTime" required error={createErrors.endTime}>
+            <AdminField
+              label="活動結束時間"
+              htmlFor="c-endTime"
+              required
+              error={createErrors.endTime}
+            >
               <BasicDatePicker
                 showTime
                 value={createForm.endTime}
@@ -328,21 +353,35 @@ export default function ActivitiesPage() {
 
         <div className="flex gap-4">
           <div className="flex-1">
-            <AdminField label="上架時間" htmlFor="c-publishStartTime" required error={createErrors.publishStartTime}>
+            <AdminField
+              label="上架時間"
+              htmlFor="c-publishStartTime"
+              required
+              error={createErrors.publishStartTime}
+            >
               <BasicDatePicker
                 showTime
                 value={createForm.publishStartTime}
-                onChange={(d) => setCreateForm({ ...createForm, publishStartTime: d })}
+                onChange={(d) =>
+                  setCreateForm({ ...createForm, publishStartTime: d })
+                }
                 placeholder="請選擇上架時間"
               />
             </AdminField>
           </div>
           <div className="flex-1">
-            <AdminField label="下架時間" htmlFor="c-publishEndTime" required error={createErrors.publishEndTime}>
+            <AdminField
+              label="下架時間"
+              htmlFor="c-publishEndTime"
+              required
+              error={createErrors.publishEndTime}
+            >
               <BasicDatePicker
                 showTime
                 value={createForm.publishEndTime}
-                onChange={(d) => setCreateForm({ ...createForm, publishEndTime: d })}
+                onChange={(d) =>
+                  setCreateForm({ ...createForm, publishEndTime: d })
+                }
                 placeholder="請選擇下架時間"
               />
             </AdminField>
@@ -353,7 +392,9 @@ export default function ActivitiesPage() {
           <span className="text-sm font-medium">是否啟用</span>
           <Switch
             checked={createForm.isActive}
-            onCheckedChange={(v) => setCreateForm({ ...createForm, isActive: v })}
+            onCheckedChange={(v) =>
+              setCreateForm({ ...createForm, isActive: v })
+            }
           />
         </div>
       </AdminModal>
@@ -365,45 +406,62 @@ export default function ActivitiesPage() {
         onClose={crud.closeModal}
         onSubmit={handleEditSubmit}
       >
-        <AdminField label="活動名稱" htmlFor="e-title" required error={editErrors.title}>
+        <AdminField
+          label="活動名稱"
+          htmlFor="e-title"
+          required
+          error={editErrors.title}
+        >
           <Input
             id="e-title"
             value={editForm.title}
-            onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+            onChange={(e) =>
+              setEditForm({ ...editForm, title: e.target.value })
+            }
             placeholder="例如：新會員首購 9 折"
           />
         </AdminField>
 
-        <AdminField label="連結" htmlFor="e-linkUrl" required error={editErrors.linkUrl}>
+        <AdminField
+          label="連結"
+          htmlFor="e-linkUrl"
+          required
+          error={editErrors.linkUrl}
+        >
           <Input
             id="e-linkUrl"
             value={editForm.linkUrl}
-            onChange={(e) => setEditForm({ ...editForm, linkUrl: e.target.value })}
+            onChange={(e) =>
+              setEditForm({ ...editForm, linkUrl: e.target.value })
+            }
             placeholder="例如：/shop"
           />
         </AdminField>
 
-        <AdminField label="圖片網址" htmlFor="e-imageUrl" required error={editErrors.imageUrl}>
-          <Input
-            id="e-imageUrl"
-            value={editForm.imageUrl}
-            onChange={(e) => setEditForm({ ...editForm, imageUrl: e.target.value })}
-            placeholder="https://..."
-          />
-        </AdminField>
-
-        <AdminField label="排序" htmlFor="e-sortOrder" required error={editErrors.sortOrder}>
+        <AdminField
+          label="排序"
+          htmlFor="e-sortOrder"
+          required
+          error={editErrors.sortOrder}
+        >
           <Input
             id="e-sortOrder"
             type="number"
             value={editForm.sortOrder}
-            onChange={(e) => setEditForm({ ...editForm, sortOrder: e.target.value })}
+            onChange={(e) =>
+              setEditForm({ ...editForm, sortOrder: e.target.value })
+            }
           />
         </AdminField>
 
         <div className="flex gap-4">
           <div className="flex-1">
-            <AdminField label="活動開始時間" htmlFor="e-startTime" required error={editErrors.startTime}>
+            <AdminField
+              label="活動開始時間"
+              htmlFor="e-startTime"
+              required
+              error={editErrors.startTime}
+            >
               <BasicDatePicker
                 showTime
                 value={editForm.startTime}
@@ -413,7 +471,12 @@ export default function ActivitiesPage() {
             </AdminField>
           </div>
           <div className="flex-1">
-            <AdminField label="活動結束時間" htmlFor="e-endTime" required error={editErrors.endTime}>
+            <AdminField
+              label="活動結束時間"
+              htmlFor="e-endTime"
+              required
+              error={editErrors.endTime}
+            >
               <BasicDatePicker
                 showTime
                 value={editForm.endTime}
@@ -424,7 +487,12 @@ export default function ActivitiesPage() {
           </div>
         </div>
 
-        <AdminField label="上架時間" htmlFor="e-publishStartTime" required error={editErrors.publishStartTime}>
+        <AdminField
+          label="上架時間"
+          htmlFor="e-publishStartTime"
+          required
+          error={editErrors.publishStartTime}
+        >
           <BasicDatePicker
             showTime
             value={editForm.publishStartTime}
