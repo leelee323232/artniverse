@@ -133,9 +133,7 @@ export default function ProductApplicationsPage() {
         {loading && <span role="status">載入中…</span>}
       </div>
       {error && <p role="alert" className="mb-4 text-destructive">{error}</p>}
-      <p className="mb-4 text-sm text-muted-foreground">
-        第一頁同時顯示資料庫申請與原有展示資料。標示「展示用」的資料僅供查看，不能審核，也不會儲存至資料庫。
-      </p>
+
       {/* 列表表格 */}
       <div className="rounded-lg border border-border bg-card overflow-hidden">
         <table className="w-full text-left border-collapse">
