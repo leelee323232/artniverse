@@ -1,190 +1,124 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { Navigation } from "@/components/navigation"
-import { UniverseBackground } from "@/components/universe-background"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, X, ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { useToast } from "@/hooks/use-toast"
+import Link from "next/link";
+import { Navigation } from "@/components/navigation";
+import { UniverseBackground } from "@/components/universe-background";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ArrowLeft, Check } from "lucide-react";
+import { useNewProductForm } from "./_components/useNewProductForm";
+import { Step1SelectProduct } from "./_components/Step1SelectProduct";
+import { Step2Editor } from "./_components/Step2Editor";
+import { Step3Pricing } from "./_components/Step3Pricing";
 
 export default function NewProductPage() {
-  const [images, setImages] = useState<string[]>([])
-  const { toast } = useToast()
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files) {
-      const newImages = Array.from(files).map((file) => URL.createObjectURL(file))
-      setImages([...images, ...newImages])
-    }
-  }
-
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index))
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    toast({
-      title: "商品已新增",
-      description: "你的商品已成功上架",
-    })
-  }
+  const form = useNewProductForm();
+  const { currentStep, showSuccessDialog, setShowSuccessDialog, router } = form;
 
   return (
     <div className="relative min-h-screen">
       <UniverseBackground />
       <Navigation />
 
-      <div className="container mx-auto max-w-4xl px-4 pt-24 pb-20">
+      <div className="container mx-auto px-4 pt-24 pb-20">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/creator-portal">
-            <Button variant="ghost" className="mb-4">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              返回控制台
-            </Button>
+          <Link
+            href="/creator-portal"
+            className="mb-4 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            返回創作者控制台
           </Link>
           <h1 className="mb-2 text-3xl font-bold text-foreground">新增商品</h1>
-          <p className="text-muted-foreground">填寫商品資訊並上架到你的星球</p>
+          <p className="text-muted-foreground">
+            選擇產品、上傳設計、設定價格，申請產品開發
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <Card className="border-border/50 bg-card/30 p-8 backdrop-blur-sm">
-            <div className="space-y-6">
-              {/* Product Images */}
-              <div className="space-y-3">
-                <Label>商品圖片</Label>
-                <div className="grid grid-cols-4 gap-4">
-                  {images.map((image, index) => (
-                    <div key={index} className="group relative aspect-square overflow-hidden rounded-lg bg-muted/30">
-                      <img
-                        src={image || "/placeholder.svg"}
-                        alt={`Product ${index + 1}`}
-                        className="h-full w-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute right-2 top-2 rounded-full bg-destructive p-1 opacity-0 transition-opacity group-hover:opacity-100"
-                      >
-                        <X className="h-4 w-4 text-destructive-foreground" />
-                      </button>
-                    </div>
-                  ))}
-                  {images.length < 8 && (
-                    <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border/50 bg-muted/20 transition-colors hover:border-primary/50 hover:bg-muted/30">
-                      <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">上傳圖片</span>
-                      <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
-                    </label>
-                  )}
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-center gap-4">
+            {[
+              { step: 1, label: "選擇產品" },
+              { step: 2, label: "上傳設計" },
+              { step: 3, label: "設定價格" },
+            ].map(({ step, label }) => (
+              <div key={step} className="flex items-center">
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors ${
+                    currentStep >= step
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-transparent text-muted-foreground"
+                  }`}
+                >
+                  {currentStep > step ? <Check className="h-5 w-5" /> : step}
                 </div>
-                <p className="text-xs text-muted-foreground">建議尺寸：800x800px，最多 8 張圖片</p>
+                <span
+                  className={`ml-2 text-sm ${currentStep >= step ? "text-foreground" : "text-muted-foreground"}`}
+                >
+                  {label}
+                </span>
+                {step < 3 && (
+                  <div
+                    className={`mx-4 h-0.5 w-16 ${currentStep > step ? "bg-primary" : "bg-border"}`}
+                  />
+                )}
               </div>
+            ))}
+          </div>
+        </div>
 
-              {/* Product Name */}
-              <div className="space-y-2">
-                <Label htmlFor="name">商品名稱 *</Label>
-                <Input id="name" placeholder="例如：星空筆記本" required className="bg-background/50" />
-              </div>
+        {/* Step 1: Product Selection */}
+        {currentStep === 1 && <Step1SelectProduct form={form} />}
 
-              {/* Category */}
-              <div className="space-y-2">
-                <Label htmlFor="category">商品分類 *</Label>
-                <Select required>
-                  <SelectTrigger className="bg-background/50">
-                    <SelectValue placeholder="選擇分類" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stationery">文具</SelectItem>
-                    <SelectItem value="stickers">貼紙</SelectItem>
-                    <SelectItem value="cards">卡片</SelectItem>
-                    <SelectItem value="bags">包包</SelectItem>
-                    <SelectItem value="badges">徽章</SelectItem>
-                    <SelectItem value="posters">海報</SelectItem>
-                    <SelectItem value="accessories">配件</SelectItem>
-                    <SelectItem value="other">其他</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+        {/* Step 2: Upload Design - Canva-like Editor */}
+        {currentStep === 2 && <Step2Editor form={form} />}
 
-              {/* Description */}
-              <div className="space-y-2">
-                <Label htmlFor="description">商品描述 *</Label>
-                <Textarea
-                  id="description"
-                  placeholder="詳細描述你的商品特色、材質、尺寸等資訊..."
-                  rows={6}
-                  required
-                  className="bg-background/50"
-                />
-              </div>
-
-              {/* Price and Stock */}
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="price">售價 (NT$) *</Label>
-                  <Input id="price" type="number" placeholder="380" min="0" required className="bg-background/50" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="stock">庫存數量 *</Label>
-                  <Input id="stock" type="number" placeholder="50" min="0" required className="bg-background/50" />
-                </div>
-              </div>
-
-              {/* Dimensions */}
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="length">長度 (cm)</Label>
-                  <Input id="length" type="number" placeholder="15" min="0" step="0.1" className="bg-background/50" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="width">寬度 (cm)</Label>
-                  <Input id="width" type="number" placeholder="10" min="0" step="0.1" className="bg-background/50" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="height">高度 (cm)</Label>
-                  <Input id="height" type="number" placeholder="2" min="0" step="0.1" className="bg-background/50" />
-                </div>
-              </div>
-
-              {/* Weight */}
-              <div className="space-y-2">
-                <Label htmlFor="weight">重量 (g)</Label>
-                <Input id="weight" type="number" placeholder="200" min="0" className="bg-background/50" />
-              </div>
-
-              {/* Tags */}
-              <div className="space-y-2">
-                <Label htmlFor="tags">標籤</Label>
-                <Input id="tags" placeholder="療癒, 可愛, 手作 (用逗號分隔)" className="bg-background/50" />
-                <p className="text-xs text-muted-foreground">幫助顧客更容易找到你的商品</p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 border-t border-border/50 pt-6">
-                <Button type="submit" className="flex-1 bg-gradient-to-r from-primary to-secondary">
-                  上架商品
-                </Button>
-                <Link href="/creator-portal" className="flex-1">
-                  <Button type="button" variant="outline" className="w-full bg-transparent">
-                    取消
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </Card>
-        </form>
+        {/* Step 3: Pricing */}
+        {currentStep === 3 && <Step3Pricing form={form} />}
       </div>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="max-w-md border-green-500/30 bg-background/95 backdrop-blur-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-500">
+              <Check className="h-6 w-6" />
+              申請已提交
+            </DialogTitle>
+            <DialogDescription>
+              您的產品開發申請已成功提交！我們會在 1-3 個工作天內審核您的申請。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="rounded-lg bg-muted/20 p-4">
+              <h4 className="mb-2 font-bold text-foreground">接下來的步驟：</h4>
+              <ol className="list-inside list-decimal space-y-1 text-sm text-muted-foreground">
+                <li>我們會審核您的設計和產品設定</li>
+                <li>審核通過後，您會收到通知</li>
+                <li>您可以在「商品管理」編輯商品詳情</li>
+                <li>設定完成後，商品即可上架販售</li>
+              </ol>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => router.push("/creator-portal")}
+              className="w-full bg-gradient-to-r from-primary to-secondary"
+            >
+              返回創作者控制台
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  )
+  );
 }

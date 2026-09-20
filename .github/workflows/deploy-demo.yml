@@ -1,0 +1,57 @@
+name: Deploy to SiteGround 
+
+on:
+  push:
+    branches:
+      - frontend-dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Clean previous build
+        working-directory: ./frontend
+        run: |
+          rm -rf .next
+          rm -rf out
+
+      - name: Build
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          
+      - name: Copy htaccess
+        run: |
+          cp frontend/public/.htaccess frontend/out/.htaccess
+          ls -la frontend/out/.htaccess
+
+      - name: Deploy to SiteGround
+        uses: easingthemes/ssh-deploy@v5.1.0
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SITEGROUND_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.SERVER_HOST }}
+          REMOTE_USER: ${{ secrets.SERVER_USER }}
+          REMOTE_PORT: ${{ secrets.SERVER_PORT }}
+
+          SOURCE: "frontend/out/"
+          TARGET: "/home/customer/www/demoart.artniverse.com/public_html/"
+
+          ARGS: "-rlzvc"
+
+          SCRIPT_BEFORE: |
+            cd /home/customer/www/demoart.artniverse.com/public_html
+            find . -mindepth 1 -maxdepth 1 -exec rm -rf {} +

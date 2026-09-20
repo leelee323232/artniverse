@@ -1,0 +1,43 @@
+import type { Activity } from "@/types/admin";
+
+export const mockActivities: Activity[] = [
+  {
+    id: "a-1",
+    title: "新會員首購 9 折",
+    linkUrl: "/shop",
+    imageUrl: "https://placehold.co/320x120?text=Welcome",
+    sortOrder: 1,
+    isActive: true,
+    createdAt: "2026-01-01",
+    startTime: "2026-01-01 00:00",
+    endTime: "2026-03-31 23:59",
+    publishStartTime: "2026-01-01 09:00",
+    publishEndTime: "2026-03-31 23:59",
+  },
+  {
+    id: "a-2",
+    title: "創作者聯名特展",
+    linkUrl: "/explore",
+    imageUrl: "https://placehold.co/320x120?text=Exhibition",
+    sortOrder: 2,
+    isActive: true,
+    createdAt: "2026-01-04",
+    startTime: "2026-02-01 10:00",
+    endTime: "2026-04-30 18:00",
+    publishStartTime: "2026-02-01 10:00",
+    publishEndTime: "2026-04-30 18:00",
+  },
+  {
+    id: "a-3",
+    title: "限時企業委託優惠",
+    linkUrl: "/commission",
+    imageUrl: "https://placehold.co/320x120?text=Commission",
+    sortOrder: 3,
+    isActive: false,
+    createdAt: "2026-01-08",
+    startTime: null,
+    endTime: null,
+    publishStartTime: null,
+    publishEndTime: null,
+  },
+];

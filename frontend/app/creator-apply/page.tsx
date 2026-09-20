@@ -1,22 +1,33 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Navigation } from "@/components/navigation"
-import { UniverseBackground } from "@/components/universe-background"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import { Navigation } from "@/components/navigation";
+import { UniverseBackground } from "@/components/universe-background";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Upload, CheckCircle2, Sparkles, Package, Users, Megaphone, Truck, Handshake, Home, PartyPopper } from "lucide-react"
-import Link from "next/link"
+} from "@/components/ui/dialog";
+import {
+  Upload,
+  CheckCircle2,
+  Sparkles,
+  Package,
+  Users,
+  Megaphone,
+  Truck,
+  Handshake,
+  Home,
+  PartyPopper,
+} from "lucide-react";
+import Link from "next/link";
 
 const productCategories = [
   "T-shirt / 上衣",
@@ -32,10 +43,10 @@ const productCategories = [
   "鑰匙圈 / 吊飾",
   "抱枕",
   "地墊",
-  "其他（請於創作理念欄補充說明）"
-]
+  "其他（請於創作理念欄補充說明）",
+];
 
-const contractContent = `Artniverse 創作者合約書
+const contractContent = `ARTNIVERSE 創作者合約書
 
 藝術宇宙文創孵化有限公司（以下簡稱甲方）
 申請合作品牌（以下簡稱乙方）
@@ -116,7 +127,7 @@ const contractContent = `Artniverse 創作者合約書
 立約人
 甲方：藝術宇宙文創孵化有限公司
 統一編號：60670422
-地址：屏東縣長治鄉長興路 406 號`
+地址：屏東縣長治鄉長興路 406 號`;
 
 export default function CreatorApplyPage() {
   const [formData, setFormData] = useState({
@@ -134,29 +145,32 @@ export default function CreatorApplyPage() {
     idFrontImage: null as File | null,
     idBackImage: null as File | null,
     agreeToContract: false,
-  })
-  const [isContractOpen, setIsContractOpen] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  });
+  const [isContractOpen, setIsContractOpen] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleCategoryChange = (category: string, checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       selectedCategories: checked
         ? [...prev.selectedCategories, category]
-        : prev.selectedCategories.filter(c => c !== category)
-    }))
-  }
+        : prev.selectedCategories.filter((c) => c !== category),
+    }));
+  };
 
-  const handleFileChange = (field: "idFrontImage" | "idBackImage", file: File | null) => {
-    setFormData(prev => ({ ...prev, [field]: file }))
-  }
+  const handleFileChange = (
+    field: "idFrontImage" | "idBackImage",
+    file: File | null,
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: file }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // Here you would typically send the data to your backend
-    console.log("Form submitted:", formData)
-    setIsSubmitted(true)
-  }
+    console.log("Form submitted:", formData);
+    setIsSubmitted(true);
+  };
 
   if (isSubmitted) {
     return (
@@ -183,7 +197,7 @@ export default function CreatorApplyPage() {
                   rel="noopener noreferrer"
                   className="text-primary hover:underline font-semibold"
                 >
-                  Artniverse IG
+                  ARTNIVERSE IG
                 </a>{" "}
                 討論後續
               </p>
@@ -197,7 +211,7 @@ export default function CreatorApplyPage() {
           </div>
         </main>
       </div>
-    )
+    );
   }
 
   return (
@@ -221,9 +235,7 @@ export default function CreatorApplyPage() {
           {/* Introduction Section */}
           <div className="bg-card/40 backdrop-blur-xl border border-primary/20 rounded-3xl p-8 mb-8">
             <div className="space-y-4 text-foreground">
-              <p className="text-xl">
-                嗨，親愛的創作者您好！
-              </p>
+              <p className="text-xl">嗨，親愛的創作者您好！</p>
               <p className="text-muted-foreground leading-relaxed">
                 我們正在尋找熱愛畫畫、設計、創作的你。
                 無論你是剛起步的原創角色創作者，或是已經有豐富角色故事線的老手，還是想法豐富的藝術家們，我們都想成為你品牌夢想的起點與專屬的品牌營運夥伴
@@ -235,22 +247,35 @@ export default function CreatorApplyPage() {
 
               {/* What we provide */}
               <div className="mt-6 pt-6 border-t border-border/50">
-                <h3 className="text-lg font-semibold mb-4 text-foreground">我們提供什麼？</h3>
+                <h3 className="text-lg font-semibold mb-4 text-foreground">
+                  我們提供什麼？
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {[
-                    { icon: Package, text: "幫你將作品製作成實體商品（如服飾、包袋等）" },
+                    {
+                      icon: Package,
+                      text: "幫你將作品製作成實體商品（如服飾、包袋等）",
+                    },
                     { icon: Sparkles, text: "規劃不同品牌收益方式" },
                     { icon: Users, text: "建立完整的培訓系統" },
                     { icon: Truck, text: "處理出貨、客服與後勤" },
                     { icon: Handshake, text: "對接各式企業聯名" },
-                    { icon: PartyPopper, text: "提供空間與主題聚會結交其他創作者" },
-                    { icon: Megaphone, text: "透過空間設計與主題展覽創造品牌識別與知名度" },
+                    {
+                      icon: PartyPopper,
+                      text: "提供空間與主題聚會結交其他創作者",
+                    },
+                    {
+                      icon: Megaphone,
+                      text: "透過空間設計與主題展覽創造品牌識別與知名度",
+                    },
                   ].map((item, index) => (
                     <div key={index} className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                         <item.icon className="w-4 h-4 text-primary" />
                       </div>
-                      <span className="text-sm text-muted-foreground">{item.text}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {item.text}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -266,7 +291,8 @@ export default function CreatorApplyPage() {
               </div>
 
               <p className="text-muted-foreground text-sm mt-4">
-                感謝您對 Artniverse 的支持與信任！請依序填寫以下資料，協助我們更了解您的創作及合作需求。期待與您一起，將作品推向更多人，打造屬於您的品牌與商品！
+                感謝您對 ARTNIVERSE
+                的支持與信任！請依序填寫以下資料，協助我們更了解您的創作及合作需求。期待與您一起，將作品推向更多人，打造屬於您的品牌與商品！
               </p>
             </div>
           </div>
@@ -275,7 +301,9 @@ export default function CreatorApplyPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Info */}
             <div className="bg-card/40 backdrop-blur-xl border border-primary/20 rounded-3xl p-8">
-              <h2 className="text-xl font-semibold text-foreground mb-6">基本資料</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-6">
+                基本資料
+              </h2>
               <div className="space-y-6">
                 {/* Email */}
                 <div className="space-y-2">
@@ -288,7 +316,12 @@ export default function CreatorApplyPage() {
                     required
                     placeholder="your@email.com"
                     value={formData.email}
-                    onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
                     className="bg-background/50 border-border/50"
                   />
                 </div>
@@ -304,7 +337,12 @@ export default function CreatorApplyPage() {
                     required
                     placeholder="請輸入真實姓名"
                     value={formData.realName}
-                    onChange={e => setFormData(prev => ({ ...prev, realName: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        realName: e.target.value,
+                      }))
+                    }
                     className="bg-background/50 border-border/50"
                   />
                 </div>
@@ -320,7 +358,12 @@ export default function CreatorApplyPage() {
                     required
                     placeholder="請輸入您的品牌名稱"
                     value={formData.brandName}
-                    onChange={e => setFormData(prev => ({ ...prev, brandName: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        brandName: e.target.value,
+                      }))
+                    }
                     className="bg-background/50 border-border/50"
                   />
                 </div>
@@ -339,7 +382,12 @@ export default function CreatorApplyPage() {
                     required
                     placeholder="7-11 復興門市"
                     value={formData.storePickup}
-                    onChange={e => setFormData(prev => ({ ...prev, storePickup: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        storePickup: e.target.value,
+                      }))
+                    }
                     className="bg-background/50 border-border/50"
                   />
                 </div>
@@ -355,7 +403,12 @@ export default function CreatorApplyPage() {
                     required
                     placeholder="0912-345-678"
                     value={formData.phone}
-                    onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
                     className="bg-background/50 border-border/50"
                   />
                 </div>
@@ -370,7 +423,12 @@ export default function CreatorApplyPage() {
                     type="date"
                     required
                     value={formData.birthday}
-                    onChange={e => setFormData(prev => ({ ...prev, birthday: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        birthday: e.target.value,
+                      }))
+                    }
                     className="bg-background/50 border-border/50"
                   />
                 </div>
@@ -386,7 +444,12 @@ export default function CreatorApplyPage() {
                     required
                     placeholder="請輸入完整地址"
                     value={formData.address}
-                    onChange={e => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        address: e.target.value,
+                      }))
+                    }
                     className="bg-background/50 border-border/50"
                   />
                 </div>
@@ -395,7 +458,9 @@ export default function CreatorApplyPage() {
 
             {/* Bank Info */}
             <div className="bg-card/40 backdrop-blur-xl border border-primary/20 rounded-3xl p-8">
-              <h2 className="text-xl font-semibold text-foreground mb-6">收款資訊</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-6">
+                收款資訊
+              </h2>
               <div className="space-y-6">
                 {/* Bank Code */}
                 <div className="space-y-2">
@@ -411,7 +476,12 @@ export default function CreatorApplyPage() {
                     required
                     placeholder="郵局 700"
                     value={formData.bankCode}
-                    onChange={e => setFormData(prev => ({ ...prev, bankCode: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        bankCode: e.target.value,
+                      }))
+                    }
                     className="bg-background/50 border-border/50"
                   />
                 </div>
@@ -430,11 +500,17 @@ export default function CreatorApplyPage() {
                     required
                     placeholder="請輸入收款帳號"
                     value={formData.bankAccount}
-                    onChange={e => setFormData(prev => ({ ...prev, bankAccount: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        bankAccount: e.target.value,
+                      }))
+                    }
                     className="bg-background/50 border-border/50"
                   />
                   <p className="text-xs text-primary flex items-center gap-1 mt-2">
-                    <span>📌</span> 此資訊僅用於內部結帳用途，不會外洩或用作他途。
+                    <span>📌</span>{" "}
+                    此資訊僅用於內部結帳用途，不會外洩或用作他途。
                   </p>
                 </div>
               </div>
@@ -442,19 +518,26 @@ export default function CreatorApplyPage() {
 
             {/* Product Categories */}
             <div className="bg-card/40 backdrop-blur-xl border border-primary/20 rounded-3xl p-8">
-              <h2 className="text-xl font-semibold text-foreground mb-2">想合作的產品類別</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                想合作的產品類別
+              </h2>
               <p className="text-sm text-muted-foreground mb-6">
                 請選擇您有興趣製作的產品類型，選完後歡迎主動與我們聯繫！如果您有其他想法，也非常歡迎和我們討論
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {productCategories.map(category => (
+                {productCategories.map((category) => (
                   <div key={category} className="flex items-center space-x-3">
                     <Checkbox
                       id={category}
                       checked={formData.selectedCategories.includes(category)}
-                      onCheckedChange={(checked) => handleCategoryChange(category, checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        handleCategoryChange(category, checked as boolean)
+                      }
                     />
-                    <Label htmlFor={category} className="text-sm text-muted-foreground cursor-pointer">
+                    <Label
+                      htmlFor={category}
+                      className="text-sm text-muted-foreground cursor-pointer"
+                    >
                       {category}
                     </Label>
                   </div>
@@ -474,14 +557,21 @@ export default function CreatorApplyPage() {
 
             {/* Creative Philosophy */}
             <div className="bg-card/40 backdrop-blur-xl border border-primary/20 rounded-3xl p-8">
-              <h2 className="text-xl font-semibold text-foreground mb-2">創作理念</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                創作理念
+              </h2>
               <p className="text-sm text-muted-foreground mb-6">
                 請簡短說明您的創作理念。告訴我們你的作品想傳達什麼故事、情感或理念，讓我們更了解你的創作背景。
               </p>
               <Textarea
                 placeholder="分享您的創作故事、靈感來源、想傳達的理念..."
                 value={formData.creativePhilosophy}
-                onChange={e => setFormData(prev => ({ ...prev, creativePhilosophy: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    creativePhilosophy: e.target.value,
+                  }))
+                }
                 className="bg-background/50 border-border/50 min-h-[150px]"
                 required
               />
@@ -489,33 +579,46 @@ export default function CreatorApplyPage() {
 
             {/* ID Upload */}
             <div className="bg-card/40 backdrop-blur-xl border border-primary/20 rounded-3xl p-8">
-              <h2 className="text-xl font-semibold text-foreground mb-2">身份證明文件</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                身份證明文件
+              </h2>
               <p className="text-sm text-muted-foreground mb-6">
                 身份證正反面照片上傳，核對身分及後續領款手續申報用
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* ID Front */}
                 <div className="space-y-3">
-                  <Label className="text-foreground">身份證正面 <span className="text-red-400">*</span></Label>
+                  <Label className="text-foreground">
+                    身份證正面 <span className="text-red-400">*</span>
+                  </Label>
                   <div className="border-2 border-dashed border-border/50 rounded-xl p-6 text-center hover:border-primary/50 transition-colors">
                     <input
                       type="file"
                       id="idFront"
                       accept="image/*"
                       className="hidden"
-                      onChange={e => handleFileChange("idFrontImage", e.target.files?.[0] || null)}
+                      onChange={(e) =>
+                        handleFileChange(
+                          "idFrontImage",
+                          e.target.files?.[0] || null,
+                        )
+                      }
                       required
                     />
                     <label htmlFor="idFront" className="cursor-pointer">
                       {formData.idFrontImage ? (
                         <div className="flex items-center justify-center gap-2 text-primary">
                           <CheckCircle2 className="w-5 h-5" />
-                          <span className="text-sm">{formData.idFrontImage.name}</span>
+                          <span className="text-sm">
+                            {formData.idFrontImage.name}
+                          </span>
                         </div>
                       ) : (
                         <>
                           <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">點擊上傳身份證正面</p>
+                          <p className="text-sm text-muted-foreground">
+                            點擊上傳身份證正面
+                          </p>
                         </>
                       )}
                     </label>
@@ -524,26 +627,37 @@ export default function CreatorApplyPage() {
 
                 {/* ID Back */}
                 <div className="space-y-3">
-                  <Label className="text-foreground">身份證反面 <span className="text-red-400">*</span></Label>
+                  <Label className="text-foreground">
+                    身份證反面 <span className="text-red-400">*</span>
+                  </Label>
                   <div className="border-2 border-dashed border-border/50 rounded-xl p-6 text-center hover:border-primary/50 transition-colors">
                     <input
                       type="file"
                       id="idBack"
                       accept="image/*"
                       className="hidden"
-                      onChange={e => handleFileChange("idBackImage", e.target.files?.[0] || null)}
+                      onChange={(e) =>
+                        handleFileChange(
+                          "idBackImage",
+                          e.target.files?.[0] || null,
+                        )
+                      }
                       required
                     />
                     <label htmlFor="idBack" className="cursor-pointer">
                       {formData.idBackImage ? (
                         <div className="flex items-center justify-center gap-2 text-primary">
                           <CheckCircle2 className="w-5 h-5" />
-                          <span className="text-sm">{formData.idBackImage.name}</span>
+                          <span className="text-sm">
+                            {formData.idBackImage.name}
+                          </span>
                         </div>
                       ) : (
                         <>
                           <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">點擊上傳身份證反面</p>
+                          <p className="text-sm text-muted-foreground">
+                            點擊上傳身份證反面
+                          </p>
                         </>
                       )}
                     </label>
@@ -554,32 +668,46 @@ export default function CreatorApplyPage() {
 
             {/* Contract Agreement */}
             <div className="bg-card/40 backdrop-blur-xl border border-primary/20 rounded-3xl p-8">
-              <h2 className="text-xl font-semibold text-foreground mb-6">合約同意</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-6">
+                合約同意
+              </h2>
               <div className="flex items-start space-x-3">
                 <Checkbox
                   id="agreeToContract"
                   checked={formData.agreeToContract}
                   onCheckedChange={(checked) => {
-                    setFormData(prev => ({ ...prev, agreeToContract: checked as boolean }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      agreeToContract: checked as boolean,
+                    }));
                     if (checked) {
-                      setIsContractOpen(true)
+                      setIsContractOpen(true);
                     }
                   }}
                   required
                 />
                 <div className="flex-1">
-                  <Label htmlFor="agreeToContract" className="text-foreground cursor-pointer">
+                  <Label
+                    htmlFor="agreeToContract"
+                    className="text-foreground cursor-pointer"
+                  >
                     我已閱讀並同意{" "}
-                    <Dialog open={isContractOpen} onOpenChange={setIsContractOpen}>
+                    <Dialog
+                      open={isContractOpen}
+                      onOpenChange={setIsContractOpen}
+                    >
                       <DialogTrigger asChild>
-                        <button type="button" className="text-primary hover:underline font-medium">
-                          Artniverse 創作者合約書
+                        <button
+                          type="button"
+                          className="text-primary hover:underline font-medium"
+                        >
+                          ARTNIVERSE 創作者合約書
                         </button>
                       </DialogTrigger>
                       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-card border-primary/20">
                         <DialogHeader>
                           <DialogTitle className="text-xl font-bold text-foreground">
-                            Artniverse 創作者合約書
+                            ARTNIVERSE 創作者合約書
                           </DialogTitle>
                         </DialogHeader>
                         <div className="prose prose-sm prose-invert max-w-none">
@@ -623,5 +751,5 @@ export default function CreatorApplyPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

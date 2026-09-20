@@ -283,7 +283,7 @@ export default function CommissionPage() {
             <Sparkles className="h-4 w-4" />
             專業客製化設計服務
           </div>
-          <h1 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">委託創作</h1>
+          <h1 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">企業委託</h1>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
             與才華洋溢的創作者合作，打造專屬於你的獨特設計
           </p>
