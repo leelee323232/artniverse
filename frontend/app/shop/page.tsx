@@ -28,14 +28,36 @@ import {
   Grid3X3,
   LayoutList,
 } from "lucide-react";
+import { mockProducts } from "@/mocks/admin/products";
+import { mockProductCategories } from "@/mocks/admin/productCategories";
+import { getAuctionPrices } from "@/lib/products/status";
+
+const categoryNameMap = Object.fromEntries(
+  mockProductCategories.map((category) => [category.id, category.name]),
+);
+
+const categoryIcons = {
+  "pc-1": Tent,
+  "pc-2": Sofa,
+  "pc-3": ChefHat,
+  "pc-4": Bed,
+  "pc-5": Car,
+} as const;
 
 const categories = [
-  { id: "all", name: "全部商品", icon: Grid3X3, count: 156 },
-  { id: "outdoor", name: "戶外用品", icon: Tent, count: 32 },
-  { id: "living-room", name: "客廳", icon: Sofa, count: 45 },
-  { id: "kitchen", name: "廚房", icon: ChefHat, count: 28 },
-  { id: "bedroom", name: "臥室", icon: Bed, count: 31 },
-  { id: "car", name: "車用", icon: Car, count: 20 },
+  {
+    id: "all",
+    name: "全部商品",
+    icon: Grid3X3,
+    count: mockProducts.length,
+  },
+  ...mockProductCategories.map((category) => ({
+    id: category.id,
+    name: category.name,
+    icon: categoryIcons[category.id as keyof typeof categoryIcons] ?? Grid3X3,
+    count: mockProducts.filter((product) => product.categoryId === category.id)
+      .length,
+  })),
 ];
 
 // 商品類型：未來會作為參數帶入搜尋 API（selectedProductType）
@@ -46,185 +68,6 @@ const productTypes = [
   { id: "presale", name: "預售商品" },
 ];
 
-const mockProducts = [
-  {
-    id: "1",
-    name: "星空露營燈",
-    price: 1280,
-    image: "/cute-notebook-with-stars.jpg",
-    category: "戶外用品",
-    categoryId: "outdoor",
-    productType: "general",
-    stock: 45,
-    creatorId: "1",
-    isNew: true,
-  },
-  {
-    id: "2",
-    name: "宇宙圖騰抱枕",
-    price: 880,
-    image: "/dreamy-postcards.jpg",
-    category: "客廳",
-    categoryId: "living-room",
-    productType: "auction",
-    stock: 23,
-    creatorId: "2",
-    isNew: false,
-    creatorName: "星河工作室",
-    startingPrice: 880,
-    currentBid: 2400,
-    minBidIncrement: 200,
-    hoursLeft: 18,
-  },
-  {
-    id: "3",
-    name: "星座馬克杯組",
-    price: 650,
-    image: "/planet-badges.jpg",
-    category: "廚房",
-    categoryId: "kitchen",
-    productType: "presale",
-    stock: 8,
-    creatorId: "3",
-    isNew: true,
-    currentBackers: 214,
-    targetBackers: 300,
-    daysLeft: 12,
-  },
-  {
-    id: "4",
-    name: "月球夜燈",
-    price: 1580,
-    image: "/universe-tote-bag.jpg",
-    category: "臥室",
-    categoryId: "bedroom",
-    productType: "general",
-    stock: 15,
-    creatorId: "1",
-    isNew: false,
-  },
-  {
-    id: "5",
-    name: "銀河系香氛掛飾",
-    price: 450,
-    image: "/cute-bear-stickers.jpg",
-    category: "車用",
-    categoryId: "car",
-    productType: "auction",
-    stock: 67,
-    creatorId: "4",
-    isNew: true,
-    creatorName: "宇宙香氛坊",
-    startingPrice: 450,
-    currentBid: 450,
-    minBidIncrement: 100,
-    hoursLeft: 72,
-  },
-  {
-    id: "6",
-    name: "極光野餐墊",
-    price: 980,
-    image: "/hand-drawn-illustration-poster.jpg",
-    category: "戶外用品",
-    categoryId: "outdoor",
-    productType: "presale",
-    stock: 12,
-    creatorId: "2",
-    isNew: false,
-    currentBackers: 89,
-    targetBackers: 150,
-    daysLeft: 24,
-  },
-  {
-    id: "7",
-    name: "星河地毯",
-    price: 2480,
-    image: "/wedding-invitation-illustration.jpg",
-    category: "客廳",
-    categoryId: "living-room",
-    productType: "general",
-    stock: 5,
-    creatorId: "5",
-    isNew: true,
-  },
-  {
-    id: "8",
-    name: "宇宙食器組",
-    price: 1280,
-    image: "/children-book-illustration.jpg",
-    category: "廚房",
-    categoryId: "kitchen",
-    productType: "auction",
-    stock: 30,
-    creatorId: "3",
-    isNew: false,
-    creatorName: "陶藝星人",
-    startingPrice: 1280,
-    currentBid: 8500,
-    minBidIncrement: 500,
-    hoursLeft: 48,
-  },
-  {
-    id: "9",
-    name: "夢幻星雲被套組",
-    price: 3280,
-    image: "/cute-mascot-design.jpg",
-    category: "臥室",
-    categoryId: "bedroom",
-    productType: "presale",
-    stock: 18,
-    creatorId: "1",
-    isNew: true,
-    currentBackers: 512,
-    targetBackers: 500,
-    daysLeft: 5,
-  },
-  {
-    id: "10",
-    name: "太空人車載支架",
-    price: 580,
-    image: "/cute-notebook-with-stars.jpg",
-    category: "車用",
-    categoryId: "car",
-    productType: "general",
-    stock: 42,
-    creatorId: "4",
-    isNew: false,
-  },
-  {
-    id: "11",
-    name: "星際探險帳篷",
-    price: 4580,
-    image: "/dreamy-postcards.jpg",
-    category: "戶外用品",
-    categoryId: "outdoor",
-    productType: "auction",
-    stock: 6,
-    creatorId: "2",
-    isNew: false,
-    creatorName: "野地創作所",
-    startingPrice: 4580,
-    currentBid: 12000,
-    minBidIncrement: 1000,
-    hoursLeft: 5,
-  },
-  {
-    id: "12",
-    name: "行星造型時鐘",
-    price: 1680,
-    image: "/planet-badges.jpg",
-    category: "客廳",
-    categoryId: "living-room",
-    productType: "presale",
-    stock: 22,
-    creatorId: "5",
-    isNew: true,
-    currentBackers: 37,
-    targetBackers: 200,
-    daysLeft: 30,
-  },
-];
-
 export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedProductType, setSelectedProductType] = useState("all");
@@ -232,6 +75,7 @@ export default function ShopPage() {
   const [sortBy, setSortBy] = useState("newest");
 
   const filteredProducts = mockProducts.filter((product) => {
+    const categoryName = categoryNameMap[product.categoryId] ?? "";
     const matchesCategory =
       selectedCategory === "all" || product.categoryId === selectedCategory;
     const matchesProductType =
@@ -239,7 +83,7 @@ export default function ShopPage() {
       product.productType === selectedProductType;
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase());
+      categoryName.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesProductType && matchesSearch;
   });
 
@@ -250,7 +94,9 @@ export default function ShopPage() {
       case "price-high":
         return b.price - a.price;
       case "newest":
-        return a.isNew ? -1 : 1;
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
       default:
         return 0;
     }
@@ -403,45 +249,56 @@ export default function ShopPage() {
           <div className="lg:col-span-4">
             {sortedProducts.length > 0 ? (
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-                {sortedProducts.map((product) =>
-                  product.productType === "presale" ? (
-                    <PresaleProductCard
-                      key={product.id}
-                      id={product.id}
-                      name={product.name}
-                      price={product.price}
-                      image={product.image}
-                      category={product.category}
-                      currentBackers={product.currentBackers ?? 0}
-                      targetBackers={product.targetBackers ?? 1}
-                      daysLeft={product.daysLeft ?? 0}
-                    />
-                  ) : product.productType === "auction" ? (
-                    <AuctionProductCard
-                      key={product.id}
-                      id={product.id}
-                      name={product.name}
-                      image={product.image}
-                      category={product.category}
-                      creatorName={product.creatorName ?? ""}
-                      startingPrice={product.startingPrice ?? product.price}
-                      currentBid={product.currentBid ?? product.price}
-                      minBidIncrement={product.minBidIncrement ?? 100}
-                      hoursLeft={product.hoursLeft ?? 0}
-                    />
-                  ) : (
+                {sortedProducts.map((product) => {
+                  const categoryName =
+                    categoryNameMap[product.categoryId] ?? "";
+                  if (product.productType === "presale") {
+                    return (
+                      <PresaleProductCard
+                        key={product.id}
+                        id={product.id}
+                        name={product.name}
+                        price={product.price}
+                        image={product.imageUrl}
+                        category={categoryName}
+                        currentBackers={product.currentBackers ?? 0}
+                        targetBackers={product.targetBackers ?? 1}
+                        presaleStartTime={product.presaleStartTime}
+                        presaleEndTime={product.presaleEndTime}
+                      />
+                    );
+                  }
+                  if (product.productType === "auction") {
+                    const prices = getAuctionPrices(product);
+                    return (
+                      <AuctionProductCard
+                        key={product.id}
+                        id={product.id}
+                        name={product.name}
+                        image={product.imageUrl}
+                        category={categoryName}
+                        creatorName={product.creatorName ?? ""}
+                        startingPrice={prices.startingPrice}
+                        currentBid={prices.currentBid}
+                        minBidIncrement={prices.minBidIncrement}
+                        auctionStartTime={product.auctionStartTime}
+                        auctionEndTime={product.auctionEndTime}
+                      />
+                    );
+                  }
+                  return (
                     <ProductCard
                       key={product.id}
                       id={product.id}
                       name={product.name}
                       price={product.price}
-                      image={product.image}
-                      category={product.category}
+                      image={product.imageUrl}
+                      category={categoryName}
                       stock={product.stock}
-                      creatorId={product.creatorId}
+                      creatorId={product.creatorId ?? ""}
                     />
-                  )
-                )}
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-20">

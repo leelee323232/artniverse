@@ -16,12 +16,48 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
 import { AdminModal } from "@/components/admin/AdminModal";
 import { AdminField } from "@/components/admin/AdminField";
+import { Badge } from "@/components/ui/badge";
 import { AdminRowActions } from "@/components/admin/AdminRowActions";
 import { StatusToggle } from "@/components/admin/StatusToggle";
 import { useAdminCrud } from "@/lib/admin/useAdminCrud";
 import { mockProducts } from "@/mocks/admin/products";
 import { mockProductCategories } from "@/mocks/admin/productCategories";
-import type { Product, ProductFile } from "@/types/admin";
+import type { Product, ProductFile, ProductType } from "@/types/admin";
+import {
+  AUCTION_STATUS_LABEL,
+  PRESALE_STATUS_LABEL,
+  formatProductDateTime,
+  getAuctionPrices,
+  getAuctionStatus,
+  getPresaleProgress,
+  getPresaleStatus,
+} from "@/lib/products/status";
+
+const PRODUCT_TABS: { id: ProductType; label: string }[] = [
+  { id: "general", label: "一般商品" },
+  { id: "auction", label: "競標商品" },
+  { id: "presale", label: "預售商品" },
+];
+
+const PRESALE_PIN_ORDER: Record<string, number> = {
+  success: 0,
+  failed: 1,
+  live: 2,
+  upcoming: 3,
+};
+
+const AUCTION_BADGE_CLASS = {
+  live: "bg-amber-500/15 text-amber-500 hover:bg-amber-500/15",
+  upcoming: "bg-sky-500/15 text-sky-500 hover:bg-sky-500/15",
+  ended: "bg-muted text-muted-foreground hover:bg-muted",
+} as const;
+
+const PRESALE_BADGE_CLASS = {
+  live: "bg-violet-500/15 text-violet-400 hover:bg-violet-500/15",
+  upcoming: "bg-sky-500/15 text-sky-500 hover:bg-sky-500/15",
+  success: "bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/15",
+  failed: "bg-muted text-muted-foreground hover:bg-muted",
+} as const;
 
 interface FormState {
   name: string;
@@ -49,6 +85,7 @@ export default function ProductsPage() {
   const crud = useAdminCrud<Product>("p", mockProducts);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [productTab, setProductTab] = useState<ProductType>("general");
 
   const categoryNameMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -100,6 +137,7 @@ export default function ProductsPage() {
       templateFile: form.templateFile ?? undefined,
       sortOrder: Number(form.sortOrder),
       isActive: form.isActive,
+      productType: crud.editingItem?.productType ?? productTab,
     });
   };
 
@@ -130,27 +168,46 @@ export default function ProductsPage() {
     }
   };
 
-  const columns: AdminTableColumn<Product>[] = [
-    {
-      key: "image",
-      header: "圖片",
-      className: "w-16",
-      render: (i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={i.imageUrl}
-          alt={i.name}
-          className="h-12 w-12 rounded-md object-cover"
-        />
-      ),
-    },
-    { key: "name", header: "商品名稱", render: (i) => <span className="font-medium">{i.name}</span> },
-    {
-      key: "category",
-      header: "類別",
-      className: "text-muted-foreground",
-      render: (i) => categoryNameMap[i.categoryId] ?? "—",
-    },
+  const imageColumn: AdminTableColumn<Product> = {
+    key: "image",
+    header: "圖片",
+    className: "w-16",
+    render: (i) => (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={i.imageUrl}
+        alt={i.name}
+        className="h-12 w-12 rounded-md object-cover"
+      />
+    ),
+  };
+  const nameColumn: AdminTableColumn<Product> = {
+    key: "name",
+    header: "商品名稱",
+    render: (i) => <span className="font-medium">{i.name}</span>,
+  };
+  const categoryColumn: AdminTableColumn<Product> = {
+    key: "category",
+    header: "類別",
+    className: "text-muted-foreground",
+    render: (i) => categoryNameMap[i.categoryId] ?? "—",
+  };
+  const actionsColumn: AdminTableColumn<Product> = {
+    key: "actions",
+    header: "操作",
+    headClassName: "text-right",
+    render: (i) => (
+      <AdminRowActions
+        onEdit={() => crud.openEdit(i)}
+        onDelete={() => handleDelete(i)}
+      />
+    ),
+  };
+
+  const generalColumns: AdminTableColumn<Product>[] = [
+    imageColumn,
+    nameColumn,
+    categoryColumn,
     { key: "price", header: "價格", render: (i) => `NT$ ${i.price}` },
     { key: "stock", header: "庫存", className: "text-muted-foreground", render: (i) => i.stock },
     {
@@ -171,19 +228,129 @@ export default function ProductsPage() {
           "—"
         ),
     },
-    { key: "status", header: "狀態", render: (i) => <StatusToggle active={i.isActive} onToggle={() => crud.toggleActive(i)} /> },
     {
-      key: "actions",
-      header: "操作",
-      headClassName: "text-right",
+      key: "status",
+      header: "狀態",
       render: (i) => (
-        <AdminRowActions
-          onEdit={() => crud.openEdit(i)}
-          onDelete={() => handleDelete(i)}
-        />
+        <StatusToggle active={i.isActive} onToggle={() => crud.toggleActive(i)} />
       ),
     },
+    actionsColumn,
   ];
+
+  const auctionColumns: AdminTableColumn<Product>[] = [
+    imageColumn,
+    nameColumn,
+    categoryColumn,
+    {
+      key: "auctionTime",
+      header: "競標起迄",
+      render: (i) => (
+        <span className="whitespace-nowrap text-sm text-muted-foreground">
+          {formatProductDateTime(i.auctionStartTime)} ~{" "}
+          {formatProductDateTime(i.auctionEndTime)}
+        </span>
+      ),
+    },
+    {
+      key: "bid",
+      header: "喊價狀況",
+      render: (i) => {
+        const prices = getAuctionPrices(i);
+        return (
+          <div className="text-sm">
+            <div>目前 NT$ {prices.currentBid.toLocaleString()}</div>
+            <div className="text-muted-foreground">
+              每次 +NT$ {prices.minBidIncrement.toLocaleString()}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "auctionStatus",
+      header: "狀態",
+      render: (i) => {
+        const status = getAuctionStatus(i.auctionStartTime, i.auctionEndTime);
+        return (
+          <Badge className={AUCTION_BADGE_CLASS[status]}>
+            {AUCTION_STATUS_LABEL[status]}
+          </Badge>
+        );
+      },
+    },
+    actionsColumn,
+  ];
+
+  const presaleColumns: AdminTableColumn<Product>[] = [
+    imageColumn,
+    nameColumn,
+    categoryColumn,
+    {
+      key: "backers",
+      header: "預購人數",
+      render: (i) => (
+        <span className="text-sm">
+          {(i.currentBackers ?? 0).toLocaleString()} /{" "}
+          {(i.targetBackers ?? 0).toLocaleString()} 人
+        </span>
+      ),
+    },
+    {
+      key: "progress",
+      header: "達標百分比",
+      render: (i) => (
+        <span className="text-sm font-medium">
+          {getPresaleProgress(i.currentBackers, i.targetBackers)}%
+        </span>
+      ),
+    },
+    {
+      key: "presaleStatus",
+      header: "狀態",
+      render: (i) => {
+        const status = getPresaleStatus(
+          i.presaleStartTime,
+          i.presaleEndTime,
+          i.currentBackers,
+          i.targetBackers,
+        );
+        return (
+          <Badge className={PRESALE_BADGE_CLASS[status]}>
+            {PRESALE_STATUS_LABEL[status]}
+          </Badge>
+        );
+      },
+    },
+    actionsColumn,
+  ];
+
+  const columns =
+    productTab === "auction"
+      ? auctionColumns
+      : productTab === "presale"
+        ? presaleColumns
+        : generalColumns;
+
+  const tabItems = useMemo(() => {
+    const items = crud.items.filter((item) => item.productType === productTab);
+    if (productTab !== "presale") return items;
+    return [...items].sort((a, b) => {
+      const aStatus = getPresaleStatus(
+        a.presaleStartTime,
+        a.presaleEndTime,
+        a.currentBackers,
+        a.targetBackers,
+      );
+      const bStatus = getPresaleStatus(
+        b.presaleStartTime,
+        b.presaleEndTime,
+        b.currentBackers,
+        b.targetBackers,
+      );
+      return PRESALE_PIN_ORDER[aStatus] - PRESALE_PIN_ORDER[bStatus];
+    });
+  }, [crud.items, productTab]);
 
   return (
     <div>
@@ -198,11 +365,32 @@ export default function ProductsPage() {
         }
       />
 
+      <div className="mb-4 flex gap-5 border-b border-border">
+        {PRODUCT_TABS.map((tab) => {
+          const active = productTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setProductTab(tab.id)}
+              className={`-mb-px border-b-2 pb-2 text-sm font-medium transition-colors ${
+                active
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
       <AdminTable
         columns={columns}
-        items={crud.items}
+        items={tabItems}
         loading={crud.loading}
         error={crud.error}
+        emptyText="目前沒有此類型商品"
       />
 
       <AdminModal
