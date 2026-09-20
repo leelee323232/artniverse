@@ -1,63 +1,54 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Navigation } from "@/components/navigation"
 import { UniverseBackground } from "@/components/universe-background"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { api } from "@/lib/api"
+import { apiError } from "@/lib/products-api"
 import { Separator } from "@/components/ui/separator"
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 
-// Mock cart data
-const initialCartItems = [
-  {
-    id: "1",
-    productId: "1",
-    name: "星空筆記本",
-    price: 380,
-    quantity: 2,
-    image: "/cute-notebook-with-stars.jpg",
-    creator: "小夢創作室",
-    creatorId: "1",
-  },
-  {
-    id: "2",
-    productId: "2",
-    name: "療癒小熊貼紙組",
-    price: 120,
-    quantity: 1,
-    image: "/cute-bear-stickers.jpg",
-    creator: "小夢創作室",
-    creatorId: "1",
-  },
-]
+interface CartItem {
+  id: string; productId: string; name: string; price: number; quantity: number;
+  image: string; creator: string; creatorId: string | null; stock: number; isAvailable: boolean;
+}
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState(initialCartItems)
-
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+  const [reload, setReload] = useState(0)
+  useEffect(() => {
+    const controller = new AbortController()
+    setLoading(true); setError("")
+    api.get<{ data: CartItem[] }>("/api/v1/cart", { signal: controller.signal })
+      .then(({ data }) => setCartItems(data.data))
+      .catch((err) => { if (!controller.signal.aborted) setError(apiError(err)) })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    return () => controller.abort()
+  }, [reload])
+  const mutateCart = async (id: string, quantity?: number) => {
+    if (saving) return
+    setSaving(true); setError("")
+    try {
+      await api.get("/sanctum/csrf-cookie")
+      if (quantity == null || quantity <= 0) await api.delete('/api/v1/cart/' + id)
+      else await api.patch('/api/v1/cart/' + id, { quantity })
+      setReload((value) => value + 1)
+    } catch (err) { setError(apiError(err)) }
+    finally { setSaving(false) }
+  }
   const updateQuantity = (id: string, change: number) => {
-    setCartItems((items) =>
-      items
-        .map((item) => {
-          if (item.id === id) {
-            const newQuantity = Math.max(0, item.quantity + change)
-            return { ...item, quantity: newQuantity }
-          }
-          return item
-        })
-        .filter((item) => item.quantity > 0),
-    )
+    const item = cartItems.find((entry) => entry.id === id)
+    if (item) void mutateCart(id, item.quantity + change)
   }
-
-  const removeItem = (id: string) => {
-    setCartItems((items) => items.filter((item) => item.id !== id))
-  }
-
+  const removeItem = (id: string) => void mutateCart(id)
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const shipping = subtotal > 1000 ? 0 : 80
-  const total = subtotal + shipping
 
   return (
     <div className="relative min-h-screen">
@@ -70,7 +61,8 @@ export default function CartPage() {
           <p className="text-muted-foreground">{cartItems.length} 件商品</p>
         </div>
 
-        {cartItems.length === 0 ? (
+        {error && <p role="alert" className="mb-4 text-destructive">{error} <Button variant="outline" onClick={() => setReload((value) => value + 1)}>重試</Button></p>}
+        {loading ? <p role="status">載入購物車中…</p> : error && cartItems.length === 0 ? null : cartItems.length === 0 ? (
           <Card className="border-border/50 bg-card/30 p-12 text-center backdrop-blur-sm">
             <ShoppingBag className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
             <h2 className="mb-2 text-xl font-bold text-foreground">購物車是空的</h2>
@@ -97,12 +89,13 @@ export default function CartPage() {
                     <div className="flex flex-1 flex-col justify-between">
                       <div>
                         <Link
-                          href={`/creator/${item.creatorId}`}
+                          href={item.creatorId ? `/creator/${item.creatorId}` : "/shop"}
                           className="text-xs text-muted-foreground hover:text-foreground"
                         >
                           {item.creator}
                         </Link>
                         <h3 className="font-bold text-foreground">{item.name}</h3>
+                        {(!item.isAvailable || item.quantity > item.stock) && <p className="text-destructive">商品已下架或庫存不足，請調整購物車。</p>}
                         <p className="text-lg font-bold text-primary">NT$ {item.price}</p>
                       </div>
 
@@ -112,7 +105,7 @@ export default function CartPage() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8 bg-transparent"
-                            onClick={() => updateQuantity(item.id, -1)}
+                            disabled={saving || loading} onClick={() => updateQuantity(item.id, -1)}
                           >
                             <Minus className="h-4 w-4" />
                           </Button>
@@ -121,7 +114,7 @@ export default function CartPage() {
                             variant="outline"
                             size="icon"
                             className="h-8 w-8 bg-transparent"
-                            onClick={() => updateQuantity(item.id, 1)}
+                            disabled={saving || loading || !item.isAvailable || item.quantity >= item.stock} onClick={() => updateQuantity(item.id, 1)}
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
@@ -131,7 +124,7 @@ export default function CartPage() {
                           variant="ghost"
                           size="icon"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => removeItem(item.id)}
+                          disabled={saving || loading} onClick={() => removeItem(item.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -150,33 +143,29 @@ export default function CartPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-muted-foreground">
                     <span>小計</span>
-                    <span>NT$ {subtotal}</span>
+                    <span>NT$ {subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>運費</span>
-                    <span>{shipping === 0 ? "免運費" : `NT$ ${shipping}`}</span>
+                    <span>結帳時確認</span>
                   </div>
-                  {subtotal < 1000 && <p className="text-xs text-muted-foreground">滿 NT$ 1,000 免運費</p>}
 
                   <Separator />
 
                   <div className="flex justify-between text-lg font-bold text-foreground">
-                    <span>總計</span>
-                    <span>NT$ {total}</span>
+                    <span>商品小計（不含運費）</span>
+                    <span>NT$ {subtotal.toLocaleString()}</span>
                   </div>
                 </div>
 
-                <Button className="mt-6 w-full bg-gradient-to-r from-primary to-secondary" size="lg">
+                <Button disabled title="訂單與配送功能尚未開放" className="mt-6 w-full bg-gradient-to-r from-primary to-secondary" size="lg">
                   前往結帳
                 </Button>
               </Card>
 
               <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
                 <h3 className="mb-3 font-bold text-foreground">優惠碼</h3>
-                <div className="flex gap-2">
-                  <Input placeholder="輸入優惠碼" className="bg-background/50" />
-                  <Button variant="outline">套用</Button>
-                </div>
+                <p className="text-muted-foreground">優惠碼功能尚未開放。</p>
               </Card>
             </div>
           </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Clock, Hammer } from "lucide-react";
@@ -61,7 +60,7 @@ export function AuctionProductCard({
       {/* 頂部識別色條 */}
       <div className="h-1 w-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500" />
 
-      <Link href="/product/1">
+      <a href={`/product/${id}`}>
         {/* 商品圖 */}
         <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img
@@ -146,7 +145,7 @@ export function AuctionProductCard({
             </div>
           </div>
         </div>
-      </Link>
+      </a>
     </TheCard>
   );
 }

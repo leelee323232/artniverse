@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Users, Clock } from "lucide-react";
@@ -54,7 +53,7 @@ export function PresaleProductCard({
       {/* 頂部識別色條 */}
       <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500" />
 
-      <Link href="/product/1">
+      <a href={`/product/${id}`}>
         {/* 商品圖 */}
         <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img
@@ -144,7 +143,7 @@ export function PresaleProductCard({
           {/* 價格 */}
           <div className="text-xl font-bold text-primary">NT$ {price.toLocaleString()}</div>
         </div>
-      </Link>
+      </a>
     </TheCard>
   );
 }

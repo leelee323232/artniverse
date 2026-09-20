@@ -184,7 +184,7 @@ export function ProductsSidebar({
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {recommendedProducts.map((product) => (
-              <Link
+              <a
                 key={product.id}
                 href={`/product/${product.id}`}
                 className="group w-40 shrink-0"
@@ -221,7 +221,7 @@ export function ProductsSidebar({
                     </span>
                   )}
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         </section>
@@ -264,7 +264,7 @@ export function ProductsSidebar({
         </CardHeader>
         <CardContent className="space-y-3">
           {recommendedProducts.map((product) => (
-            <Link
+            <a
               key={product.id}
               href={`/product/${product.id}`}
               className="flex gap-3 p-2 rounded-xl hover:bg-muted/50 transition-colors group"
@@ -303,7 +303,7 @@ export function ProductsSidebar({
                   )}
                 </div>
               </div>
-            </Link>
+            </a>
           ))}
 
           <TheButton

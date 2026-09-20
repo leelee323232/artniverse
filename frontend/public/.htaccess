@@ -7,3 +7,10 @@
 <IfModule mod_expires.c>
     ExpiresActive Off
 </IfModule>
+# 新商品共用靜態商品頁；瀏覽器仍保留 /product/{id}/，由 API 讀取內容。
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^product/[0-9]+/?$ product/1/index.html [L]
+</IfModule>

@@ -3,7 +3,6 @@
 import type React from "react";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,8 +57,8 @@ export function ProductCard({
 
   return (
     <TheCard className="group overflow-hidden border-border/50 bg-card/50 pt-0 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10">
-      {/* 先都導向 id 1 的商品頁面 */}
-      <Link href={`/product/1`}>
+      {/* 靜態主機使用完整頁面導航，讓新商品 ID 也能開啟。 */}
+      <a href={`/product/${id}`}>
         <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img
             src={image || "/placeholder.svg"}
@@ -104,7 +103,7 @@ export function ProductCard({
             </Button>
           </div>
         </div>
-      </Link>
+      </a>
     </TheCard>
   );
 }

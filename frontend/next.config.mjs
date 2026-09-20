@@ -5,7 +5,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export",
+  output: process.env.NODE_ENV === "production" ? "export" : undefined,
   trailingSlash: true,
 
   typescript: {
