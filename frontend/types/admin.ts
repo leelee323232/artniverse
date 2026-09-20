@@ -30,6 +30,7 @@ export interface Product extends AdminBaseEntity {
   imageUrl: string;
   categoryId: string;
   stock: number;
+  description?: string;
   templateFile?: ProductFile;
   productType: ProductType;
   creatorId?: string;
