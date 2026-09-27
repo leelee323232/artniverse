@@ -68,12 +68,12 @@ export function getPresaleProgress(currentBackers = 0, targetBackers = 0) {
 
 export function getAuctionPrices(product: Pick<
   Product,
-  "price" | "startingPrice" | "currentBid" | "minBidIncrement"
+  "price" | "auctionStartPrice" | "currentBid" | "auctionMinIncrement"
 >) {
-  const startingPrice = product.startingPrice ?? product.price;
-  const currentBid = product.currentBid ?? startingPrice;
-  const minBidIncrement = product.minBidIncrement ?? 100;
-  return { startingPrice, currentBid, minBidIncrement };
+  const auctionStartPrice = product.auctionStartPrice ?? product.price;
+  const currentBid = product.currentBid ?? auctionStartPrice;
+  const auctionMinIncrement = product.auctionMinIncrement ?? 100;
+  return { auctionStartPrice, currentBid, auctionMinIncrement };
 }
 
 export function formatProductDateTime(value?: string | null) {
@@ -85,4 +85,40 @@ export function formatProductDateTime(value?: string | null) {
   const h = String(date.getHours()).padStart(2, "0");
   const min = String(date.getMinutes()).padStart(2, "0");
   return `${y}/${m}/${d} ${h}:${min}`;
+}
+
+export interface AuctionBid {
+  id: string;
+  bidderId: string;
+  bidderLabel: string;
+  amount: number;
+  createdAt: string;
+  withdrawn: boolean;
+}
+
+// 同一人只保留最高有效出價作為順位；同價時較早出價者優先。
+export function getAuctionRanking(bids: AuctionBid[]) {
+  const ranked = bids.filter((bid) => !bid.withdrawn).sort(
+    (a, b) => b.amount - a.amount || Date.parse(a.createdAt) - Date.parse(b.createdAt),
+  );
+  return ranked.filter((bid, index) => ranked.findIndex((item) => item.bidderId === bid.bidderId) === index);
+}
+
+export const AUCTION_PAYMENT_WINDOW = 24 * 60 * 60 * 1000;
+
+// 畫面示範用：每一順位各有 24 小時，使用自己的最高有效出價成交。
+// 正式串接時，得標者與付款期限必須採用後端結果，不能由瀏覽器決定。
+export function getAuctionPayment(bids: AuctionBid[], auctionEndTime: string, now = Date.now()) {
+  const end = Date.parse(auctionEndTime);
+  const ranking = getAuctionRanking(bids);
+  if (!Number.isFinite(end) || now < end) return null;
+  const index = Math.floor((now - end) / AUCTION_PAYMENT_WINDOW);
+  const winner = ranking[index];
+  if (!winner) return null;
+  return { winner, rank: index + 1, deadline: end + (index + 1) * AUCTION_PAYMENT_WINDOW };
+}
+
+export function getMinimumAuctionBid(auctionStartPrice: number, auctionMinIncrement: number, bids: AuctionBid[]) {
+  const leader = getAuctionRanking(bids)[0];
+  return leader ? Math.round((leader.amount + auctionMinIncrement) * 100) / 100 : auctionStartPrice;
 }

@@ -237,7 +237,7 @@ export default function ProductsPage() {
           <div className="text-sm">
             <div>目前 NT$ {prices.currentBid.toLocaleString()}</div>
             <div className="text-muted-foreground">
-              每次 +NT$ {prices.minBidIncrement.toLocaleString()}
+              每次 +NT$ {prices.auctionMinIncrement.toLocaleString()}
             </div>
           </div>
         );

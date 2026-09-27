@@ -35,9 +35,9 @@ export interface Product extends AdminBaseEntity {
   productType: ProductType;
   creatorId?: string;
   creatorName?: string;
-  startingPrice?: number;
+  auctionStartPrice?: number;
   currentBid?: number;
-  minBidIncrement?: number;
+  auctionMinIncrement?: number;
   auctionStartTime?: string | null;
   auctionEndTime?: string | null;
   currentBackers?: number;

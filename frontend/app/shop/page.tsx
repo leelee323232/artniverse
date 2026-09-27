@@ -313,9 +313,9 @@ export default function ShopPage() {
                         image={product.imageUrl}
                         category={categoryName}
                         creatorName={product.creatorName ?? ""}
-                        startingPrice={prices.startingPrice}
+                        auctionStartPrice={prices.auctionStartPrice}
                         currentBid={prices.currentBid}
-                        minBidIncrement={prices.minBidIncrement}
+                        auctionMinIncrement={prices.auctionMinIncrement}
                         auctionStartTime={product.auctionStartTime}
                         auctionEndTime={product.auctionEndTime}
                       />

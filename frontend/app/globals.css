@@ -168,3 +168,28 @@
 .animate-orbit {
   animation: orbit 20s linear infinite;
 }
+
+/* 商品推薦捲軸：保留拖曳操作，避免系統白色軌道破壞深色頁面。 */
+.product-recommendations-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #18181b transparent;
+}
+
+.product-recommendations-scroll::-webkit-scrollbar {
+  height: 8px;
+  background: transparent;
+}
+
+.product-recommendations-scroll::-webkit-scrollbar-track,
+.product-recommendations-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.product-recommendations-scroll::-webkit-scrollbar-thumb {
+  background: #18181b;
+  border-radius: 999px;
+}
+
+.product-recommendations-scroll::-webkit-scrollbar-thumb:hover {
+  background: #27272a;
+}
