@@ -79,7 +79,7 @@ export function PresaleProductCard({
       {/* 頂部識別色條 */}
       <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500" />
 
-      <Link href="/product/1">
+      <Link href={{ pathname: "/product", query: { id } }}>
         {/* 商品圖 */}
         <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img

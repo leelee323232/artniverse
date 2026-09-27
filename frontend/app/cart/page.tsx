@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { mockProducts } from "@/mocks/admin/products"
+import { AUCTION_PAYMENT_WINDOW } from "@/lib/products/status"
 import { Navigation } from "@/components/navigation"
 import { UniverseBackground } from "@/components/universe-background"
 import { Button } from "@/components/ui/button"
@@ -9,6 +11,11 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
 import Link from "next/link"
+
+type CartItem = {
+  id: string; productId: string; name: string; price: number; quantity: number;
+  image: string; creator: string; creatorId: string; paymentDeadline?: number;
+}
 
 // Mock cart data
 const initialCartItems = [
@@ -35,13 +42,42 @@ const initialCartItems = [
 ]
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState(initialCartItems)
+  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems)
+
+  const [message, setMessage] = useState("")
+
+  useEffect(() => {
+    // 只加入內頁示範得標商品；正式結帳需由 API 驗證得標資格與價格。
+    const id = new URLSearchParams(window.location.search).get("auction")?.replace(/^p-(?=\d+$)/, "")
+    if (!id) return
+    const product = mockProducts.find((item) => item.id === id && item.productType === "auction")
+    const end = Date.parse(product?.auctionEndTime ?? "")
+    const deadline = end + AUCTION_PAYMENT_WINDOW
+    if (!product || !Number.isFinite(end) || Date.now() < end || Date.now() >= deadline || !product.currentBid) {
+      setMessage("目前沒有可加入的示範得標商品，或付款期限已過。")
+      return
+    }
+    setCartItems((items) => [...items.filter((item) => item.id !== `auction-${id}`), {
+      id: `auction-${id}`, productId: product.id, name: product.name, price: product.currentBid!,
+      quantity: 1, image: product.imageUrl, creator: product.creatorName ?? "創作者",
+      creatorId: product.creatorId ?? "", paymentDeadline: deadline,
+    }])
+    setMessage("已加入示範得標商品；移除商品不會取消得標資格或重設付款期限。")
+    const timer = window.setInterval(() => {
+      if (Date.now() >= deadline) {
+        setCartItems((items) => items.filter((item) => item.id !== `auction-${id}`))
+        setMessage("示範得標商品付款期限已過，已自購物車移除。")
+        window.clearInterval(timer)
+      }
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   const updateQuantity = (id: string, change: number) => {
     setCartItems((items) =>
       items
         .map((item) => {
-          if (item.id === id) {
+          if (item.id === id && !item.paymentDeadline) {
             const newQuantity = Math.max(0, item.quantity + change)
             return { ...item, quantity: newQuantity }
           }
@@ -69,6 +105,8 @@ export default function CartPage() {
           <h1 className="mb-2 text-3xl font-bold text-foreground">購物車</h1>
           <p className="text-muted-foreground">{cartItems.length} 件商品</p>
         </div>
+
+        {message && <p role="status" className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm">{message}</p>}
 
         {cartItems.length === 0 ? (
           <Card className="border-border/50 bg-card/30 p-12 text-center backdrop-blur-sm">
@@ -103,11 +141,14 @@ export default function CartPage() {
                           {item.creator}
                         </Link>
                         <h3 className="font-bold text-foreground">{item.name}</h3>
+                        {item.paymentDeadline && <p className="text-xs text-amber-500">
+                          競標得標・付款截止 {new Date(item.paymentDeadline).toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false })}（台灣時間）
+                        </p>}
                         <p className="text-lg font-bold text-primary">NT$ {item.price}</p>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                        {item.paymentDeadline ? <span className="text-sm text-muted-foreground">得標數量：1 件／組</span> : <div className="flex items-center gap-2">
                           <Button
                             variant="outline"
                             size="icon"
@@ -125,7 +166,7 @@ export default function CartPage() {
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
-                        </div>
+                        </div>}
 
                         <Button
                           variant="ghost"
@@ -166,7 +207,14 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <Button className="mt-6 w-full bg-gradient-to-r from-primary to-secondary" size="lg">
+                <Button className="mt-6 w-full bg-gradient-to-r from-primary to-secondary" size="lg" onClick={() => {
+                  if (cartItems.some((item) => item.paymentDeadline && Date.now() >= item.paymentDeadline)) {
+                    setCartItems((items) => items.filter((item) => !item.paymentDeadline || Date.now() < item.paymentDeadline))
+                    setMessage("得標付款期限已過，請重新確認購物車。")
+                    return
+                  }
+                  setMessage("目前為購物車畫面預覽，尚未建立訂單或進行付款。")
+                }}>
                   前往結帳
                 </Button>
               </Card>

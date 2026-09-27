@@ -58,8 +58,7 @@ export function ProductCard({
 
   return (
     <TheCard className="group overflow-hidden border-border/50 bg-card/50 pt-0 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10">
-      {/* 先都導向 id 1 的商品頁面 */}
-      <Link href={`/product/1`}>
+      <Link href={{ pathname: "/product", query: { id } }}>
         <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img
             src={image || "/placeholder.svg"}

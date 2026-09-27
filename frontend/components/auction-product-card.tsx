@@ -20,9 +20,9 @@ interface AuctionProductCardProps {
   image: string;
   category: string;
   creatorName: string;
-  startingPrice: number;
+  auctionStartPrice: number;
   currentBid: number;
-  minBidIncrement: number;
+  auctionMinIncrement: number;
   auctionStartTime?: string | null;
   auctionEndTime?: string | null;
   hoursLeft?: number;
@@ -48,9 +48,9 @@ export function AuctionProductCard({
   image,
   category,
   creatorName,
-  startingPrice,
+  auctionStartPrice,
   currentBid,
-  minBidIncrement,
+  auctionMinIncrement,
   auctionStartTime,
   auctionEndTime,
   hoursLeft: hoursLeftProp,
@@ -71,10 +71,10 @@ export function AuctionProductCard({
   };
 
   const prices = getAuctionPrices({
-    price: startingPrice,
-    startingPrice,
+    price: auctionStartPrice,
+    auctionStartPrice,
     currentBid,
-    minBidIncrement,
+    auctionMinIncrement,
   });
   const status = getAuctionStatus(auctionStartTime, auctionEndTime);
   const hoursLeft =
@@ -82,14 +82,14 @@ export function AuctionProductCard({
       ? getHoursLeft(auctionEndTime)
       : (hoursLeftProp ?? 0);
   const { label: timeLabel, urgent } = formatTimeLeft(hoursLeft);
-  const hasBids = prices.currentBid > prices.startingPrice;
+  const hasBids = prices.currentBid > prices.auctionStartPrice;
 
   return (
     <TheCard className="group relative overflow-hidden border-amber-500/40 bg-card/50 pt-0 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-amber-500/70 hover:shadow-xl hover:shadow-amber-500/20">
       {/* 頂部識別色條 */}
       <div className="h-1 w-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500" />
 
-      <Link href="/product/1">
+      <Link href={{ pathname: "/product", query: { id } }}>
         {/* 商品圖 */}
         <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img
@@ -151,7 +151,7 @@ export function AuctionProductCard({
             <div className="flex items-baseline justify-between">
               <span className="text-xs text-muted-foreground">每次至少</span>
               <span className="text-sm font-semibold text-orange-400">
-                +NT$ {prices.minBidIncrement.toLocaleString()}
+                +NT$ {prices.auctionMinIncrement.toLocaleString()}
               </span>
             </div>
 
@@ -176,7 +176,7 @@ export function AuctionProductCard({
               </span>
               {!hasBids && status !== "ended" && (
                 <span className="ml-auto text-xs text-muted-foreground">
-                  起標 NT$ {prices.startingPrice.toLocaleString()}
+                  起標 NT$ {prices.auctionStartPrice.toLocaleString()}
                 </span>
               )}
             </div>
