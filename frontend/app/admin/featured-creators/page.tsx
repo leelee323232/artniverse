@@ -92,7 +92,7 @@ export default function FeaturedCreatorsPage() {
         // eslint-disable-next-line @next/next/no-img-element
         return c ? (
           <img
-            src={c.avatarUrl}
+            src={c.avatar}
             alt={c.name}
             className="h-12 w-12 rounded-full object-cover"
           />

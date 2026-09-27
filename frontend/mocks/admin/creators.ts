@@ -4,7 +4,7 @@ export const mockCreators: Creator[] = [
   {
     id: "c-1",
     name: "小夢創作室",
-    avatarUrl: "https://placehold.co/80x80?text=Dream",
+    avatar: "https://placehold.co/80x80?text=Dream",
     categoryId: "cc-1",
     specialty: "療癒插畫",
     sortOrder: 1,
@@ -14,7 +14,7 @@ export const mockCreators: Creator[] = [
   {
     id: "c-2",
     name: "Minimal Studio",
-    avatarUrl: "https://placehold.co/80x80?text=Min",
+    avatar: "https://placehold.co/80x80?text=Min",
     categoryId: "cc-2",
     specialty: "極簡設計",
     sortOrder: 2,
@@ -24,7 +24,7 @@ export const mockCreators: Creator[] = [
   {
     id: "c-3",
     name: "綠野工作室",
-    avatarUrl: "https://placehold.co/80x80?text=Green",
+    avatar: "https://placehold.co/80x80?text=Green",
     categoryId: "cc-3",
     specialty: "自然手作",
     sortOrder: 3,
@@ -34,7 +34,7 @@ export const mockCreators: Creator[] = [
   {
     id: "c-4",
     name: "Cyber Arts",
-    avatarUrl: "https://placehold.co/80x80?text=Cyber",
+    avatar: "https://placehold.co/80x80?text=Cyber",
     categoryId: "cc-4",
     specialty: "未來視覺",
     sortOrder: 4,

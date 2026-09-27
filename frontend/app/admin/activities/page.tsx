@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -11,18 +11,25 @@ import {
   type AdminTableColumn,
 } from "@/components/admin/AdminTable";
 import { AdminModal } from "@/components/admin/AdminModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminRowActions } from "@/components/admin/AdminRowActions";
 import { StatusToggle } from "@/components/admin/StatusToggle";
 import { useAdminCrud } from "@/lib/admin/useAdminCrud";
 import { mockActivities } from "@/mocks/admin/activities";
-import type { Activity } from "@/types/admin";
+import type { Activity, ActivityReviewStatus } from "@/types/admin";
 import { BasicDatePicker } from "@/components/ui/date-picker";
+import { cn } from "@/lib/utils";
 
 interface CreateFormState {
   title: string;
   linkUrl: string;
-  imageUrl: string;
   sortOrder: string;
   isActive: boolean;
   startTime: Date | null;
@@ -34,7 +41,6 @@ interface CreateFormState {
 const emptyCreateForm: CreateFormState = {
   title: "",
   linkUrl: "",
-  imageUrl: "",
   sortOrder: "1",
   isActive: true,
   startTime: null,
@@ -46,7 +52,6 @@ const emptyCreateForm: CreateFormState = {
 interface EditFormState {
   title: string;
   linkUrl: string;
-  imageUrl: string;
   sortOrder: string;
   isActive: boolean;
   startTime: Date | null;
@@ -57,7 +62,6 @@ interface EditFormState {
 const emptyEditForm: EditFormState = {
   title: "",
   linkUrl: "",
-  imageUrl: "",
   sortOrder: "1",
   isActive: true,
   startTime: null,
@@ -65,13 +69,35 @@ const emptyEditForm: EditFormState = {
   publishStartTime: null,
 };
 
+type TabKey = ActivityReviewStatus | "all";
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "all", label: "全部" },
+  { key: "pending", label: "待審核" },
+  { key: "approved", label: "已通過" },
+  { key: "rejected", label: "已拒絕" },
+];
+
 export default function ActivitiesPage() {
   const crud = useAdminCrud<Activity>("a", mockActivities);
+  const [activeTab, setActiveTab] = useState<TabKey>("all");
   const [createForm, setCreateForm] =
     useState<CreateFormState>(emptyCreateForm);
   const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
   const [editForm, setEditForm] = useState<EditFormState>(emptyEditForm);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+
+  const tabCounts: Record<TabKey, number> = {
+    all: crud.items.length,
+    pending: crud.items.filter((i) => i.reviewStatus === "pending").length,
+    approved: crud.items.filter((i) => i.reviewStatus === "approved").length,
+    rejected: crud.items.filter((i) => i.reviewStatus === "rejected").length,
+  };
+
+  const visibleItems =
+    activeTab === "all"
+      ? crud.items
+      : crud.items.filter((i) => i.reviewStatus === activeTab);
 
   const parseDate = (s: string | null) =>
     s ? new Date(s.replace("/", "-").replace("/", "-")) : null;
@@ -91,7 +117,6 @@ export default function ActivitiesPage() {
     setEditForm({
       title: e.title,
       linkUrl: e.linkUrl,
-      imageUrl: e.imageUrl,
       sortOrder: String(e.sortOrder),
       isActive: e.isActive,
       startTime: parseDate(e.startTime),
@@ -154,12 +179,13 @@ export default function ActivitiesPage() {
       ? `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
       : null;
 
-  const handleCreateSubmit = () => {
+  const handleCreateSubmit = async () => {
     if (!validateCreate()) return;
-    crud.submit({
+    const ok = await crud.submit({
+      source: "ADMIN",
+      reviewStatus: "approved",
       title: createForm.title.trim(),
       linkUrl: createForm.linkUrl.trim(),
-      imageUrl: createForm.imageUrl.trim(),
       sortOrder: Number(createForm.sortOrder),
       isActive: createForm.isActive,
       startTime: toDateString(createForm.startTime),
@@ -167,14 +193,16 @@ export default function ActivitiesPage() {
       publishStartTime: toDateString(createForm.publishStartTime),
       publishEndTime: toDateString(createForm.publishEndTime),
     });
+    if (ok) setActiveTab("approved");
   };
 
   const handleEditSubmit = () => {
     if (!validateEdit()) return;
     crud.submit({
+      source: "ADMIN",
+      reviewStatus: "approved",
       title: editForm.title.trim(),
       linkUrl: editForm.linkUrl.trim(),
-      imageUrl: editForm.imageUrl.trim(),
       sortOrder: Number(editForm.sortOrder),
       isActive: editForm.isActive,
       startTime: toDateString(editForm.startTime),
@@ -190,6 +218,41 @@ export default function ActivitiesPage() {
     }
   };
 
+  const [reviewingItem, setReviewingItem] = useState<Activity | null>(null);
+
+  const handleReview = (item: Activity, status: "approved" | "rejected") => {
+    crud.replaceItems(
+      crud.items.map((i) =>
+        i.id === item.id
+          ? { ...i, reviewStatus: status, isActive: status === "approved" }
+          : i,
+      ),
+    );
+    setReviewingItem(null);
+  };
+
+  const SOURCE_BADGE: Record<Activity["source"], string> = {
+    ADMIN: "bg-blue-500/15 text-blue-600",
+    CREATOR: "bg-purple-500/15 text-purple-600",
+  };
+
+  const SOURCE_LABEL: Record<Activity["source"], string> = {
+    ADMIN: "管理員",
+    CREATOR: "創作者",
+  };
+
+  const REVIEW_BADGE: Record<Activity["reviewStatus"], string> = {
+    pending: "bg-yellow-500/15 text-yellow-600",
+    approved: "bg-green-500/15 text-green-600",
+    rejected: "bg-red-500/15 text-red-600",
+  };
+
+  const REVIEW_LABEL: Record<Activity["reviewStatus"], string> = {
+    pending: "待審核",
+    approved: "已通過",
+    rejected: "已拒絕",
+  };
+
   const columns: AdminTableColumn<Activity>[] = [
     {
       key: "sortOrder",
@@ -203,10 +266,32 @@ export default function ActivitiesPage() {
       render: (i) => <span className="font-medium">{i.title}</span>,
     },
     {
-      key: "linkUrl",
-      header: "連結",
-      className: "max-w-[160px] truncate text-muted-foreground",
-      render: (i) => i.linkUrl,
+      key: "source",
+      header: "來源",
+      render: (i) => (
+        <span
+          className={cn(
+            "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+            SOURCE_BADGE[i.source],
+          )}
+        >
+          {SOURCE_LABEL[i.source]}
+        </span>
+      ),
+    },
+    {
+      key: "reviewStatus",
+      header: "審核狀態",
+      render: (i) => (
+        <span
+          className={cn(
+            "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+            REVIEW_BADGE[i.reviewStatus],
+          )}
+        >
+          {REVIEW_LABEL[i.reviewStatus]}
+        </span>
+      ),
     },
     {
       key: "status",
@@ -229,16 +314,27 @@ export default function ActivitiesPage() {
       header: "操作",
       headClassName: "text-right",
       render: (i) => (
-        <AdminRowActions
-          onEdit={() => crud.openEdit(i)}
-          onDelete={() => handleDelete(i)}
-          sortable={{
-            onMoveUp: () => crud.moveUp(i.id),
-            onMoveDown: () => crud.moveDown(i.id),
-            isFirst: i.sortOrder === 1,
-            isLast: i.sortOrder === crud.items.length,
-          }}
-        />
+        <div className="flex items-center justify-end gap-2">
+          {i.source === "CREATOR" && i.reviewStatus === "pending" && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setReviewingItem(i)}
+            >
+              審核
+            </Button>
+          )}
+          <AdminRowActions
+            onEdit={() => crud.openEdit(i)}
+            onDelete={() => handleDelete(i)}
+            sortable={{
+              onMoveUp: () => crud.moveUp(i.id),
+              onMoveDown: () => crud.moveDown(i.id),
+              isFirst: i.sortOrder === 1,
+              isLast: i.sortOrder === crud.items.length,
+            }}
+          />
+        </div>
       ),
     },
   ];
@@ -247,18 +343,46 @@ export default function ActivitiesPage() {
     <div>
       <AdminPageHeader
         title="活動區塊管理"
-        description="管理前台活動 banner / 促銷區塊，可調整顯示排序。"
         action={
           <Button onClick={crud.openCreate} className="gap-2">
             <Plus className="h-4 w-4" />
-            新增活動區塊
+            新增活動
           </Button>
         }
       />
 
+      {/* Tab 切換列 */}
+      <div className="mb-4 flex items-center gap-2">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key as TabKey)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition-colors",
+              activeTab === tab.key
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80",
+            )}
+          >
+            {tab.label}
+            <span
+              className={cn(
+                "rounded-full px-1.5 py-0.5 text-xs font-semibold",
+                activeTab === tab.key
+                  ? "bg-primary-foreground/20 text-primary-foreground"
+                  : "bg-background text-foreground",
+              )}
+            >
+              {tabCounts[tab.key]}
+            </span>
+          </button>
+        ))}
+      </div>
+
       <AdminTable
         columns={columns}
-        items={crud.items}
+        items={visibleItems}
         loading={crud.loading}
         error={crud.error}
       />
@@ -509,6 +633,76 @@ export default function ActivitiesPage() {
           />
         </div>
       </AdminModal>
+
+      {/* 審核 Modal */}
+      <Dialog
+        open={!!reviewingItem}
+        onOpenChange={(open) => !open && setReviewingItem(null)}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>審核創作者活動申請</DialogTitle>
+          </DialogHeader>
+
+          {reviewingItem && (
+            <div className="space-y-4 py-2">
+              <div className="space-y-3 rounded-lg border border-border p-4">
+                <Row label="活動名稱" value={reviewingItem.title} />
+                <Row
+                  label="活動時間"
+                  value={
+                    reviewingItem.startTime && reviewingItem.endTime
+                      ? `${reviewingItem.startTime} ～ ${reviewingItem.endTime}`
+                      : "—"
+                  }
+                />
+                {reviewingItem.boothStartTime && reviewingItem.boothEndTime && (
+                  <Row
+                    label="擺攤時間"
+                    value={`${reviewingItem.boothStartTime} ～ ${reviewingItem.boothEndTime}`}
+                  />
+                )}
+                <Row label="地址" value={reviewingItem.address || "—"} />
+                <Row label="備註" value={reviewingItem.note || "—"} />
+                <Row label="申請日期" value={reviewingItem.createdAt} />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setReviewingItem(null)}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              className="gap-1.5"
+              onClick={() => reviewingItem && handleReview(reviewingItem, "rejected")}
+            >
+              <X className="h-4 w-4" />
+              拒絕
+            </Button>
+            <Button
+              className="gap-1.5 bg-green-600 hover:bg-green-700"
+              onClick={() => reviewingItem && handleReview(reviewingItem, "approved")}
+            >
+              <Check className="h-4 w-4" />
+              通過
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex gap-3 text-sm">
+      <span className="w-20 shrink-0 text-muted-foreground">{label}</span>
+      <span className="font-medium">{value}</span>
     </div>
   );
 }
