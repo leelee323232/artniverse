@@ -2,8 +2,8 @@
 
 import type React from "react";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import { TheCard } from "@/components/common/TheCard";
 
 interface ProductCardProps {
   id: string;
+  source?: "api" | "mock";
   name: string;
   price: number;
   image: string;
@@ -25,6 +26,7 @@ interface ProductCardProps {
 
 export function ProductCard({
   id,
+  source = "mock",
   name,
   price,
   image,
@@ -58,7 +60,7 @@ export function ProductCard({
 
   return (
     <TheCard className="group overflow-hidden border-border/50 bg-card/50 pt-0 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10">
-      <Link href={{ pathname: "/product", query: { id } }}>
+      <Link href={{ pathname: "/product", query: { id, source } }}>
         <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img
             src={image || "/placeholder.svg"}
