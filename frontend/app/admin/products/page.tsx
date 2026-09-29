@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Download, FileText, Plus, Upload, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Download, FileText, ImagePlus, Plus, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -67,7 +67,8 @@ interface FormState {
   categoryId: string;
   price: string;
   stock: string;
-  imageUrl: string;
+  image: string;
+  imageFile: File | null;
   templateFile: ProductFile | null;
   sortOrder: string;
   isActive: boolean;
@@ -79,7 +80,8 @@ const emptyForm: FormState = {
   categoryId: "",
   price: "0",
   stock: "0",
-  imageUrl: "",
+  image: "",
+  imageFile: null,
   description: "",
   templateFile: null,
   sortOrder: "1",
@@ -107,7 +109,8 @@ export default function ProductsPage() {
         categoryId: e.categoryId,
         price: String(e.price),
         stock: String(e.stock),
-        imageUrl: e.imageUrl,
+        image: e.image,
+        imageFile: null,
         templateFile: e.templateFile ?? null,
         sortOrder: String(e.sortOrder),
         isActive: e.isActive,
@@ -123,7 +126,7 @@ export default function ProductsPage() {
     const next: Record<string, string> = {};
     if (!form.name.trim()) next.name = "請輸入商品名稱";
     if (!form.categoryId) next.categoryId = "請選擇類別";
-    if (!form.imageUrl.trim()) next.imageUrl = "請輸入圖片網址";
+    if (!form.image && !form.imageFile) next.image = "請上傳商品圖片";
     if (Number.isNaN(Number(form.price))) next.price = "價格必須是數字";
     if (Number.isNaN(Number(form.stock))) next.stock = "庫存必須是數字";
     if (form.sortOrder === "" || Number.isNaN(Number(form.sortOrder)))
@@ -134,12 +137,15 @@ export default function ProductsPage() {
 
   const handleSubmit = () => {
     if (!validate()) return;
+    const imageUrl = form.imageFile
+      ? URL.createObjectURL(form.imageFile)
+      : form.image;
     crud.submit({
       name: form.name.trim(),
       categoryId: form.categoryId,
       price: Number(form.price),
       stock: Number(form.stock),
-      imageUrl: form.imageUrl.trim(),
+      image: imageUrl,
       description: form.description.trim(),
       templateFile: form.templateFile ?? undefined,
       sortOrder: Number(form.sortOrder),
@@ -161,7 +167,7 @@ export default function ProductsPage() {
     render: (i) => (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={i.imageUrl}
+        src={i.image}
         alt={i.name}
         className="h-12 w-12 rounded-md object-cover"
       />
@@ -433,17 +439,12 @@ export default function ProductsPage() {
           </AdminField>
         </div>
 
-        <AdminField
-          label="圖片網址"
-          htmlFor="imageUrl"
-          required
-          error={errors.imageUrl}
-        >
-          <Input
-            id="imageUrl"
-            value={form.imageUrl}
-            onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-            placeholder="https://..."
+        <AdminField label="商品圖片" required error={errors.image}>
+          <ImageUpload
+            value={form.image}
+            file={form.imageFile}
+            onChange={(file) => setForm({ ...form, imageFile: file, image: "" })}
+            onClear={() => setForm({ ...form, imageFile: null, image: "" })}
           />
         </AdminField>
 
@@ -475,6 +476,74 @@ export default function ProductsPage() {
           />
         </AdminField>
       </AdminModal>
+    </div>
+  );
+}
+
+function ImageUpload({
+  value,
+  file,
+  onChange,
+  onClear,
+}: {
+  value: string;
+  file: File | null;
+  onChange: (file: File) => void;
+  onClear: () => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const preview = file ? URL.createObjectURL(file) : value || null;
+
+  return (
+    <div className="flex items-center gap-3">
+      {preview ? (
+        <div className="relative h-16 w-16 shrink-0">
+          <img
+            src={preview}
+            alt="預覽"
+            className="h-16 w-16 rounded-md object-cover border border-border"
+          />
+          <button
+            type="button"
+            onClick={onClear}
+            className="absolute -right-1.5 -top-1.5 rounded-full bg-destructive p-0.5 text-destructive-foreground"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md border border-dashed border-border bg-muted/40">
+          <ImagePlus className="h-6 w-6 text-muted-foreground" />
+        </div>
+      )}
+      <div className="flex-1 space-y-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => ref.current?.click()}
+        >
+          <Upload className="h-3.5 w-3.5" />
+          {preview ? "更換圖片" : "上傳圖片"}
+        </Button>
+        {file && (
+          <p className="text-xs text-muted-foreground truncate max-w-[180px]">
+            {file.name}
+          </p>
+        )}
+      </div>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onChange(f);
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }

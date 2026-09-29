@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Flame } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Plus, Flame, Upload, X, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -30,7 +30,8 @@ interface FormState {
   name: string;
   categoryId: string;
   specialty: string;
-  avatarUrl: string;
+  avatar: string;
+  avatarFile: File | null;
   sortOrder: string;
   isActive: boolean;
   isPopular: boolean;
@@ -40,7 +41,8 @@ const emptyForm: FormState = {
   name: "",
   categoryId: "",
   specialty: "",
-  avatarUrl: "",
+  avatar: "",
+  avatarFile: null,
   sortOrder: "1",
   isActive: true,
   isPopular: false,
@@ -94,7 +96,8 @@ export default function CreatorsPage() {
         name: e.name,
         categoryId: e.categoryId,
         specialty: e.specialty,
-        avatarUrl: e.avatarUrl,
+        avatar: e.avatar,
+        avatarFile: null,
         sortOrder: String(e.sortOrder),
         isActive: e.isActive,
         isPopular: (e as any).isPopular ?? false,
@@ -109,7 +112,7 @@ export default function CreatorsPage() {
     const next: Record<string, string> = {};
     if (!form.name.trim()) next.name = "請輸入創作者名稱";
     if (!form.categoryId) next.categoryId = "請選擇類別";
-    if (!form.avatarUrl.trim()) next.avatarUrl = "請輸入頭像網址";
+    if (!form.avatar && !form.avatarFile) next.avatar = "請上傳頭像圖片";
     if (form.sortOrder === "" || Number.isNaN(Number(form.sortOrder)))
       next.sortOrder = "排序必須是數字";
     setErrors(next);
@@ -118,11 +121,14 @@ export default function CreatorsPage() {
 
   const handleSubmit = () => {
     if (!validate()) return;
+    const avatarUrl = form.avatarFile
+      ? URL.createObjectURL(form.avatarFile)
+      : form.avatar;
     crud.submit({
       name: form.name.trim(),
       categoryId: form.categoryId,
       specialty: form.specialty.trim(),
-      avatarUrl: form.avatarUrl.trim(),
+      avatar: avatarUrl,
       sortOrder: Number(form.sortOrder),
       isActive: form.isActive,
       isPopular: form.isPopular,
@@ -151,7 +157,7 @@ export default function CreatorsPage() {
       render: (i) => (
         <div className="relative h-12 w-12">
           <img
-            src={i.avatarUrl}
+            src={i.avatar}
             alt={i.name}
             className="h-12 w-12 rounded-full object-cover"
           />
@@ -284,17 +290,12 @@ export default function CreatorsPage() {
           />
         </AdminField>
 
-        <AdminField
-          label="頭像網址"
-          htmlFor="avatarUrl"
-          required
-          error={errors.avatarUrl}
-        >
-          <Input
-            id="avatarUrl"
-            value={form.avatarUrl}
-            onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
-            placeholder="https://..."
+        <AdminField label="頭像圖片" required error={errors.avatar}>
+          <AvatarUpload
+            value={form.avatar}
+            file={form.avatarFile}
+            onChange={(file) => setForm({ ...form, avatarFile: file, avatar: "" })}
+            onClear={() => setForm({ ...form, avatarFile: null, avatar: "" })}
           />
         </AdminField>
 
@@ -330,6 +331,74 @@ export default function CreatorsPage() {
           </div>
         </div>
       </AdminModal>
+    </div>
+  );
+}
+
+function AvatarUpload({
+  value,
+  file,
+  onChange,
+  onClear,
+}: {
+  value: string;
+  file: File | null;
+  onChange: (file: File) => void;
+  onClear: () => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const preview = file ? URL.createObjectURL(file) : value || null;
+
+  return (
+    <div className="flex items-center gap-3">
+      {preview ? (
+        <div className="relative h-16 w-16 shrink-0">
+          <img
+            src={preview}
+            alt="頭像預覽"
+            className="h-16 w-16 rounded-full object-cover border border-border"
+          />
+          <button
+            type="button"
+            onClick={onClear}
+            className="absolute -right-1 -top-1 rounded-full bg-destructive p-0.5 text-destructive-foreground"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-dashed border-border bg-muted/40">
+          <ImagePlus className="h-6 w-6 text-muted-foreground" />
+        </div>
+      )}
+      <div className="flex-1 space-y-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => ref.current?.click()}
+        >
+          <Upload className="h-3.5 w-3.5" />
+          {preview ? "更換頭像" : "上傳頭像"}
+        </Button>
+        {file && (
+          <p className="text-xs text-muted-foreground truncate max-w-[180px]">
+            {file.name}
+          </p>
+        )}
+      </div>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onChange(f);
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }
