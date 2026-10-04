@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileText, ImagePlus, Plus, Upload, X } from "lucide-react";
+import { Download, FileText, Flame, ImagePlus, Plus, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -72,6 +72,7 @@ interface FormState {
   templateFile: ProductFile | null;
   sortOrder: string;
   isActive: boolean;
+  isPopular: boolean;
   description: string;
 }
 
@@ -86,6 +87,7 @@ const emptyForm: FormState = {
   templateFile: null,
   sortOrder: "1",
   isActive: true,
+  isPopular: false,
 };
 
 export default function ProductsPage() {
@@ -114,6 +116,7 @@ export default function ProductsPage() {
         templateFile: e.templateFile ?? null,
         sortOrder: String(e.sortOrder),
         isActive: e.isActive,
+        isPopular: (e as any).isPopular ?? false,
         description: e.description ?? "",
       });
     } else {
@@ -150,6 +153,7 @@ export default function ProductsPage() {
       templateFile: form.templateFile ?? undefined,
       sortOrder: Number(form.sortOrder),
       isActive: form.isActive,
+      isPopular: form.isPopular,
       productType: crud.editingItem?.productType ?? productTab,
     });
   };
@@ -165,12 +169,19 @@ export default function ProductsPage() {
     header: "圖片",
     className: "w-16",
     render: (i) => (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={i.image}
-        alt={i.name}
-        className="h-12 w-12 rounded-md object-cover"
-      />
+      <div className="relative h-12 w-12">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={i.image}
+          alt={i.name}
+          className="h-12 w-12 rounded-md object-cover"
+        />
+        {(i as any).isPopular && (
+          <span className="absolute -bottom-0.5 -right-0.5 bg-background border border-border/50 rounded-full p-0.5 shadow-sm flex items-center justify-center">
+            <Flame className="h-3.5 w-3.5 text-orange-500 fill-orange-500/20" />
+          </span>
+        )}
+      </div>
     ),
   };
   const nameColumn: AdminTableColumn<Product> = {
@@ -381,12 +392,21 @@ export default function ProductsPage() {
         onClose={crud.closeModal}
         onSubmit={handleSubmit}
       >
-        <div className="flex items-center justify-between rounded-lg border border-border p-3">
-          <span className="text-sm font-medium">是否啟用</span>
-          <Switch
-            checked={form.isActive}
-            onCheckedChange={(v) => setForm({ ...form, isActive: v })}
-          />
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-lg border border-border p-3">
+            <span className="text-sm font-medium">是否啟用</span>
+            <Switch
+              checked={form.isActive}
+              onCheckedChange={(v) => setForm({ ...form, isActive: v })}
+            />
+          </div>
+          <div className="flex items-center justify-between rounded-lg border border-border p-3">
+            <span className="text-sm font-medium">設為熱門商品</span>
+            <Switch
+              checked={form.isPopular}
+              onCheckedChange={(v) => setForm({ ...form, isPopular: v })}
+            />
+          </div>
         </div>
         <AdminField
           label="商品名稱"

@@ -18,6 +18,7 @@ import {
   Settings,
   Package,
   Heart,
+  Gavel,
   LogOut,
   Palette,
 } from "lucide-react";
@@ -172,6 +173,15 @@ export function Navigation() {
                     >
                       <Package className="h-4 w-4" />
                       我的訂單
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/account/auctions"
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <Gavel className="h-4 w-4" />
+                      我的競標
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
