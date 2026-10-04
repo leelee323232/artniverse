@@ -2,8 +2,9 @@
 
 import type React from "react";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useRef, useState } from "react";
+import { addToCart, apiError } from "@/lib/products-api";
 import { useCart } from "@/lib/commerce/cart-context";
 import { purchaseIssue, normalizeProductId } from "@/lib/commerce/cart";
 import { mockProducts } from "@/mocks/admin/products";
@@ -15,6 +16,7 @@ import { TheCard } from "@/components/common/TheCard";
 
 interface ProductCardProps {
   id: string;
+  source?: "api" | "mock";
   name: string;
   price: number;
   image: string;
@@ -27,6 +29,7 @@ interface ProductCardProps {
 
 export function ProductCard({
   id,
+  source = "mock",
   name,
   price,
   image,
@@ -41,8 +44,12 @@ export function ProductCard({
   const isLiked = isControlled ? !!isFavorited : internalLiked;
   const { toast } = useToast();
   const { addItem, ready, now } = useCart();
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const product = mockProducts.find(p => p.id === normalizeProductId(id));
-  const unavailable = ready ? purchaseIssue(product, now) : "商品載入中";
+  const unavailable = source === "api"
+    ? (stock <= 0 ? "已售完" : null)
+    : ready ? purchaseIssue(product, now) : "商品載入中";
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -53,15 +60,31 @@ export function ProductCard({
     }
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
+    if (unavailable || savingRef.current) return;
+    // API 商品不可依相同 ID 加入示範購物車。
+    if (source === "api") {
+      savingRef.current = true;
+      setSaving(true);
+      try {
+        await addToCart(id, 1);
+        toast({ title: "已加入購物車", description: name });
+      } catch (error) {
+        toast({ title: "無法加入購物車", description: apiError(error), variant: "destructive" });
+      } finally {
+        savingRef.current = false;
+        setSaving(false);
+      }
+      return;
+    }
     const result = addItem(id);
     toast({ title: result.ok ? "已加入購物車" : "無法加入購物車", description: result.message, variant: result.ok ? "default" : "destructive" });
   };
 
   return (
     <TheCard className="group overflow-hidden border-border/50 bg-card/50 pt-0 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10">
-      <Link href={{ pathname: "/product", query: { id } }}>
+      <Link href={{ pathname: "/product", query: { id, source } }}>
         <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img
             src={image || "/placeholder.svg"}
@@ -100,7 +123,7 @@ export function ProductCard({
               size="sm"
               className="bg-gradient-to-r from-primary to-secondary"
               onClick={handleAddToCart}
-              disabled={!!unavailable}
+              disabled={saving || !!unavailable}
               title={unavailable ?? "加入購物車"}
             >
               <ShoppingCart className="mr-1 h-4 w-4" />

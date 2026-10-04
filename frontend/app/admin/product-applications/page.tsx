@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Eye,
   Check,
@@ -13,22 +13,71 @@ import {
 import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { mockProductApplications } from "@/mocks/admin/productApplications";
+import { getApplications, reviewApplication, apiError, type Application } from "@/lib/products-api";
 import type {
-  ProductApplication,
   ProductApplicationStatus,
 } from "@/types/admin";
 
+type DisplayApplication =
+  | (Application & { source: "api" })
+  | (Omit<Application, "saleType"> & { source: "mock"; saleType: null });
+
+// 舊資料只供前端展示，不送至 API、不寫入資料庫。
+const demoApplications: DisplayApplication[] = mockProductApplications.map((app) => ({
+  ...app,
+  id: `demo:${app.id}`,
+  source: "mock",
+  name: app.productType,
+  description: null,
+  note: null,
+  saleType: null,
+  templateFile: app.templateFile ?? null,
+  preOrderQuantity: app.preOrderQuantity ?? null,
+  customRequest: app.customRequest ?? null,
+  rejectReason: app.rejectReason ?? null,
+  auctionStartPrice: null,
+  auctionMinIncrement: null,
+  auctionStartTime: null,
+  auctionEndTime: null,
+  presaleTargetQuantity: null,
+  presaleStartDate: null,
+  presaleEndDate: null,
+}));
+
 export default function ProductApplicationsPage() {
-  const [applications, setApplications] = useState<ProductApplication[]>(
-    mockProductApplications,
+  const [applications, setApplications] = useState<(Application & { source: "api" })[]>(
+    [],
   );
-  const [selectedApp, setSelectedApp] = useState<ProductApplication | null>(
+  const [selectedApp, setSelectedApp] = useState<DisplayApplication | null>(
     null,
   );
   const [confirmType, setConfirmType] = useState<
     "approve" | "reject" | "re-evaluate" | null
   >(null);
   const [rejectInputReason, setRejectInputReason] = useState("");
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [status, setStatus] = useState("");
+  const [reload, setReload] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setError(""); setApplications([]); setLastPage(1);
+    getApplications(page, status, controller.signal).then((response) => {
+      setApplications(response.data.map((app) => ({ ...app, source: "api" as const }))); setLastPage(response.meta.last_page);
+    }).catch((err) => { if (!controller.signal.aborted) setError(apiError(err)); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [page, status, reload]);
+
+  // API 保留原有分頁；展示資料只加在第一頁，並套用相同狀態篩選。
+  const visibleApplications: DisplayApplication[] = [
+    ...applications,
+    ...(page === 1 ? demoApplications.filter((app) => !status || app.status === status) : []),
+  ];
 
   const renderStatusBadge = (status: ProductApplicationStatus) => {
     switch (status) {
@@ -53,29 +102,20 @@ export default function ProductApplicationsPage() {
     }
   };
 
-  const handleStatusChange = (
-    id: string,
-    newStatus: ProductApplicationStatus,
-    reason?: string,
-  ) => {
-    setApplications((prev) =>
-      prev.map((app) =>
-        app.id === id
-          ? { ...app, status: newStatus, rejectReason: reason || "" }
-          : app,
-      ),
-    );
-    setSelectedApp((prev) =>
-      prev && prev.id === id
-        ? { ...prev, status: newStatus, rejectReason: reason || "" }
-        : prev,
-    );
-    setConfirmType(null);
-    setRejectInputReason("");
+  const handleStatusChange = async (id: string, newStatus: ProductApplicationStatus, reason?: string) => {
+    // 即使意外觸發處理函式，展示資料也不會發出任何儲存請求。
+    if (!selectedApp || selectedApp.source !== "api" || selectedApp.id !== id || saving) return;
+    setSaving(true); setError("");
+    try {
+      const updated = await reviewApplication(selectedApp, newStatus, reason);
+      setSelectedApp({ ...updated, source: "api" }); setConfirmType(null); setRejectInputReason("");
+      setReload((value) => value + 1);
+    } catch (err) { setError(apiError(err)); }
+    finally { setSaving(false); }
   };
 
-  const formatMoney = (value: number) => `NT$ ${value.toLocaleString()}`;
-  const formatFileSize = (size: number) =>
+  const formatMoney = (value: number | null) => value == null ? "未提供" : `NT$ ${value.toLocaleString()}`;
+  const formatFileSize = (size: number | null) => size == null ? "大小未提供" :
     `${(size / 1024 / 1024).toFixed(size >= 1024 * 1024 ? 1 : 2)} MB`;
 
   return (
@@ -84,6 +124,15 @@ export default function ProductApplicationsPage() {
         title="商品開發申請審核"
         description="審核創作者送出的商品開發申請，可查看設計與成本後決定通過或拒絕製作。"
       />
+
+      <div className="mb-4 flex gap-3 items-center">
+        <select aria-label="審核狀態" className="border rounded p-2 bg-background" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+          <option value="">全部狀態</option><option value="pending">待審核</option><option value="approved">已通過</option><option value="rejected">已拒絕</option>
+        </select>
+        <Button variant="outline" disabled={loading} onClick={() => setReload((value) => value + 1)}>重新載入</Button>
+        {loading && <span role="status">載入中…</span>}
+      </div>
+      {error && <p role="alert" className="mb-4 text-destructive">{error}</p>}
 
       {/* 列表表格 */}
       <div className="rounded-lg border border-border bg-card overflow-hidden">
@@ -100,9 +149,9 @@ export default function ProductApplicationsPage() {
             </tr>
           </thead>
           <tbody>
-            {applications.map((app) => (
+            {visibleApplications.map((app) => (
               <tr
-                key={app.id}
+                key={`${app.source}:${app.id}`}
                 onClick={() => setSelectedApp(app)}
                 className="border-b border-border/60 hover:bg-muted/40 cursor-pointer transition-colors text-muted-foreground hover:text-foreground text-sm"
               >
@@ -113,6 +162,9 @@ export default function ProductApplicationsPage() {
                   <div className="text-xs text-muted-foreground">
                     {app.brandName}
                   </div>
+                  <span className={`mt-1 inline-block rounded px-2 py-0.5 text-xs ${app.source === "mock" ? "bg-amber-500/10 text-amber-600" : "bg-primary/10 text-primary"}`}>
+                    {app.source === "mock" ? "展示用・不可儲存" : "資料庫"}
+                  </span>
                 </td>
                 <td className="p-4">
                   <div className="text-foreground">{app.productType}</div>
@@ -122,7 +174,7 @@ export default function ProductApplicationsPage() {
                 </td>
                 <td className="p-4">{app.category}</td>
                 <td className="p-4">
-                  {app.sellingPrice > 0 ? formatMoney(app.sellingPrice) : "—"}
+                  {(app.sellingPrice ?? 0) > 0 ? formatMoney(app.sellingPrice) : "—"}
                 </td>
                 <td className="p-4">{app.date}</td>
                 <td className="p-4">{renderStatusBadge(app.status)}</td>
@@ -141,7 +193,7 @@ export default function ProductApplicationsPage() {
                 </td>
               </tr>
             ))}
-            {applications.length === 0 && (
+            {!loading && !error && visibleApplications.length === 0 && (
               <tr>
                 <td
                   colSpan={7}
@@ -155,6 +207,11 @@ export default function ProductApplicationsPage() {
         </table>
       </div>
 
+      <div className="mt-4 flex gap-3 items-center">
+        <Button variant="outline" disabled={loading || page <= 1} onClick={() => setPage(page - 1)}>上一頁</Button>
+        <span>資料庫第 {page} / {lastPage} 頁</span>
+        <Button variant="outline" disabled={loading || page >= lastPage} onClick={() => setPage(page + 1)}>下一頁</Button>
+      </div>
       {/* 第一層：商品申請詳細資料 Modal */}
       {selectedApp && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-40 p-4 animate-in fade-in duration-150">
@@ -175,6 +232,11 @@ export default function ProductApplicationsPage() {
 
             {/* Content */}
             <div className="p-6 space-y-6 overflow-y-auto text-muted-foreground">
+              {selectedApp.source === "mock" && (
+                <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+                  這是原有展示資料，僅供查看內容與檔案，不能通過、拒絕或重新審核，不會寫入資料庫。
+                </p>
+              )}
               {/* 設計圖預覽 */}
               <div>
                 <h4 className="mb-3 text-sm font-semibold text-foreground">
@@ -264,6 +326,14 @@ export default function ProductApplicationsPage() {
                 )}
               </div>
 
+              <div className="space-y-2">
+                <h4 className="font-semibold text-foreground">{selectedApp.name}</h4>
+                <p className="whitespace-pre-wrap">{selectedApp.description}</p>
+                <p>販售方式：{selectedApp.saleType === null ? "未提供" : selectedApp.saleType === "general" ? "一般" : selectedApp.saleType === "auction" ? "競標" : "預售"}</p>
+                {selectedApp.note && <p>創作者備註：{selectedApp.note}</p>}
+                {selectedApp.saleType === "auction" && <p>起標價：{selectedApp.auctionStartPrice ?? "未提供"}；最低加價：{selectedApp.auctionMinIncrement ?? "未提供"}<br />期間：{selectedApp.auctionStartTime ?? "未提供"} ～ {selectedApp.auctionEndTime ?? "未提供"}</p>}
+                {selectedApp.saleType === "presale" && <p>達標數量：{selectedApp.presaleTargetQuantity ?? "未提供"}<br />期間：{selectedApp.presaleStartDate ?? "未提供"} ～ {selectedApp.presaleEndDate ?? "未提供"}</p>}
+              </div>
               {/* 產品資訊 */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-foreground">
@@ -349,7 +419,7 @@ export default function ProductApplicationsPage() {
                       創作者設定售價
                     </span>
                     <span className="text-lg font-bold text-emerald-500">
-                      {selectedApp.sellingPrice > 0
+                      {(selectedApp.sellingPrice ?? 0) > 0
                         ? formatMoney(selectedApp.sellingPrice)
                         : "待定"}
                     </span>
@@ -395,7 +465,7 @@ export default function ProductApplicationsPage() {
                 關閉
               </Button>
 
-              {selectedApp.status === "pending" && (
+              {selectedApp.source === "api" && selectedApp.status === "pending" && (
                 <>
                   <Button
                     variant="destructive"
@@ -414,7 +484,7 @@ export default function ProductApplicationsPage() {
               )}
 
               {/* 已通過的申請仍可拒絕 */}
-              {selectedApp.status === "approved" && (
+              {selectedApp.source === "api" && selectedApp.status === "approved" && (
                 <Button
                   variant="destructive"
                   onClick={() => setConfirmType("reject")}
@@ -425,7 +495,7 @@ export default function ProductApplicationsPage() {
               )}
 
               {/* 已拒絕的申請可重新審核 */}
-              {selectedApp.status === "rejected" && (
+              {selectedApp.source === "api" && selectedApp.status === "rejected" && (
                 <Button
                   onClick={() => setConfirmType("re-evaluate")}
                   className="gap-2 bg-gradient-to-r from-primary to-secondary text-primary-foreground"
@@ -439,9 +509,10 @@ export default function ProductApplicationsPage() {
       )}
 
       {/* 第二層：二次確認彈窗 */}
-      {confirmType && selectedApp && (
+      {confirmType && selectedApp?.source === "api" && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            {error && <p role="alert" className="text-destructive">{error}</p>}
             {/* 通過確認 */}
             {confirmType === "approve" && (
               <>
@@ -449,17 +520,18 @@ export default function ProductApplicationsPage() {
                   確認通過申請
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  確定要通過此商品開發申請並進行製作嗎？
+                  確定要通過此商品開發申請嗎？一般商品會建立商品資料，庫存需待入庫後設定；競標與預售目前僅記錄審核結果。
                 </p>
                 <div className="flex justify-end gap-3 pt-2">
                   <Button
                     variant="outline"
-                    onClick={() => setConfirmType(null)}
+                    disabled={saving} onClick={() => setConfirmType(null)}
                     className="bg-transparent text-muted-foreground hover:text-foreground"
                   >
                     取消
                   </Button>
                   <Button
+                    disabled={saving}
                     onClick={() =>
                       handleStatusChange(selectedApp.id, "approved")
                     }
@@ -494,13 +566,13 @@ export default function ProductApplicationsPage() {
                 <div className="flex justify-end gap-3 pt-2">
                   <Button
                     variant="outline"
-                    onClick={() => setConfirmType(null)}
+                    disabled={saving} onClick={() => setConfirmType(null)}
                     className="bg-transparent text-muted-foreground hover:text-foreground"
                   >
                     取消
                   </Button>
                   <Button
-                    disabled={!rejectInputReason.trim()}
+                    disabled={saving || !rejectInputReason.trim()}
                     variant="destructive"
                     onClick={() =>
                       handleStatusChange(
@@ -529,12 +601,13 @@ export default function ProductApplicationsPage() {
                 <div className="flex justify-end gap-3 pt-2">
                   <Button
                     variant="outline"
-                    onClick={() => setConfirmType(null)}
+                    disabled={saving} onClick={() => setConfirmType(null)}
                     className="bg-transparent text-muted-foreground hover:text-foreground"
                   >
                     取消
                   </Button>
                   <Button
+                    disabled={saving}
                     onClick={() =>
                       handleStatusChange(selectedApp.id, "pending")
                     }

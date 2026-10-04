@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import ApiProductDetail from "./[id]/ProductDetailClient"
 import { mockProducts } from "@/mocks/admin/products"
 import { mockProductCategories } from "@/mocks/admin/productCategories"
 import { useCart } from "@/lib/commerce/cart-context"
@@ -279,6 +280,9 @@ export default function ProductDetailPage() {
   const searchParams = useSearchParams()
   // 相容先前分享的 p-10 格式；新連結一律使用純數字 ID。
   const id = searchParams.get("id")?.trim().replace(/^p-(?=\d+$)/, "")
+  if (searchParams.get("source") === "api" && id) {
+    return <ApiProductDetail key={`api:${id}`} productId={id} />
+  }
   const product = allProducts.find((item) => item.id === id)
   if (!product) {
     return (
@@ -425,7 +429,7 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
             {/* 沒有評價不等於零分。 */}
             {product.productType !== "auction" && (
               <div className="flex flex-wrap items-center gap-3 text-sm">
-                {product.rating !== null ? (
+                {product.rating !== null && product.rating > 0 ? (
                   <>
                     <div className="flex items-center gap-1" aria-label={`平均評分 ${product.rating.toFixed(1)} 分，滿分 5 分`}>
                       <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
@@ -434,9 +438,9 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
                     <Separator orientation="vertical" className="h-4" />
                     <span className="text-muted-foreground">{product.reviewCount} 則評價</span>
                   </>
-                ) : <span className="text-muted-foreground">尚無評價</span>}
+                ) : null}
                 {product.sold !== null && <>
-                  <Separator orientation="vertical" className="h-4" />
+                  {product.rating !== null && product.rating > 0 && <Separator orientation="vertical" className="h-4" />}
                   <span className="text-muted-foreground">已售出 {product.sold.toLocaleString()} 件</span>
                 </>}
               </div>
@@ -588,12 +592,12 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
               >
                 商品規格
               </TabsTrigger>
-              <TabsTrigger
+              {product.reviewCount > 0 && <TabsTrigger
                 value="reviews"
                 className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent"
               >
-                顧客評價{product.reviewCount > 0 ? ` (${product.reviewCount})` : ""}
-              </TabsTrigger>
+                顧客評價 ({product.reviewCount})
+              </TabsTrigger>}
               <TabsTrigger
                 value="shipping"
                 className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent"
@@ -619,7 +623,7 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
               </Card>
             </TabsContent>
 
-            <TabsContent value="reviews" className="mt-6">
+            {product.reviewCount > 0 && <TabsContent value="reviews" className="mt-6">
               {product.rating === null ? (
                 <Card className="border-border/50 bg-card/30 p-8 text-center">
                   <p className="font-medium">尚無評價</p>
@@ -759,7 +763,7 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
                 </div>
 
               </div>}
-            </TabsContent>
+            </TabsContent>}
 
             <TabsContent value="shipping" className="mt-6">
               <Card className="border-border/50 bg-card/30 p-6">
@@ -890,9 +894,9 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                       {item.productType === "auction" ? <span>競標商品・目前出價</span> : <>
-                        {item.rating !== null ? <span className="flex items-center gap-1">
+                        {item.rating !== null && item.rating > 0 ? <span className="flex items-center gap-1">
                           <Star className="h-3 w-3 fill-amber-400 text-amber-400" />{item.rating.toFixed(1)} / 5
-                        </span> : <span>尚無評價</span>}
+                        </span> : null}
                         {item.sold !== null && <span>・已售 {item.sold.toLocaleString()} 件</span>}
                       </>}
                     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ApiCart } from "./api-cart";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { mockProducts } from "@/mocks/admin/products";
@@ -97,6 +98,8 @@ export default function CartPage() {
       <Navigation />
       <main className="container mx-auto max-w-5xl px-4 pt-24 pb-20">
         <h1 className="mb-2 text-3xl font-bold">購物車</h1>
+        <ApiCart />
+        <h2 className="mb-2 text-lg font-bold">示範商品</h2>
         <p className="mb-6 text-muted-foreground">
           一次結帳一個創作者賣場，同類商品合併結帳；一般、預售分開結帳，競標每件獨立結帳。
         </p>
@@ -113,7 +116,7 @@ export default function CartPage() {
         ) : items.length === 0 ? (
           <Card className="border-border/50 bg-card/30 p-12 text-center">
             <ShoppingBag className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-            <h2 className="mb-2 text-xl font-bold">購物車是空的</h2>
+            <h2 className="mb-2 text-xl font-bold">尚未加入示範商品</h2>
             <p className="mb-6 text-muted-foreground">
               先挑選喜歡的商品，加入後會保留在這裡。
             </p>

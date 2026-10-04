@@ -107,7 +107,7 @@ export default function ShopPage() {
     loadProducts();
   }, []);
 
-  const filteredProducts = [...mockProducts, ...webProducts].filter(
+  const filteredProducts = [...mockProducts.map((product) => ({ ...product, source: "mock" as const })), ...webProducts].filter(
     (product) => {
       const categoryName = categoryNameMap[product.categoryId] ?? "";
       const matchesCategory =
@@ -130,7 +130,7 @@ export default function ShopPage() {
         return b.price - a.price;
       case "newest":
         return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          ("createdAt" in b ? Date.parse(b.createdAt) || 0 : 0) - ("createdAt" in a ? Date.parse(a.createdAt) || 0 : 0)
         );
       default:
         return 0;
@@ -290,7 +290,7 @@ export default function ShopPage() {
                   if (product.productType === "presale") {
                     return (
                       <PresaleProductCard
-                        key={product.id}
+                        key={`${product.source}:${product.id}`}
                         id={product.id}
                         name={product.name}
                         price={product.price}
@@ -307,7 +307,7 @@ export default function ShopPage() {
                     const prices = getAuctionPrices(product);
                     return (
                       <AuctionProductCard
-                        key={product.id}
+                        key={`${product.source}:${product.id}`}
                         id={product.id}
                         name={product.name}
                         image={product.image}
@@ -323,12 +323,13 @@ export default function ShopPage() {
                   }
                   return (
                     <ProductCard
-                      key={product.id}
+                      source={product.source}
+                      key={`${product.source}:${product.id}`}
                       id={product.id}
                       name={product.name}
                       price={product.price}
                       image={getFirstImage(product.image ?? "")}
-                      category={categoryName}
+                      category={product.source === "api" ? product.category : categoryName}
                       stock={product.stock}
                       creatorId={product.creatorId ?? ""}
                     />
