@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface AdminModalProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface AdminModalProps {
   onSubmit: () => void;
   submitting?: boolean;
   submitLabel?: string;
+  className?: string;
 }
 
 export function AdminModal({
@@ -28,10 +30,11 @@ export function AdminModal({
   onSubmit,
   submitting = false,
   submitLabel = "儲存",
+  className,
 }: AdminModalProps) {
   return (
     <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className={cn("max-h-[90vh] overflow-y-auto", className)}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>

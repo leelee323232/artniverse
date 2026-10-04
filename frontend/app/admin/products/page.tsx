@@ -25,7 +25,9 @@ import { StatusToggle } from "@/components/admin/StatusToggle";
 import { useAdminCrud } from "@/lib/admin/useAdminCrud";
 import { mockProducts } from "@/mocks/admin/products";
 import { mockProductCategories } from "@/mocks/admin/productCategories";
-import type { Product, ProductFile, ProductType } from "@/types/admin";
+import { ProductOptionsEditor } from "@/components/admin/ProductOptionsEditor";
+import { emptyOptions, normalizeOptions, validateOptions } from "@/lib/products/options";
+import type { Product, ProductFile, ProductType, ProductOptions } from "@/types/admin";
 import {
   AUCTION_STATUS_LABEL,
   PRESALE_STATUS_LABEL,
@@ -62,7 +64,7 @@ const PRESALE_BADGE_CLASS = {
   failed: "bg-muted text-muted-foreground hover:bg-muted",
 } as const;
 
-interface FormState {
+interface FormState extends ProductOptions {
   name: string;
   categoryId: string;
   price: string;
@@ -76,10 +78,11 @@ interface FormState {
 }
 
 const emptyForm: FormState = {
+  ...emptyOptions(),
   name: "",
   categoryId: "",
-  price: "0",
-  stock: "0",
+  price: "",
+  stock: "",
   image: "",
   imageFile: null,
   description: "",
@@ -105,6 +108,9 @@ export default function ProductsPage() {
     if (crud.editingItem) {
       const e = crud.editingItem;
       setForm({
+        styles: structuredClone(e.styles ?? []),
+        sizes: structuredClone(e.sizes ?? []),
+        colors: structuredClone(e.colors ?? []),
         name: e.name,
         categoryId: e.categoryId,
         price: String(e.price),
@@ -117,18 +123,20 @@ export default function ProductsPage() {
         description: e.description ?? "",
       });
     } else {
-      setForm({ ...emptyForm, sortOrder: String(crud.items.length + 1) });
+      setForm({ ...emptyForm, ...emptyOptions(), sortOrder: String(crud.items.length + 1) });
     }
     setErrors({});
   }, [crud.isModalOpen, crud.editingItem, crud.items.length]);
 
   const validate = () => {
-    const next: Record<string, string> = {};
+    const next: Record<string, string> = validateOptions(form);
     if (!form.name.trim()) next.name = "請輸入商品名稱";
     if (!form.categoryId) next.categoryId = "請選擇類別";
     if (!form.image && !form.imageFile) next.image = "請上傳商品圖片";
-    if (Number.isNaN(Number(form.price))) next.price = "價格必須是數字";
-    if (Number.isNaN(Number(form.stock))) next.stock = "庫存必須是數字";
+    if (!form.price.trim()) next.price = "請輸入價格";
+    else if (!Number.isFinite(Number(form.price))) next.price = "價格必須是數字";
+    if (!form.stock.trim()) next.stock = "請輸入庫存";
+    else if (!Number.isFinite(Number(form.stock))) next.stock = "庫存必須是數字";
     if (form.sortOrder === "" || Number.isNaN(Number(form.sortOrder)))
       next.sortOrder = "排序必須是數字";
     setErrors(next);
@@ -141,6 +149,7 @@ export default function ProductsPage() {
       ? URL.createObjectURL(form.imageFile)
       : form.image;
     crud.submit({
+      ...normalizeOptions(form),
       name: form.name.trim(),
       categoryId: form.categoryId,
       price: Number(form.price),
@@ -378,6 +387,7 @@ export default function ProductsPage() {
       <AdminModal
         open={crud.isModalOpen}
         title={crud.editingItem ? "編輯商品" : "新增商品"}
+        className="sm:max-w-[min(800px,calc(100%-2rem))]"
         onClose={crud.closeModal}
         onSubmit={handleSubmit}
       >
@@ -421,23 +431,40 @@ export default function ProductsPage() {
         </AdminField>
 
         <div className="grid grid-cols-2 gap-3">
-          <AdminField label="價格" htmlFor="price" error={errors.price}>
+          <AdminField label="價格" htmlFor="price" required error={errors.price}>
             <Input
               id="price"
+              required
               type="number"
               value={form.price}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
             />
           </AdminField>
-          <AdminField label="庫存" htmlFor="stock" error={errors.stock}>
+          <AdminField label="庫存" htmlFor="stock" required error={errors.stock}>
             <Input
               id="stock"
+              required
               type="number"
               value={form.stock}
               onChange={(e) => setForm({ ...form, stock: e.target.value })}
             />
           </AdminField>
         </div>
+
+        <ProductOptionsEditor
+          value={{ styles: form.styles, sizes: form.sizes, colors: form.colors }}
+          errors={errors}
+          onChange={(options) => {
+            setForm(current => ({ ...current, ...options }));
+            setErrors(current => {
+              const next = { ...current };
+              for (const group of [form.styles, form.sizes, form.colors]) {
+                for (const option of group) { delete next[option.id]; delete next[`${option.id}-hex`]; }
+              }
+              return next;
+            });
+          }}
+        />
 
         <AdminField label="商品圖片" required error={errors.image}>
           <ImageUpload
