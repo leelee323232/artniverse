@@ -4,7 +4,9 @@ import type React from "react";
 
 import { useState } from "react";
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
+import { useCart } from "@/lib/commerce/cart-context";
+import { purchaseIssue, normalizeProductId } from "@/lib/commerce/cart";
+import { mockProducts } from "@/mocks/admin/products";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Heart } from "lucide-react";
@@ -38,6 +40,9 @@ export function ProductCard({
   const isControlled = onToggleFavorite !== undefined;
   const isLiked = isControlled ? !!isFavorited : internalLiked;
   const { toast } = useToast();
+  const { addItem, ready, now } = useCart();
+  const product = mockProducts.find(p => p.id === normalizeProductId(id));
+  const unavailable = ready ? purchaseIssue(product, now) : "商品載入中";
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -50,10 +55,8 @@ export function ProductCard({
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    toast({
-      title: "已加入購物車",
-      description: `${name} 已成功加入購物車`,
-    });
+    const result = addItem(id);
+    toast({ title: result.ok ? "已加入購物車" : "無法加入購物車", description: result.message, variant: result.ok ? "default" : "destructive" });
   };
 
   return (
@@ -97,6 +100,8 @@ export function ProductCard({
               size="sm"
               className="bg-gradient-to-r from-primary to-secondary"
               onClick={handleAddToCart}
+              disabled={!!unavailable}
+              title={unavailable ?? "加入購物車"}
             >
               <ShoppingCart className="mr-1 h-4 w-4" />
               加入購物車

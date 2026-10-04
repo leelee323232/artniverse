@@ -1,235 +1,305 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { mockProducts } from "@/mocks/admin/products"
-import { AUCTION_PAYMENT_WINDOW } from "@/lib/products/status"
-import { Navigation } from "@/components/navigation"
-import { UniverseBackground } from "@/components/universe-background"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
-import Link from "next/link"
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { mockProducts } from "@/mocks/admin/products";
+import { useCart } from "@/lib/commerce/cart-context";
+import {
+  cartGroupId,
+  cartLineIssue,
+  shippingFor,
+  TYPE_LABEL,
+} from "@/lib/commerce/cart";
+import { Navigation } from "@/components/navigation";
+import { UniverseBackground } from "@/components/universe-background";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 
-type CartItem = {
-  id: string; productId: string; name: string; price: number; quantity: number;
-  image: string; creator: string; creatorId: string; paymentDeadline?: number;
-}
-
-// Mock cart data
-const initialCartItems = [
-  {
-    id: "1",
-    productId: "1",
-    name: "星空筆記本",
-    price: 380,
-    quantity: 2,
-    image: "/cute-notebook-with-stars.jpg",
-    creator: "小夢創作室",
-    creatorId: "1",
-  },
-  {
-    id: "2",
-    productId: "2",
-    name: "療癒小熊貼紙組",
-    price: 120,
-    quantity: 1,
-    image: "/cute-bear-stickers.jpg",
-    creator: "小夢創作室",
-    creatorId: "1",
-  },
-]
+const money = (value: number) => `NT$ ${value.toLocaleString("zh-TW")}`;
+const dateTime = (value: number | string) =>
+  new Date(value).toLocaleString("zh-TW", {
+    timeZone: "Asia/Taipei",
+    hour12: false,
+  });
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems)
+  const { items, ready, now, storageWarning, setQuantity, removeItem } =
+    useCart();
+  const [message, setMessage] = useState("");
+  const router = useRouter();
+  const rows = items.map((line) => {
+    const product = mockProducts.find((p) => p.id === line.productId);
+    return {
+      line,
+      product,
+      issue: cartLineIssue(line, product, now),
+      price:
+        product?.productType === "auction"
+          ? (line.award?.amount ?? 0)
+          : (product?.price ?? 0),
+    };
+  });
+  const groups = Array.from(
+    new Set(
+      rows.map((row) =>
+        row.product
+          ? cartGroupId(row.product)
+          : `missing:${row.line.productId}`,
+      ),
+    ),
+  ).map((id) => {
+    const entries = rows.filter(
+      (row) =>
+        (row.product
+          ? cartGroupId(row.product)
+          : `missing:${row.line.productId}`) === id,
+    );
+    const product = entries[0].product;
+    const subtotal =
+      Math.round(
+        entries.reduce((sum, row) => sum + row.price * row.line.quantity, 0) *
+          100,
+      ) / 100;
+    const shipping = shippingFor(subtotal);
+    return {
+      id,
+      entries,
+      product,
+      subtotal,
+      shipping,
+      total: subtotal + shipping,
+      invalid: entries.some((row) => !!row.issue),
+    };
+  });
 
-  const [message, setMessage] = useState("")
-
-  useEffect(() => {
-    // 只加入內頁示範得標商品；正式結帳需由 API 驗證得標資格與價格。
-    const id = new URLSearchParams(window.location.search).get("auction")?.replace(/^p-(?=\d+$)/, "")
-    if (!id) return
-    const product = mockProducts.find((item) => item.id === id && item.productType === "auction")
-    const end = Date.parse(product?.auctionEndTime ?? "")
-    const deadline = end + AUCTION_PAYMENT_WINDOW
-    if (!product || !Number.isFinite(end) || Date.now() < end || Date.now() >= deadline || !product.currentBid) {
-      setMessage("目前沒有可加入的示範得標商品，或付款期限已過。")
-      return
+  function checkoutGroup(id: string) {
+    const group = groups.find((g) => g.id === id);
+    if (
+      !group ||
+      group.entries.some((row) =>
+        cartLineIssue(row.line, row.product, Date.now()),
+      )
+    ) {
+      setMessage("商品狀態已變更，請確認提示並調整購物車。");
+      return;
     }
-    setCartItems((items) => [...items.filter((item) => item.id !== `auction-${id}`), {
-      id: `auction-${id}`, productId: product.id, name: product.name, price: product.currentBid!,
-      quantity: 1, image: product.imageUrl, creator: product.creatorName ?? "創作者",
-      creatorId: product.creatorId ?? "", paymentDeadline: deadline,
-    }])
-    setMessage("已加入示範得標商品；移除商品不會取消得標資格或重設付款期限。")
-    const timer = window.setInterval(() => {
-      if (Date.now() >= deadline) {
-        setCartItems((items) => items.filter((item) => item.id !== `auction-${id}`))
-        setMessage("示範得標商品付款期限已過，已自購物車移除。")
-        window.clearInterval(timer)
-      }
-    }, 1000)
-    return () => window.clearInterval(timer)
-  }, [])
-
-  const updateQuantity = (id: string, change: number) => {
-    setCartItems((items) =>
-      items
-        .map((item) => {
-          if (item.id === id && !item.paymentDeadline) {
-            const newQuantity = Math.max(0, item.quantity + change)
-            return { ...item, quantity: newQuantity }
-          }
-          return item
-        })
-        .filter((item) => item.quantity > 0),
-    )
+    router.push(
+      `/checkout?group=${encodeURIComponent(id)}&draft=${crypto.randomUUID()}`,
+    );
   }
-
-  const removeItem = (id: string) => {
-    setCartItems((items) => items.filter((item) => item.id !== id))
-  }
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const shipping = subtotal > 1000 ? 0 : 80
-  const total = subtotal + shipping
 
   return (
     <div className="relative min-h-screen">
       <UniverseBackground />
       <Navigation />
-
-      <div className="container mx-auto px-4 pt-24 pb-20">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold text-foreground">購物車</h1>
-          <p className="text-muted-foreground">{cartItems.length} 件商品</p>
-        </div>
-
-        {message && <p role="status" className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm">{message}</p>}
-
-        {cartItems.length === 0 ? (
-          <Card className="border-border/50 bg-card/30 p-12 text-center backdrop-blur-sm">
+      <main className="container mx-auto max-w-5xl px-4 pt-24 pb-20">
+        <h1 className="mb-2 text-3xl font-bold">購物車</h1>
+        <p className="mb-6 text-muted-foreground">
+          一次結帳一個創作者賣場，同類商品合併結帳；一般、預售分開結帳，競標每件獨立結帳。
+        </p>
+      {storageWarning && (
+          <p role="alert" className="mb-4 text-amber-500">
+            {storageWarning}
+          </p>
+        )}
+        <p role="status" className="mb-4 text-sm">
+          {message}
+        </p>
+        {!ready ? (
+          <p role="status">購物車載入中…</p>
+        ) : items.length === 0 ? (
+          <Card className="border-border/50 bg-card/30 p-12 text-center">
             <ShoppingBag className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-            <h2 className="mb-2 text-xl font-bold text-foreground">購物車是空的</h2>
-            <p className="mb-6 text-muted-foreground">快去探索創作者的宇宙，找尋喜歡的商品吧！</p>
-            <Link href="/">
-              <Button className="bg-gradient-to-r from-primary to-secondary">開始探索</Button>
-            </Link>
+            <h2 className="mb-2 text-xl font-bold">購物車是空的</h2>
+            <p className="mb-6 text-muted-foreground">
+              先挑選喜歡的商品，加入後會保留在這裡。
+            </p>
+            <Button asChild>
+              <Link href="/shop">繼續逛商店</Link>
+            </Button>
           </Card>
         ) : (
-          <div className="grid gap-8 lg:grid-cols-[1fr_400px]">
-            {/* Cart Items */}
-            <div className="space-y-4">
-              {cartItems.map((item) => (
-                <Card key={item.id} className="border-border/50 bg-card/30 p-4 backdrop-blur-sm">
-                  <div className="flex gap-4">
-                    <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted/30">
-                      <img
-                        src={item.image || "/placeholder.svg"}
-                        alt={item.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-
-                    <div className="flex flex-1 flex-col justify-between">
-                      <div>
-                        <Link
-                          href={`/creator/${item.creatorId}`}
-                          className="text-xs text-muted-foreground hover:text-foreground"
-                        >
-                          {item.creator}
-                        </Link>
-                        <h3 className="font-bold text-foreground">{item.name}</h3>
-                        {item.paymentDeadline && <p className="text-xs text-amber-500">
-                          競標得標・付款截止 {new Date(item.paymentDeadline).toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false })}（台灣時間）
-                        </p>}
-                        <p className="text-lg font-bold text-primary">NT$ {item.price}</p>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        {item.paymentDeadline ? <span className="text-sm text-muted-foreground">得標數量：1 件／組</span> : <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8 bg-transparent"
-                            onClick={() => updateQuantity(item.id, -1)}
+          <div className="space-y-8">
+            {groups.map((group) => (
+              <section key={group.id} id={group.id} className="scroll-mt-28">
+                <Card className="border-border/50 bg-card/40 p-4 sm:p-6">
+                  <div className="mb-4 flex flex-wrap items-center gap-3">
+                    <h2 className="text-lg font-bold">
+                      {group.product?.creatorName ??
+                        (group.product?.creatorId
+                          ? `創作者賣場 ${group.product.creatorId}`
+                          : "商品資料待確認")}
+                    </h2>
+                    {group.product && (
+                      <Badge variant="outline">
+                        {TYPE_LABEL[group.product.productType]}
+                      </Badge>
+                    )}
+                  </div>
+                  {group.product?.productType === "presale" && (
+                    <p className="mb-4 text-sm text-violet-400">
+                      達標或截止即停止購買。下單後 24
+                      小時內付款，加入購物車不開始倒數。
+                    </p>
+                  )}
+                  {group.product?.productType === "auction" && (
+                    <p className="mb-4 text-sm text-amber-500">
+                      得標數量固定為 1
+                      件／組。移除商品不會取消得標或延長付款期限。
+                    </p>
+                  )}
+                  <div className="divide-y divide-border/50">
+                    {group.entries.map(({ line, product, issue, price }) => (
+                      <div key={line.productId} className="flex gap-4 py-5">
+                        <img
+                          src={product?.image || "/placeholder.svg"}
+                          alt={product?.name ?? "商品"}
+                          className="h-20 w-20 shrink-0 rounded-lg object-cover sm:h-24 sm:w-24"
+                        />
+                        <div className="min-w-0 flex-1 space-y-2">
+                          <Link
+                            href={`/product?id=${encodeURIComponent(line.productId)}`}
+                            className="block break-words font-bold hover:underline"
                           >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <Input type="number" value={item.quantity} className="h-8 w-16 text-center" readOnly />
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8 bg-transparent"
-                            onClick={() => updateQuantity(item.id, 1)}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>}
-
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => removeItem(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                            {product?.name ?? "找不到這項商品"}
+                          </Link>
+                          <p className="font-semibold text-primary">
+                            {money(price)}
+                          </p>
+                          {line.award && (
+                            <p className="text-sm text-amber-500">
+                              付款截止：{dateTime(line.award.deadline)}
+                              （台灣時間）・第 {line.award.rank} 順位得標
+                            </p>
+                          )}
+                          {product?.productType === "presale" &&
+                            product.presaleEndTime && (
+                              <p className="text-xs text-muted-foreground">
+                                預售截止：{dateTime(product.presaleEndTime)}
+                                （台灣時間）
+                              </p>
+                            )}
+                          {issue && (
+                            <p
+                              role="alert"
+                              className="text-sm text-destructive"
+                            >
+                              {issue}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            {product?.productType === "auction" ? (
+                              <span className="text-sm">
+                                得標數量：1 件／組
+                              </span>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  aria-label={`減少${product?.name ?? "商品"}數量`}
+                                  disabled={line.quantity <= 1}
+                                  onClick={() =>
+                                    setMessage(
+                                      setQuantity(
+                                        line.productId,
+                                        Math.min(
+                                          line.quantity - 1,
+                                          product?.stock ?? 0,
+                                        ),
+                                      ).message,
+                                    )
+                                  }
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                                <span
+                                  className="min-w-8 text-center"
+                                  aria-label="商品數量"
+                                >
+                                  {line.quantity}
+                                </span>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  aria-label={`增加${product?.name ?? "商品"}數量`}
+                                  disabled={
+                                    !!issue ||
+                                    line.quantity >= (product?.stock ?? 0)
+                                  }
+                                  onClick={() =>
+                                    setMessage(
+                                      setQuantity(
+                                        line.productId,
+                                        line.quantity + 1,
+                                      ).message,
+                                    )
+                                  }
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`移除${product?.name ?? "商品"}`}
+                              className="text-destructive"
+                              onClick={() => {
+                                removeItem(line.productId);
+                                setMessage("已移除商品");
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 space-y-3 border-t border-border pt-4">
+                    <div className="flex justify-between text-sm">
+                      <span>商品小計</span>
+                      <span>{money(group.subtotal)}</span>
                     </div>
+                    <div className="flex justify-between text-sm">
+                      <span>預估運費（本組滿 NT$ 1,000 免運）</span>
+                      <span>
+                        {group.shipping ? money(group.shipping) : "免運費"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-bold">
+                      <span>本組預估總額</span>
+                      <span>{money(group.total)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      每次僅結帳此組商品，其他賣場的商品會保留在購物車。
+                    </p>
+                    {group.invalid && (
+                      <p className="text-sm text-destructive">
+                        請先移除無法購買的商品，或依提示調整數量。
+                      </p>
+                    )}
+                    <Button
+                      className="w-full"
+                      disabled={group.invalid}
+                      onClick={() => checkoutGroup(group.id)}
+                    >
+                      前往結帳
+                    </Button>
                   </div>
                 </Card>
-              ))}
-            </div>
-
-            {/* Order Summary */}
-            <div className="h-fit space-y-4">
-              <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
-                <h2 className="mb-4 text-xl font-bold text-foreground">訂單摘要</h2>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>小計</span>
-                    <span>NT$ {subtotal}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>運費</span>
-                    <span>{shipping === 0 ? "免運費" : `NT$ ${shipping}`}</span>
-                  </div>
-                  {subtotal < 1000 && <p className="text-xs text-muted-foreground">滿 NT$ 1,000 免運費</p>}
-
-                  <Separator />
-
-                  <div className="flex justify-between text-lg font-bold text-foreground">
-                    <span>總計</span>
-                    <span>NT$ {total}</span>
-                  </div>
-                </div>
-
-                <Button className="mt-6 w-full bg-gradient-to-r from-primary to-secondary" size="lg" onClick={() => {
-                  if (cartItems.some((item) => item.paymentDeadline && Date.now() >= item.paymentDeadline)) {
-                    setCartItems((items) => items.filter((item) => !item.paymentDeadline || Date.now() < item.paymentDeadline))
-                    setMessage("得標付款期限已過，請重新確認購物車。")
-                    return
-                  }
-                  setMessage("目前為購物車畫面預覽，尚未建立訂單或進行付款。")
-                }}>
-                  前往結帳
-                </Button>
-              </Card>
-
-              <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
-                <h3 className="mb-3 font-bold text-foreground">優惠碼</h3>
-                <div className="flex gap-2">
-                  <Input placeholder="輸入優惠碼" className="bg-background/50" />
-                  <Button variant="outline">套用</Button>
-                </div>
-              </Card>
-            </div>
+              </section>
+            ))}
+            <Button asChild variant="outline">
+              <Link href="/shop">繼續購物</Link>
+            </Button>
           </div>
         )}
-      </div>
+      </main>
     </div>
-  )
+  );
 }

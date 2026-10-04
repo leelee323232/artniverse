@@ -2,6 +2,8 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
+import { CartProvider } from "@/lib/commerce/cart-context";
+import { Toaster } from "@/components/ui/toaster";
 import ConditionalFooter from "@/components/conditional-footer";
 import "./globals.css";
 
@@ -22,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider><CartProvider>{children}<Toaster /></CartProvider></AuthProvider>
         <ConditionalFooter />
       </body>
     </html>
