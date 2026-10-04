@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { mockProducts } from "@/mocks/admin/products"
 import { mockProductCategories } from "@/mocks/admin/productCategories"
+import { useCart } from "@/lib/commerce/cart-context"
+import { cartGroupId, purchaseIssue } from "@/lib/commerce/cart"
 import { AuctionPanel } from "./auction-panel"
 import Link from "next/link"
 import { Navigation } from "@/components/navigation"
@@ -259,7 +261,7 @@ const allProducts = mockProducts.map((item) => {
   const reviews = item.id === "1" ? mockReviews : []
   return {
     ...item,
-    images: detail?.images ?? [item.imageUrl],
+    images: detail?.images ?? [item.image],
     category: mockProductCategories.find((category) => category.id === item.categoryId)?.name ?? "商品",
     originalPrice: detail?.originalPrice ?? item.price,
     description: item.description ?? detail?.description ?? "商品介紹即將更新。",
@@ -294,6 +296,9 @@ export default function ProductDetailPage() {
 
 function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
   const { toast } = useToast()
+  const router = useRouter()
+  const { addItem, ready, now } = useCart()
+  const unavailable = ready ? purchaseIssue(product, now) : "商品載入中"
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [isLiked, setIsLiked] = useState(false)
@@ -308,17 +313,13 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
   const recommendedProducts = [...relatedProducts, ...otherProducts].slice(0, 6)
 
   const handleAddToCart = () => {
-    toast({
-      title: "已加入購物車",
-      description: `${product.name} x ${quantity} 已成功加入購物車`,
-    })
+    const result = addItem(product.id, quantity)
+    toast({ title: result.ok ? "已加入購物車" : "無法加入購物車", description: result.message, variant: result.ok ? "default" : "destructive" })
+    return result.ok
   }
 
   const handleBuyNow = () => {
-    toast({
-      title: "前往結帳",
-      description: "正在為您準備結帳頁面...",
-    })
+    if (handleAddToCart()) router.push(`/cart#${encodeURIComponent(cartGroupId(product))}`)
   }
 
   const scrollCarousel = (direction: "left" | "right") => {
@@ -478,6 +479,13 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
               <AuctionPanel product={product} />
             ) : (
               <>
+                {product.productType === "presale" && <section className="space-y-2 rounded-lg border border-violet-500/30 bg-violet-500/5 p-4" aria-label="預售購買須知">
+                  <h2 className="font-bold">預售商品</h2>
+                  <p>目前 {product.currentBackers ?? 0} / {product.targetBackers ?? 0} 人；達標或截止即停止購買。</p>
+                  <p className="text-sm text-muted-foreground">預售期間：{ready && product.presaleStartTime ? new Date(product.presaleStartTime).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" }) : "待確認"} ～ {ready && product.presaleEndTime ? new Date(product.presaleEndTime).toLocaleString("zh-TW", { timeZone: "Asia/Taipei" }) : "待確認"}（台灣時間）</p>
+                  <p className="text-sm">下單後須於 24 小時內付款，加入購物車不會開始付款倒數。</p>
+                </section>}
+                {unavailable && <p role="status" className="text-sm text-amber-500">{unavailable}</p>}
                 {/* Quantity */}
                 <div className="flex items-center gap-4">
                   <span className="font-medium text-foreground">數量</span>
@@ -487,7 +495,7 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
                       size="icon"
                       className="h-10 w-10"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      disabled={product.stock <= 0 || quantity <= 1}
+                      disabled={!!unavailable || quantity <= 1}
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
@@ -499,7 +507,7 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
                       onClick={() =>
                         setQuantity(Math.min(product.stock, quantity + 1))
                       }
-                      disabled={quantity >= product.stock}
+                      disabled={!!unavailable || quantity >= product.stock}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
@@ -515,7 +523,7 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
                     size="lg"
                     variant="outline"
                     className="flex-1"
-                    disabled={product.stock <= 0}
+                    disabled={!!unavailable}
                     onClick={handleAddToCart}
                   >
                     <ShoppingCart className="mr-2 h-5 w-5" />
@@ -524,10 +532,10 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
                   <Button
                     size="lg"
                     className="flex-1 bg-gradient-to-r from-primary to-secondary"
-                    disabled={product.stock <= 0}
+                    disabled={!!unavailable}
                     onClick={handleBuyNow}
                   >
-                    {product.stock <= 0 ? "已售完" : "立即購買"}
+                    {unavailable ?? "加入並查看購物車"}
                   </Button>
                 </div>
 
