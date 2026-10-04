@@ -20,5 +20,12 @@ class DatabaseSeeder extends Seeder
         ) {
             $this->call(TestingUserSeeder::class);
         }
+
+        \App\Models\User::factory()->count(3)->create();
+        \App\Models\Creator::factory()->count(3)->create();
+        \App\Models\ProductCategorySpec::factory()->count(3)->create();
+        \App\Models\Product::factory()->count(3)->create();
+        \App\Models\CartItem::factory()->count(3)->create();
+        \App\Models\ProductReview::factory()->count(3)->create();
     }
 }

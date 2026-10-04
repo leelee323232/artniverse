@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class CartItem extends Model
+class ProductCategorySpec extends Model
 {
     use HasFactory;
 
@@ -13,18 +13,13 @@ class CartItem extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'user_id',
-        'product_id',
+        'id',
         'name',
-        'price',
-        'quantity',
-        'image',
-        'creator_name',
-        'creator_id',
+        'name_zh',
+        'base_cost',
+        'min_order',
+        'has_min_quantity',
+        'print_zones',
+        'specs',
     ];
-
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
-    }
 }
