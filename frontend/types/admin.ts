@@ -24,12 +24,26 @@ export type AuctionStatus = "upcoming" | "live" | "ended";
 export type PresaleStatus = "upcoming" | "live" | "success" | "failed";
 
 // 產品
+export interface ProductOption {
+  id: string;
+  label: string;
+}
+
+export interface ProductOptions {
+  styles: ProductOption[];
+  sizes: ProductOption[];
+  colors: (ProductOption & { hex: string })[];
+}
+
 export interface Product extends AdminBaseEntity {
   name: string;
   price: number;
   image: string;
   categoryId: string;
   stock: number;
+  styles?: ProductOptions["styles"];
+  sizes?: ProductOptions["sizes"];
+  colors?: ProductOptions["colors"];
   description?: string;
   templateFile?: ProductFile;
   productType: ProductType;
