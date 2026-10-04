@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCart } from "@/lib/commerce/cart-context";
+import { cartGroupId } from "@/lib/commerce/cart";
 import { Clock, Gavel, RotateCcw, ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,6 +79,9 @@ function createPreviewBids(product: Product): AuctionBid[] {
 }
 
 export function AuctionPanel({ product }: { product: Product }) {
+  const router = useRouter();
+  const { addItem, ready, awards } = useCart();
+  const savedAward = awards.find(award => award.productId === product.id);
   const [bids, setBids] = useState<AuctionBid[]>([]);
   const [now, setNow] = useState<number | null>(null);
   const [amount, setAmount] = useState("");
@@ -139,7 +144,11 @@ export function AuctionPanel({ product }: { product: Product }) {
     auctionMinIncrement!,
     bids,
   );
-  const payment = getAuctionPayment(bids, auctionEndTime!, now);
+  const payment = savedAward
+    ? now < savedAward.deadline
+      ? { winner: { bidderId: PREVIEW_BIDDER_ID, amount: savedAward.amount }, rank: savedAward.rank, deadline: savedAward.deadline }
+      : null
+    : getAuctionPayment(bids, auctionEndTime!, now);
   const isWinner = payment?.winner.bidderId === PREVIEW_BIDDER_ID;
   const ownRank = ranking.findIndex(
     (bid) => bid.bidderId === PREVIEW_BIDDER_ID,
@@ -277,10 +286,10 @@ export function AuctionPanel({ product }: { product: Product }) {
         <p className="font-medium">{ownStatus}</p>
         {ownBid && (
           <p className="text-sm text-muted-foreground">
-            我的最高有效出價：{money(ownBid.amount)}
+            我的最高有效出價：{money(savedAward?.amount ?? ownBid.amount)}
           </p>
         )}
-        {status === "ended" && !payment && (
+        {status === "ended" && !payment && !savedAward && (
           <p className="text-sm text-muted-foreground">
             {ranking.length
               ? "所有候補付款期限均已結束，本次未成交。"
@@ -297,15 +306,19 @@ export function AuctionPanel({ product }: { product: Product }) {
               剩餘 {remaining(payment.deadline, now)}
             </p>
             <Button
-              asChild
+              disabled={!ready}
+              onClick={() => {
+                const currentPayment = savedAward ? (Date.now() < savedAward.deadline ? payment : null) : getAuctionPayment(bids, auctionEndTime!, Date.now());
+                if (!currentPayment || currentPayment.winner.bidderId !== PREVIEW_BIDDER_ID) {
+                  setError("得標資格已變更或付款期限已過。"); return;
+                }
+                const result = addItem(product.id, 1, { productId: product.id, amount: currentPayment.winner.amount, deadline: currentPayment.deadline, rank: currentPayment.rank });
+                if (!result.ok) { setError(result.message); return; }
+                router.push(`/cart#${encodeURIComponent(cartGroupId(product))}`);
+              }}
               className="mt-2 w-full bg-gradient-to-r from-primary to-secondary"
             >
-              <Link
-                href={{ pathname: "/cart", query: { auction: product.id } }}
-              >
-                <ShoppingCart className="mr-2 h-4 w-4" />
-                前往購物車結帳
-              </Link>
+              <ShoppingCart className="mr-2 h-4 w-4" />前往購物車結帳
             </Button>
           </>
         )}
@@ -427,7 +440,7 @@ export function AuctionPanel({ product }: { product: Product }) {
           </li>
         </ul>
         <p className="rounded-lg bg-muted/30 p-3 text-xs">
-          目前為畫面預覽，以示範會員操作；出價不會送出，重新整理會還原。
+          目前為畫面預覽，以示範會員操作；出價不會送出，重新整理會還原出價。加入購物車的得標金額與期限會保留。
         </p>
       </div>
 

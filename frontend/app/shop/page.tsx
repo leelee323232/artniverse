@@ -294,7 +294,7 @@ export default function ShopPage() {
                         id={product.id}
                         name={product.name}
                         price={product.price}
-                        image={product.imageUrl}
+                        image={product.image}
                         category={categoryName}
                         currentBackers={product.currentBackers ?? 0}
                         targetBackers={product.targetBackers ?? 1}
@@ -310,7 +310,7 @@ export default function ShopPage() {
                         key={product.id}
                         id={product.id}
                         name={product.name}
-                        image={product.imageUrl}
+                        image={product.image}
                         category={categoryName}
                         creatorName={product.creatorName ?? ""}
                         auctionStartPrice={prices.auctionStartPrice}
@@ -327,8 +327,8 @@ export default function ShopPage() {
                       id={product.id}
                       name={product.name}
                       price={product.price}
-                      image={getFirstImage(product.image)}
-                      category={product.category}
+                      image={getFirstImage(product.image ?? "")}
+                      category={categoryName}
                       stock={product.stock}
                       creatorId={product.creatorId ?? ""}
                     />

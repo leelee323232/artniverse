@@ -27,7 +27,7 @@ export type PresaleStatus = "upcoming" | "live" | "success" | "failed";
 export interface Product extends AdminBaseEntity {
   name: string;
   price: number;
-  imageUrl: string;
+  image: string;
   categoryId: string;
   stock: number;
   description?: string;
@@ -55,24 +55,31 @@ export interface ProductFile {
 // 創作者
 export interface Creator extends AdminBaseEntity {
   name: string;
-  avatarUrl: string;
+  avatar: string;
   categoryId: string;
   specialty: string;
 }
 
+// 活動來源
+export type ActivitySource = "ADMIN" | "CREATOR";
+
+// 活動審核狀態
+export type ActivityReviewStatus = "pending" | "approved" | "rejected";
+
 // 活動區塊
 export interface Activity extends AdminBaseEntity {
+  source: ActivitySource;           // 活動來源
+  reviewStatus: ActivityReviewStatus; // 審核狀態
   title: string;
   linkUrl: string;
-  imageUrl: string;
-  startTime: string | null;       // 活動開始時間
-  endTime: string | null;         // 活動結束時間
-  publishStartTime: string | null; // 上架時間
-  publishEndTime: string | null;   // 下架時間
-  address?: string;               // 地址（創作者活動申請新增）
-  boothStartTime?: string | null; // 擺攤開始時間
-  boothEndTime?: string | null;   // 擺攤結束時間
-  note?: string;                  // 備註
+  startTime: string | null;         // 活動開始時間
+  endTime: string | null;           // 活動結束時間
+  publishStartTime: string | null;  // 上架時間
+  publishEndTime: string | null;    // 下架時間
+  address?: string;                 // 地址（創作者活動申請）
+  boothStartTime?: string | null;   // 擺攤開始時間
+  boothEndTime?: string | null;     // 擺攤結束時間
+  note?: string;                    // 備註
 }
 
 // 熱門創作者

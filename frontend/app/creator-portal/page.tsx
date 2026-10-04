@@ -1969,7 +1969,7 @@ export default function CreatorPortalPage() {
                                 )}
                               </div>
                             </div>
-                            <div className="grid gap-3 md:grid-cols-2">
+                            {/* <div className="grid gap-3 md:grid-cols-2">
                               <div className="space-y-2">
                                 <Label>擺攤開始時間</Label>
                                 <BasicDatePicker
@@ -2004,7 +2004,7 @@ export default function CreatorPortalPage() {
                                   </p>
                                 )}
                               </div>
-                            </div>
+                            </div> */}
                             <div className="space-y-2">
                               <Label>地址</Label>
                               <Input
@@ -2108,9 +2108,9 @@ export default function CreatorPortalPage() {
                         <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                           活動時間
                         </th>
-                        <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                        {/* <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                           擺攤時間
-                        </th>
+                        </th> */}
                         <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                           地址
                         </th>
@@ -2137,9 +2137,9 @@ export default function CreatorPortalPage() {
                               {evt.startTime} ~ {evt.endTime}
                             </span>
                           </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">
+                          {/* <td className="whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">
                             {evt.boothStartTime} ~ {evt.boothEndTime}
-                          </td>
+                          </td> */}
                           <td className="px-4 py-3 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1.5">
                               <MapPin className="h-3.5 w-3.5 shrink-0" />

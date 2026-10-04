@@ -92,7 +92,7 @@ export default function FeaturedProductsPage() {
         // eslint-disable-next-line @next/next/no-img-element
         return p ? (
           <img
-            src={p.imageUrl}
+            src={p.image}
             alt={p.name}
             className="h-12 w-12 rounded-md object-cover"
           />

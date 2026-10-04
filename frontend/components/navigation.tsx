@@ -21,11 +21,14 @@ import {
   LogOut,
   Palette,
 } from "lucide-react";
+import { useCart } from "@/lib/commerce/cart-context";
 import { useAuth } from "@/lib/auth-context";
 import { MobileMenu } from "@/components/mobile-menu";
 
 export function Navigation() {
   const router = useRouter();
+  const { items, ready } = useCart();
+  const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const { user, logout } = useAuth();
 
   async function handleLogout() {
@@ -98,13 +101,14 @@ export function Navigation() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/cart">
+          <Link href="/cart" aria-label={`購物車${ready ? `，${cartCount} 件商品` : ""}`}>
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:bg-transparent hover:text-white dark:hover:bg-transparent"
             >
               <ShoppingCart className="h-5 w-5" />
+              {ready && cartCount > 0 && <span className="ml-1 text-xs">{cartCount}</span>}
             </Button>
           </Link>
           <Link href="/admin">
