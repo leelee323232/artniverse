@@ -96,16 +96,6 @@ export interface Activity extends AdminBaseEntity {
   note?: string;                    // 備註
 }
 
-// 熱門創作者
-export interface FeaturedCreator extends AdminBaseEntity {
-  creatorId: string;
-}
-
-// 熱門商品
-export interface FeaturedProduct extends AdminBaseEntity {
-  productId: string;
-}
-
 // 商品開發申請 - 審核狀態
 export type ProductApplicationStatus = "pending" | "approved" | "rejected";
 

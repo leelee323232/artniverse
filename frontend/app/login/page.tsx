@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { TheButton } from "@/components/common/TheButton";
-import { userAPI } from "@/apis/user";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,15 +27,11 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
-    try {
-      const result = await userAPI.login({ email, password });
-      if (result.access_token) {
-        router.push("/");
-      } else {
-        setError(result.error?.message || "登入失敗");
-      }
-    } catch (error) {
-      setError(error.message || "登入失敗");
+    const result = await login(email, password);
+    if (result.success) {
+      router.push("/");
+    } else {
+      setError(result.error || "登入失敗");
     }
     setIsSubmitting(false);
   };

@@ -31,6 +31,7 @@ export function BasicDatePicker({
       timeFormat="HH:mm"
       timeIntervals={30}
       timeCaption="時間"
+      portalId="datepicker-portal"
       className={`
         h-10 w-full rounded-md border border-gray-100 bg-transparent px-3 text-sm
         text-gray-100 shadow-sm
