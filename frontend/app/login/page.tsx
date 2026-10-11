@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { TheButton } from "@/components/common/TheButton";
-import { userAPI } from "@/apis/user";
 
 export default function LoginPage() {
   const router = useRouter();

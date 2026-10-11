@@ -193,3 +193,8 @@
 .product-recommendations-scroll::-webkit-scrollbar-thumb:hover {
   background: #27272a;
 }
+
+#datepicker-portal {
+  position: relative;
+  z-index: 9999;
+}

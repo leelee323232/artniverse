@@ -6,8 +6,6 @@ import {
   PackagePlus,
   Users,
   Image as ImageIcon,
-  Star,
-  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -15,8 +13,6 @@ import { mockProducts } from "@/mocks/admin/products";
 import { mockProductApplications } from "@/mocks/admin/productApplications";
 import { mockCreators } from "@/mocks/admin/creators";
 import { mockActivities } from "@/mocks/admin/activities";
-import { mockFeaturedProducts } from "@/mocks/admin/featuredProducts";
-import { mockFeaturedCreators } from "@/mocks/admin/featuredCreators";
 
 interface StatCard {
   label: string;
@@ -30,8 +26,6 @@ const stats: StatCard[] = [
   { label: "待審核商品申請", count: mockProductApplications.filter((a) => a.status === "pending").length, href: "/admin/product-applications", icon: PackagePlus },
   { label: "創作者數量", count: mockCreators.length, href: "/admin/creators", icon: Users },
   { label: "活動區塊數量", count: mockActivities.length, href: "/admin/activities", icon: ImageIcon },
-  { label: "熱門商品數量", count: mockFeaturedProducts.length, href: "/admin/featured-products", icon: Sparkles },
-  { label: "熱門創作者數量", count: mockFeaturedCreators.length, href: "/admin/featured-creators", icon: Star },
 ];
 
 export default function AdminDashboardPage() {

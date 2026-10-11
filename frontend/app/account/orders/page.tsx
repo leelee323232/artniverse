@@ -11,49 +11,81 @@ import { useAuth } from "@/lib/auth-context"
 import { Package, Truck, CheckCircle, Clock, ChevronRight, MessageCircle } from "lucide-react"
 import Link from "next/link"
 
-const mockOrders = [
+export const mockOrders = [
   {
     id: "ORD-2024-001",
     date: "2024-01-15",
+    statusUpdatedAt: "2024-01-20 14:32",
     status: "delivered",
     total: 1280,
     items: [
-      { name: "星空筆記本", quantity: 2, price: 380, image: "/cute-notebook-with-stars.jpg" },
-      { name: "療癒小熊貼紙組", quantity: 1, price: 120, image: "/cute-bear-stickers.jpg" },
-      { name: "夢境明信片套組", quantity: 1, price: 400, image: "/dreamy-postcards.jpg" },
+      { name: "星空筆記本", quantity: 2, price: 380, image: "/cute-notebook-with-stars.jpg", spec: "A5 / 深藍色" },
+      { name: "療癒小熊貼紙組", quantity: 1, price: 120, image: "/cute-bear-stickers.jpg", spec: "" },
+      { name: "夢境明信片套組", quantity: 1, price: 400, image: "/dreamy-postcards.jpg", spec: "10 入組" },
     ],
     creator: "星空畫室",
     trackingNumber: "7D1234567890",
+    paymentMethod: "信用卡",
+    receiver: "王小明",
+    phone: "0912-345-678",
+    deliveryType: "home",
+    address: "台北市信義區松仁路100號5樓",
+    storeInfo: null,
   },
   {
     id: "ORD-2024-002",
     date: "2024-01-18",
+    statusUpdatedAt: "2024-01-19 09:15",
     status: "shipping",
     total: 850,
     items: [
-      { name: "宇宙帆布袋", quantity: 1, price: 450, image: "/universe-tote-bag.jpg" },
-      { name: "星球徽章組", quantity: 2, price: 200, image: "/planet-badges.jpg" },
+      { name: "宇宙帆布袋", quantity: 1, price: 450, image: "/universe-tote-bag.jpg", spec: "自然米色" },
+      { name: "星球徽章組", quantity: 2, price: 200, image: "/planet-badges.jpg", spec: "" },
     ],
     creator: "月光工作室",
     trackingNumber: "7D0987654321",
+    paymentMethod: "LINE Pay",
+    receiver: "林美玲",
+    phone: "0987-654-321",
+    deliveryType: "store",
+    address: null,
+    storeInfo: "7-ELEVEN 信義門市（台北市信義路五段7號）",
   },
   {
     id: "ORD-2024-003",
     date: "2024-01-20",
+    statusUpdatedAt: "2024-01-20 11:00",
     status: "processing",
     total: 560,
-    items: [{ name: "手繪風格海報", quantity: 1, price: 560, image: "/hand-drawn-illustration-poster.jpg" }],
+    items: [
+      { name: "手繪風格海報", quantity: 1, price: 560, image: "/hand-drawn-illustration-poster.jpg", spec: "A3 / 霧面" },
+    ],
     creator: "森林畫家",
     trackingNumber: null,
+    paymentMethod: "ATM 轉帳",
+    receiver: "陳大華",
+    phone: "0955-111-222",
+    deliveryType: "home",
+    address: "新北市板橋區文化路一段188號3樓",
+    storeInfo: null,
   },
   {
     id: "ORD-2024-004",
     date: "2024-01-22",
+    statusUpdatedAt: "2024-01-22 16:48",
     status: "pending",
     total: 320,
-    items: [{ name: "可愛吉祥物設計", quantity: 1, price: 320, image: "/cute-mascot-design.jpg" }],
+    items: [
+      { name: "可愛吉祥物設計", quantity: 1, price: 320, image: "/cute-mascot-design.jpg", spec: "" },
+    ],
     creator: "夢想插畫",
     trackingNumber: null,
+    paymentMethod: "信用卡",
+    receiver: "張小芳",
+    phone: "0922-333-444",
+    deliveryType: "home",
+    address: "台中市西屯區台灣大道三段99號",
+    storeInfo: null,
   },
 ]
 
@@ -198,9 +230,11 @@ export default function OrdersPage() {
                             <p className="text-sm text-muted-foreground">訂單金額</p>
                             <p className="text-xl font-bold text-primary">NT$ {order.total}</p>
                           </div>
-                          <Button variant="ghost" size="icon">
-                            <ChevronRight className="h-5 w-5" />
-                          </Button>
+                          <Link href={`/account/orders/${order.id}`}>
+                            <Button variant="ghost" size="icon">
+                              <ChevronRight className="h-5 w-5" />
+                            </Button>
+                          </Link>
                         </div>
                       </div>
                     </Card>
