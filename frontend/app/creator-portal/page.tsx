@@ -1411,18 +1411,8 @@ export default function CreatorPortalPage() {
                         {product.name}
                       </h3>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold text-primary">
-                        NT$ {product.price}
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="bg-transparent"
-                      >
-                        <Edit className="mr-1 h-4 w-4" />
-                        編輯
-                      </Button>
+                    <div className="text-2xl font-bold text-primary">
+                      NT$ {product.price}
                     </div>
                   </div>
                 </TheCard>
