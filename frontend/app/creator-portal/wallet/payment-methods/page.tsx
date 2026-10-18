@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useLayoutEffect, useState } from "react"
 import { Navigation } from "@/components/navigation"
 import { UniverseBackground } from "@/components/universe-background"
 import { Card } from "@/components/ui/card"
@@ -36,6 +36,13 @@ const paymentMethods = [
 export default function PaymentMethodsPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const { toast } = useToast()
+
+  // Reset after the form is removed, including cancellation and successful submission.
+  useLayoutEffect(() => {
+    if (!showAddForm) {
+      window.scrollTo({ top: 0, behavior: "instant" })
+    }
+  }, [showAddForm])
 
   const handleSetDefault = (id: string) => {
     toast({

@@ -123,7 +123,10 @@ export default function WalletPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push("/creator-portal")}
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: "instant" });
+                router.push("/creator-portal", { scroll: true });
+              }}
               className="mb-3 -ml-2 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />

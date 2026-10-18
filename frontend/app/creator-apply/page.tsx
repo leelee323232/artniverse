@@ -583,13 +583,13 @@ export default function CreatorApplyPage() {
                 身份證明文件
               </h2>
               <p className="text-sm text-muted-foreground mb-6">
-                身份證正反面照片上傳，核對身分及後續領款手續申報用
+                身分證正反面照片上傳，核對身分及後續領款手續申報用
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* ID Front */}
                 <div className="space-y-3">
                   <Label className="text-foreground">
-                    身份證正面 <span className="text-red-400">*</span>
+                    身分證正面 <span className="text-red-400">*</span>
                   </Label>
                   <div className="border-2 border-dashed border-border/50 rounded-xl p-6 text-center hover:border-primary/50 transition-colors">
                     <input
@@ -617,7 +617,7 @@ export default function CreatorApplyPage() {
                         <>
                           <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                           <p className="text-sm text-muted-foreground">
-                            點擊上傳身份證正面
+                            點擊上傳身分證正面
                           </p>
                         </>
                       )}
@@ -628,7 +628,7 @@ export default function CreatorApplyPage() {
                 {/* ID Back */}
                 <div className="space-y-3">
                   <Label className="text-foreground">
-                    身份證反面 <span className="text-red-400">*</span>
+                    身分證反面 <span className="text-red-400">*</span>
                   </Label>
                   <div className="border-2 border-dashed border-border/50 rounded-xl p-6 text-center hover:border-primary/50 transition-colors">
                     <input
@@ -656,7 +656,7 @@ export default function CreatorApplyPage() {
                         <>
                           <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                           <p className="text-sm text-muted-foreground">
-                            點擊上傳身份證反面
+                            點擊上傳身分證反面
                           </p>
                         </>
                       )}

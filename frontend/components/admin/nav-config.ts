@@ -11,6 +11,8 @@ import {
   Ticket,
   Scroll,
   Newspaper,
+  Truck,
+  Percent,
   type LucideIcon,
 } from "lucide-react";
 
@@ -40,6 +42,7 @@ export const adminNavItems: AdminNavItem[] = [
     icon: ClipboardList,
   },
   { label: "企業委託管理", href: "/admin/quests", icon: Scroll },
+  { label: "分潤管理", href: "/admin/revenue-sharing", icon: Percent },
   { label: "活動區塊管理", href: "/admin/activities", icon: ImageIcon },
   { label: "商品類別管理", href: "/admin/product-categories", icon: Tags },
   {
@@ -48,5 +51,6 @@ export const adminNavItems: AdminNavItem[] = [
     icon: FolderTree,
   },
   { label: "優惠碼管理", href: "/admin/coupons", icon: Ticket },
+  { label: "運費管理", href: "/admin/shipping", icon: Truck },
   { label: "貼文管理", href: "/admin/posts", icon: Newspaper },
 ];
