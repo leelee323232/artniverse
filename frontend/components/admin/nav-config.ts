@@ -11,6 +11,7 @@ import {
   Ticket,
   Scroll,
   Newspaper,
+  Truck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -48,5 +49,6 @@ export const adminNavItems: AdminNavItem[] = [
     icon: FolderTree,
   },
   { label: "優惠碼管理", href: "/admin/coupons", icon: Ticket },
+  { label: "運費管理", href: "/admin/shipping", icon: Truck },
   { label: "貼文管理", href: "/admin/posts", icon: Newspaper },
 ];
