@@ -21,7 +21,15 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth-context";
+import { TheCard } from "@/components/common/TheCard";
 import { BasicDatePicker } from "@/components/ui/date-picker";
 import {
   // getEvents, // 等接後端 API 時再啟用
@@ -60,6 +68,7 @@ import {
   Calendar,
   MapPin,
   CalendarPlus,
+  ListFilter,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -112,6 +121,7 @@ const products = [
     sales: 156,
     image: "/cute-notebook-with-stars.jpg",
     status: "active",
+    category: "筆記本",
   },
   {
     id: "2",
@@ -120,7 +130,8 @@ const products = [
     stock: 120,
     sales: 342,
     image: "/cute-bear-stickers.jpg",
-    status: "active",
+    status: "pending",
+    category: "貼紙",
   },
   {
     id: "3",
@@ -129,7 +140,8 @@ const products = [
     stock: 68,
     sales: 89,
     image: "/dreamy-postcards.jpg",
-    status: "active",
+    status: "inactive",
+    category: "明信片",
   },
 ];
 
@@ -346,6 +358,26 @@ export default function CreatorPortalPage() {
   );
   const [newBenefit, setNewBenefit] = useState("");
   const [quoteAmount, setQuoteAmount] = useState(0);
+
+  // Product status filter
+  const [productStatusFilter, setProductStatusFilter] = useState<
+    "all" | "active" | "pending" | "inactive"
+  >("all");
+
+  // Product category filter
+  const [productCategoryFilter, setProductCategoryFilter] = useState("全部");
+  const productCategories = [
+    "全部",
+    ...Array.from(new Set(products.map((p) => p.category))),
+  ];
+
+  const filteredProducts = products.filter((p) => {
+    const statusMatch =
+      productStatusFilter === "all" || p.status === productStatusFilter;
+    const categoryMatch =
+      productCategoryFilter === "全部" || p.category === productCategoryFilter;
+    return statusMatch && categoryMatch;
+  });
 
   // Commission request status filter ("all" | "pending" | "quoted" | "paid")
   const [commissionFilter, setCommissionFilter] = useState<
@@ -1297,52 +1329,100 @@ export default function CreatorPortalPage() {
 
           {/* Products Tab */}
           <TabsContent value="products" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-foreground">商品管理</h2>
+              <Link href="/creator-portal/products/new">
+                <Button size="sm" className="bg-gradient-to-r from-primary to-secondary">
+                  <Plus className="mr-1 h-4 w-4" />
+                  新增商品
+                </Button>
+              </Link>
+            </div>
+
+            {/* Status Sub-tabs + Category Filter */}
+            <div className="flex items-center justify-between">
+              <div className="flex gap-2">
+                {(
+                  [
+                    { value: "all", label: "全部" },
+                    { value: "pending", label: "待審核" },
+                    { value: "active", label: "已上架" },
+                    { value: "inactive", label: "已下架" },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.value}
+                    onClick={() => setProductStatusFilter(tab.value)}
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                      productStatusFilter === tab.value
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card/50 text-muted-foreground hover:bg-card hover:text-foreground"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`gap-1.5 bg-transparent ${productCategoryFilter !== "全部" ? "border-primary text-primary" : ""}`}
+                  >
+                    <ListFilter className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuRadioGroup
+                    value={productCategoryFilter}
+                    onValueChange={setProductCategoryFilter}
+                  >
+                    {productCategories.map((cat) => (
+                      <DropdownMenuRadioItem key={cat} value={cat}>
+                        {cat}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {products.map((product) => (
-                <Card
+              {filteredProducts.map((product) => (
+                <TheCard
                   key={product.id}
-                  className="border-border/50 bg-card/30 p-4 backdrop-blur-sm"
+                  className="group overflow-hidden pt-0"
                 >
-                  <div className="mb-3 aspect-square overflow-hidden rounded-lg">
+                  <div className="relative aspect-square overflow-hidden bg-muted/30">
                     <img
                       src={product.image || "/placeholder.svg"}
                       alt={product.name}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
-                  <h3 className="mb-1 font-bold text-foreground">
-                    {product.name}
-                  </h3>
-                  <p className="mb-2 text-sm text-muted-foreground">
-                    NT$ {product.price}
-                  </p>
-                  <div className="mb-3 flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      庫存: {product.stock}
-                    </span>
-                    <span className="text-muted-foreground">
-                      已售: {product.sales}
-                    </span>
+                  <div className="space-y-3 p-4">
+                    <div>
+                      <Badge variant="outline" className="mb-2 text-xs">
+                        {product.category}
+                      </Badge>
+                      <h3 className="text-lg font-bold text-foreground">
+                        {product.name}
+                      </h3>
+                    </div>
+                    <div className="text-2xl font-bold text-primary">
+                      NT$ {product.price}
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 bg-transparent"
-                    >
-                      <Edit className="mr-1 h-4 w-4" />
-                      編輯
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="bg-transparent text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </Card>
+                </TheCard>
               ))}
+              {filteredProducts.length === 0 && (
+                <div className="col-span-3 flex flex-col items-center justify-center py-16 text-muted-foreground">
+                  <Package className="mb-3 h-10 w-10 opacity-30" />
+                  <p className="text-sm">沒有符合條件的商品</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 

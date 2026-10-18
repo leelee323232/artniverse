@@ -68,17 +68,15 @@ export function ProductCard({
             alt={name}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-2 bg-background/50 backdrop-blur-sm hover:bg-background/80"
+          <button
+            className="absolute bottom-2 right-2 rounded-full bg-background/60 p-1.5 backdrop-blur-sm transition-colors hover:bg-background/90"
             onClick={handleToggleFavorite}
             title={isLiked ? "取消收藏" : "加入收藏"}
           >
             <Heart
               className={`h-4 w-4 ${isLiked ? "fill-red-500 text-red-500" : "text-foreground"}`}
             />
-          </Button>
+          </button>
           {stock < 10 && (
             <Badge variant="destructive" className="absolute left-2 top-2">
               僅剩 {stock} 件
