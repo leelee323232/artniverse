@@ -6,6 +6,7 @@ use App\Models\CheckoutOrder;
 use App\Models\Product;
 use App\Models\TapPayPaymentAttempt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -96,23 +97,44 @@ class TapPayPaymentService
         return DB::transaction(function () use ($attempt) {
             $order = CheckoutOrder::whereKey($attempt->checkout_order_id)->lockForUpdate()->firstOrFail();
             $current = TapPayPaymentAttempt::whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+            // Prefer the provider's unique transaction ID once submission returned it.
+            // Keep the required time range below 90 days, with tolerance for clock skew.
+            $filters = [
+                'time' => ['start_time' => $current->created_at->copy()->subHours(12)->getTimestampMs(),
+                    'end_time' => now()->addMinute()->getTimestampMs()],
+                'merchant_id' => [$current->merchant_id],
+            ];
+            if ($current->rec_trade_id) {
+                $filters['rec_trade_id'] = $current->rec_trade_id;
+            } else {
+                // A transport timeout may not have returned a provider transaction ID.
+                $filters['bank_transaction_id'] = $current->bank_transaction_id;
+            }
             try {
                 $result = $this->client->request('query', ['records_per_page' => 50, 'page' => 0,
-                    'filters' => ['time' => ['start_time' => $current->created_at->copy()->subMinute()->getTimestampMs(),
-                        'end_time' => now()->addMinute()->getTimestampMs()],
-                        'bank_transaction_id' => $current->bank_transaction_id,
-                        'merchant_id' => [$current->merchant_id]]]);
+                    'filters' => $filters]);
             } catch (Throwable) {
                 abort(502, '交易查詢暫時失敗，請稍後重試；不要重複付款。');
             }
-            abort_unless($result['status'] === 0, 502, 'TapPay 查詢未成功，請稍後再查。');
-            $record = collect($result['trade_records'] ?? [])->first(fn ($row) =>
-                is_array($row) && ($row['bank_transaction_id'] ?? null) === $current->bank_transaction_id
-                && ($row['merchant_id'] ?? null) === $current->merchant_id);
-            if (!$record) {
+            $this->logQueryResult($current, $filters, $result);
+            // End-of-list status 2 may still include the final page's trade records.
+            // Reconcile those records with the same checks as status 0; never skip them.
+            // Only the validated numeric status is safe to expose to the browser.
+            abort_unless(in_array($result['status'], [0, 2], true), 502,
+                'TapPay 查詢未成功（狀態碼：'.$result['status'].'），請提供此代碼給管理員；不要重複付款。');
+            $records = $result['trade_records'] ?? null;
+            abort_unless(is_array($records), 502, 'TapPay 查帳回應缺少交易紀錄陣列，請聯繫管理員。');
+            if ($records === []) {
                 return $current; // No record yet is not a failed payment and never permits recharging.
             }
-            abort_unless(($record['currency'] ?? null) === $order->currency
+            $record = collect($records)->first(fn ($row) => is_array($row)
+                && ($current->rec_trade_id
+                    ? ($row['rec_trade_id'] ?? null) === $current->rec_trade_id
+                    : ($row['bank_transaction_id'] ?? null) === $current->bank_transaction_id));
+            abort_unless($record, 502, 'TapPay 已回傳紀錄，但交易識別碼不符，請聯繫管理員；不要重複付款。');
+            abort_unless(($record['merchant_id'] ?? null) === $current->merchant_id
+                && ($record['bank_transaction_id'] ?? null) === $current->bank_transaction_id
+                && ($record['currency'] ?? null) === $order->currency
                 && (int) ($record['original_amount'] ?? $record['amount'] ?? -1) === $order->total
                 && is_string($record['rec_trade_id'] ?? null)
                 && (!$current->rec_trade_id || $current->rec_trade_id === $record['rec_trade_id']),
@@ -139,5 +161,38 @@ class TapPayPaymentService
             }
             return $current;
         });
+    }
+
+    private function logQueryResult(TapPayPaymentAttempt $attempt, array $filters, array $result): void
+    {
+        try {
+            $records = $result['trade_records'] ?? null;
+            $matching = is_array($records) ? array_values(array_filter($records, static fn ($row) =>
+                is_array($row) && ($attempt->rec_trade_id
+                    ? ($row['rec_trade_id'] ?? null) === $attempt->rec_trade_id
+                    : ($row['bank_transaction_id'] ?? null) === $attempt->bank_transaction_id))) : [];
+            // Log counts/types and exact-match booleans only, never returned trade/cardholder data.
+            $matched = count($matching) === 1 ? $matching[0] : [];
+            Log::build([
+                'driver' => 'daily', 'path' => storage_path('logs/tappay-diagnostics.log'),
+                'level' => 'info', 'days' => 14, 'permission' => 0600,
+            ])->info('TapPay record query result', [
+                'query_version' => 'rec-trade-id-v3',
+                'order_id' => $attempt->checkout_order_id,
+                'attempt_id' => $attempt->id,
+                'query_by' => isset($filters['rec_trade_id']) ? 'rec_trade_id' : 'bank_transaction_id',
+                'start_time_ms' => $filters['time']['start_time'],
+                'end_time_ms' => $filters['time']['end_time'],
+                'tappay_status' => $result['status'],
+                'records_is_array' => is_array($records),
+                'record_count' => is_array($records) ? count($records) : null,
+                'matching_id_count' => count($matching),
+                'merchant_matches' => $matched ? ($matched['merchant_id'] ?? null) === $attempt->merchant_id : null,
+                'bank_transaction_matches' => $matched ? ($matched['bank_transaction_id'] ?? null) === $attempt->bank_transaction_id : null,
+                'record_status' => is_int($matched['record_status'] ?? null) ? $matched['record_status'] : null,
+            ]);
+        } catch (Throwable) {
+            // Logging failures must not affect reconciliation or expose original exceptions.
+        }
     }
 }

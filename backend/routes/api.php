@@ -33,5 +33,8 @@ Route::prefix('v1')->group(function (): void {
     });
 
     require __DIR__.'/product.php';
+
+    // Keep checkout routes inside this group so TapPay endpoints use /api/v1.
+    // Deploy this file together with routes/checkout.php.
     require __DIR__.'/checkout.php';
 });
