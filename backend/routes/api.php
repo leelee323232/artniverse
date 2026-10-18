@@ -33,4 +33,5 @@ Route::prefix('v1')->group(function (): void {
     });
 
     require __DIR__.'/product.php';
+    require __DIR__.'/checkout.php';
 });
