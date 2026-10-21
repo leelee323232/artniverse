@@ -10,10 +10,11 @@ class TapPayPaymentAttempt extends Model
     public $incrementing = false;
     protected $keyType = 'string';
     protected $guarded = ['id'];
-    protected $hidden = ['notify_token_hash', 'merchant_id'];
+    protected $hidden = ['notify_token_hash', 'merchant_id', 'payee_info'];
 
     protected function casts(): array
     {
-        return ['gateway_status' => 'integer', 'record_status' => 'integer'];
+        return ['gateway_status' => 'integer', 'record_status' => 'integer',
+            'payee_info' => 'encrypted:array', 'payment_expires_at' => 'datetime'];
     }
 }

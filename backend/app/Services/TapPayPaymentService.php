@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\CheckoutOrder;
 use App\Models\Product;
 use App\Models\TapPayPaymentAttempt;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -16,11 +17,15 @@ class TapPayPaymentService
 
     public function pay(CheckoutOrder $order, string $prime): TapPayPaymentAttempt
     {
-        $this->client->assertReady();
+        $method = $order->payment_method;
+        $this->client->assertReady($method);
         $token = bin2hex(random_bytes(32));
-        $attempt = DB::transaction(function () use ($order, $token) {
+        $attempt = DB::transaction(function () use ($order, $token, $method) {
             $locked = CheckoutOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
             abort_unless($locked->environment === 'sandbox', 409, '訂單環境不符。');
+            abort_unless($locked->payment_method === $method, 409, '訂單付款方式已變更。');
+            abort_unless($locked->currency === 'TWD', 422, '目前僅支援台幣付款。');
+            abort_if($method === 'atm' && ($locked->total < 16 || $locked->total > 49999), 422, 'ATM 轉帳金額須為新台幣 16 至 49,999 元。');
             abort_if($locked->expires_at->isPast(), 409, '訂單付款期限已過。');
             $previous = TapPayPaymentAttempt::where('checkout_order_id', $locked->id)->orderByDesc('attempt_number')->first();
             // Only a verified decline/cancellation allows another attempt on the same order.
@@ -32,7 +37,7 @@ class TapPayPaymentService
             $attempt = new TapPayPaymentAttempt;
             $attempt->id = (string) Str::uuid();
             $attempt->fill(['checkout_order_id' => $locked->id, 'attempt_number' => ($previous?->attempt_number ?? 0) + 1, 'environment' => 'sandbox',
-                'merchant_id' => config('tappay.merchant_id'), 'bank_transaction_id' => strtoupper(bin2hex(random_bytes(9))),
+                'payment_method' => $method, 'merchant_id' => $this->client->merchantId($method), 'bank_transaction_id' => strtoupper(bin2hex(random_bytes(9))),
                 'notify_token_hash' => hash('sha256', $token), 'status' => 'processing']);
             $attempt->save();
             $locked->payment_status = 'processing';
@@ -44,13 +49,20 @@ class TapPayPaymentService
             'amount' => $order->total, 'currency' => $order->currency,
             'details' => mb_substr(collect($order->items)->pluck('name')->implode('、'), 0, 90),
             'order_number' => $attempt->bank_transaction_id, 'bank_transaction_id' => $attempt->bank_transaction_id,
-            'cardholder' => ['name' => $contact['name'], 'phone_number' => $contact['phone'], 'email' => $contact['email']],
-            'remember' => false, 'three_domain_secure' => (bool) config('tappay.three_domain_secure')];
-        if (config('tappay.three_domain_secure')) {
-            $payload['result_url'] = [
-                'frontend_redirect_url' => config('tappay.return_url').'?order='.rawurlencode($order->id),
-                'backend_notify_url' => config('tappay.notify_url').'?attempt='.rawurlencode($attempt->id).'&token='.$token,
-            ];
+            'cardholder' => ['name' => $contact['name'], 'phone_number' => $contact['phone'], 'email' => $contact['email']]];
+        $needsRedirect = $method === 'line_pay' || ($method === 'card' && (bool) config('tappay.three_domain_secure'));
+        if ($method === 'card') {
+            $payload['remember'] = false;
+            $payload['three_domain_secure'] = (bool) config('tappay.three_domain_secure');
+        }
+        if ($needsRedirect || $method === 'atm') {
+            $payload['result_url']['backend_notify_url'] = config('tappay.notify_url').'?attempt='.rawurlencode($attempt->id).'&token='.$token;
+        }
+        if ($needsRedirect) {
+            $payload['result_url']['frontend_redirect_url'] = config('tappay.return_url').'?order='.rawurlencode($order->id);
+        }
+        if ($method === 'atm') {
+            $payload['expire_in_days'] = (int) config('tappay.atm_expire_in_days');
         }
         try {
             $result = $this->client->request('pay-by-prime', $payload);
@@ -78,11 +90,20 @@ class TapPayPaymentService
             if (in_array($current->status, ['processing', 'unknown', 'pending'], true)) {
                 $current->status = ($result['status'] ?? null) === 0 ? 'pending' : 'unknown';
                 $url = $result['payment_url'] ?? null;
-                if (is_string($url) && filter_var($url, FILTER_VALIDATE_URL) && parse_url($url, PHP_URL_SCHEME) === 'https') {
+                if ($current->payment_method !== 'atm' && ($result['status'] ?? null) === 0
+                    && is_string($url) && filter_var($url, FILTER_VALIDATE_URL) && parse_url($url, PHP_URL_SCHEME) === 'https'
+                    && !parse_url($url, PHP_URL_USER) && !parse_url($url, PHP_URL_PASS)) {
                     $current->payment_url = $url;
                 }
                 $order->payment_status = $current->status;
                 $order->save();
+            }
+            if ($current->payment_method === 'atm' && ($result['status'] ?? null) === 0
+                && ($result['merchant_id'] ?? null) === $current->merchant_id
+                && ($result['bank_transaction_id'] ?? null) === $current->bank_transaction_id
+                && ($result['amount'] ?? null) === $order->total) {
+                // A virtual account is an instruction to pay, never proof of settlement.
+                $this->storePayeeInfo($current, $order, $result['payee_info'] ?? null);
             }
             $current->save();
         });
@@ -90,7 +111,7 @@ class TapPayPaymentService
 
     public function refresh(TapPayPaymentAttempt $attempt): TapPayPaymentAttempt
     {
-        $this->client->assertReady();
+        $this->client->assertConnectionReady();
         abort_unless($attempt->environment === 'sandbox', 409, '交易環境不符。');
         abort_if($attempt->created_at->lt(now()->subDays(89)), 409, '交易已超過自動查詢期間，請至 TapPay 後台核對。');
         // Serializes callbacks and user refreshes, so an older query cannot overwrite a newer result.
@@ -139,9 +160,15 @@ class TapPayPaymentService
                 && is_string($record['rec_trade_id'] ?? null)
                 && (!$current->rec_trade_id || $current->rec_trade_id === $record['rec_trade_id']),
                 502, '交易資料與訂單不一致，請聯繫管理員。');
+            $expectedMethod = match ($current->payment_method) {
+                'card' => 'direct_pay', 'line_pay' => 'line_pay', 'atm' => 'atm',
+                default => abort(502, '未知的訂單付款方式。'),
+            };
+            abort_unless(($record['payment_method'] ?? null) === $expectedMethod, 502, '查帳付款方式與原訂單不符。');
             $states = [-1 => 'failed', 0 => 'authorized', 1 => 'paid', 2 => 'partially_refunded', 3 => 'refunded', 4 => 'pending', 5 => 'cancelled'];
             $recordStatus = $record['record_status'] ?? null;
             abort_unless(is_int($recordStatus) && array_key_exists($recordStatus, $states), 502, '未知的交易狀態。');
+            abort_if($current->payment_method === 'atm' && $recordStatus === 0, 502, 'ATM 查帳回傳非預期授權狀態，尚未確認入帳。');
             // Terminal successes cannot be demoted to unpaid by a delayed provider response.
             if (in_array($current->status, ['authorized', 'paid', 'partially_refunded', 'refunded'], true)
                 && in_array($states[$recordStatus], ['failed', 'pending'], true)) {
@@ -149,6 +176,9 @@ class TapPayPaymentService
             }
             $current->fill(['rec_trade_id' => $record['rec_trade_id'], 'record_status' => $recordStatus,
                 'status' => $states[$recordStatus]]);
+            if ($current->payment_method === 'atm') {
+                $this->storePayeeInfo($current, $order, $record['payee_info'] ?? null);
+            }
             if ($current->status !== 'pending') {
                 $current->payment_url = null;
             }
@@ -161,6 +191,30 @@ class TapPayPaymentService
             }
             return $current;
         });
+    }
+
+    private function storePayeeInfo(TapPayPaymentAttempt $attempt, CheckoutOrder $order, mixed $info): void
+    {
+        if (!is_array($info)) return;
+        $bank = $info['vacc_bank_code'] ?? null;
+        $account = $info['vacc_no'] ?? null;
+        $expires = $info['expire_time'] ?? null;
+        if (!is_string($bank) || !preg_match('/\A[0-9]{3,5}\z/', $bank)
+            || !is_string($account) || !preg_match('/\A[0-9]{1,16}\z/', $account)
+            || !is_string($expires) || !preg_match('/\A[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\z/', $expires)) return;
+        try {
+            // Taiwan-only ATM product returns a local wall-clock deadline without an offset.
+            $deadline = CarbonImmutable::createFromFormat('!Y-m-d H:i:s', $expires, 'Asia/Taipei');
+            if (!$deadline || $deadline->format('Y-m-d H:i:s') !== $expires) return;
+        } catch (Throwable) { return; }
+        $attempt->payee_info = ['vacc_bank_code' => $bank, 'vacc_no' => $account, 'expire_time' => $expires];
+        $attempt->payment_expires_at = $deadline->utc();
+        // Keep the issued account's deadline, including when it extends beyond initial checkout.
+        $latestId = TapPayPaymentAttempt::where('checkout_order_id', $order->id)->orderByDesc('attempt_number')->value('id');
+        if ($latestId === $attempt->id) {
+            $order->expires_at = $deadline->utc();
+            $order->save();
+        }
     }
 
     private function logQueryResult(TapPayPaymentAttempt $attempt, array $filters, array $result): void

@@ -1,6 +1,6 @@
 # TapPay 官方測試環境：既有 Laravel 後端串接
 
-本次只編寫程式，未執行測試、語法／建置驗證、migration 或任何 TapPay 請求。前端尚未修改。物流、分潤、退款 API、綁卡、電子錢包及 ATM 不在這次實作範圍。
+本文件記錄信用卡基礎串接與後續查帳修正。只編寫程式，未執行測試、語法／建置驗證、migration 或任何 TapPay 請求。2026-10-20 新增 LINE Pay 與 ATM 後端，部署設定、migration 及新版 API 契約請參閱 [LINE Pay 與 ATM 後端串接](tappay-line-pay-atm.md)。物流、分潤、退款 API 與綁卡仍不在實作範圍。
 
 ## 架構及範圍
 

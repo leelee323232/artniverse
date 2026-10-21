@@ -11,12 +11,39 @@ class TapPayClient
 {
     public function configuration(): array
     {
+        $settings = [];
+        $methods = [];
+        foreach (['card', 'line_pay', 'atm'] as $method) {
+            $settings[$method] = $this->methodConfiguration($method);
+            if ($settings[$method]['ready']) $methods[] = $method;
+        }
+        // Keep the public SDK fields and card 3D flag for existing frontends.
+        return array_merge($settings['card'], [
+            'ready' => $methods !== [], 'methods' => $methods,
+            'missing' => $methods === [] ? $settings['card']['missing'] : [],
+            'method_settings' => array_map(static fn ($setting) => array_intersect_key($setting,
+                array_flip(['enabled', 'ready', 'missing', 'three_domain_secure', 'min_amount', 'max_amount'])), $settings),
+        ]);
+    }
+
+    public function merchantId(string $method): string
+    {
+        $key = match ($method) {
+            'card' => 'merchant_id', 'line_pay' => 'line_pay_merchant_id', 'atm' => 'atm_merchant_id',
+            default => abort(422, '不支援此付款方式。'),
+        };
+        return (string) config("tappay.$key");
+    }
+
+    private function methodConfiguration(string $method): array
+    {
         $missing = [];
-        foreach (['app_id', 'app_key', 'partner_key', 'merchant_id', 'shipping_fee'] as $key) {
+        foreach (['app_id', 'app_key', 'partner_key', 'shipping_fee'] as $key) {
             if (config("tappay.$key") === null || config("tappay.$key") === '') {
                 $missing[] = $key;
             }
         }
+        if ($this->merchantId($method) === '') $missing[] = $method === 'card' ? 'merchant_id' : $method.'_merchant_id';
         if (!filter_var(config('tappay.app_id'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
             $missing[] = 'valid_app_id';
         }
@@ -27,36 +54,50 @@ class TapPayClient
         if ($threshold !== null && $threshold !== '' && filter_var($threshold, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
             $missing[] = 'valid_free_shipping_threshold';
         }
-        if (config('tappay.three_domain_secure')) {
-            foreach (['return_url', 'notify_url'] as $key) {
+        $requiresRedirect = $method === 'line_pay' || ($method === 'card' && config('tappay.three_domain_secure'));
+        $urlKeys = $requiresRedirect ? ['return_url', 'notify_url'] : ($method === 'atm' ? ['notify_url'] : []);
+        foreach ($urlKeys as $key) {
                 $url = config("tappay.$key");
                 if (!filter_var($url, FILTER_VALIDATE_URL) || parse_url($url, PHP_URL_SCHEME) !== 'https'
-                    || parse_url($url, PHP_URL_QUERY) || parse_url($url, PHP_URL_FRAGMENT)) {
+                    || parse_url($url, PHP_URL_QUERY) || parse_url($url, PHP_URL_FRAGMENT)
+                    || parse_url($url, PHP_URL_USER) || parse_url($url, PHP_URL_PASS)
+                    || ($key === 'notify_url' && !in_array(parse_url($url, PHP_URL_PORT), [null, 443], true))) {
                     $missing[] = "https_$key";
                 }
-            }
         }
+        if ($method === 'atm' && filter_var(config('tappay.atm_expire_in_days'), FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1, 'max_range' => 7]]) === false) $missing[] = 'valid_atm_expire_in_days';
+        $enabled = (bool) config('tappay.enabled') && ($method === 'card' || (bool) config('tappay.'.$method.'_enabled'));
 
         return [
-            'enabled' => (bool) config('tappay.enabled'),
-            'ready' => config('tappay.enabled') && config('tappay.environment') === 'sandbox' && !$missing,
+            'enabled' => $enabled,
+            'ready' => $enabled && config('tappay.environment') === 'sandbox' && !$missing,
             'environment' => config('tappay.environment'),
-            'methods' => ['card'],
             'app_id' => (int) config('tappay.app_id'),
             'app_key' => config('tappay.app_key'),
-            'three_domain_secure' => (bool) config('tappay.three_domain_secure'),
+            'three_domain_secure' => $method === 'card' && (bool) config('tappay.three_domain_secure'),
+            'min_amount' => $method === 'atm' ? 16 : 1,
+            'max_amount' => $method === 'atm' ? 49999 : 199999,
             'missing' => array_values(array_unique($missing)),
         ];
     }
 
-    public function assertReady(): void
+    public function assertReady(string $method = 'card'): void
     {
-        abort_unless($this->configuration()['ready'], 503, 'TapPay 測試環境尚未設定完成。');
+        abort_unless($this->methodConfiguration($method)['ready'], 503, '此付款方式的 TapPay 測試環境尚未啟用或設定完成。');
+    }
+
+    public function assertConnectionReady(): void
+    {
+        // Existing transactions must remain queryable when a method is disabled for new orders.
+        abort_unless(config('tappay.enabled') && config('tappay.environment') === 'sandbox'
+            && is_string(config('tappay.partner_key')) && config('tappay.partner_key') !== '',
+            503, 'TapPay 測試環境連線設定尚未完成。');
     }
 
     public function request(string $operation, array $payload): array
     {
-        $this->assertReady();
+        $this->assertConnectionReady();
         // Payment and Record APIs have different prefixes; do not derive one from the other.
         $endpoint = match ($operation) {
             'pay-by-prime' => 'https://sandbox.tappaysdk.com/tpc/payment/pay-by-prime',
