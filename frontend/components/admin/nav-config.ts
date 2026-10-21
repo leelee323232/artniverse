@@ -16,11 +16,16 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export interface AdminNavItem {
+// 一般項目直接導頁；群組只展開子選單，最多兩層。
+export interface AdminNavLink {
   label: string;
   href: string;
-  icon: LucideIcon;
 }
+
+export type AdminNavItem = { label: string; icon: LucideIcon } & (
+  | { href: string; children?: never; id?: never }
+  | { id: string; children: AdminNavLink[]; href?: never }
+);
 
 export const adminNavItems: AdminNavItem[] = [
   { label: "後台首頁", href: "/admin", icon: LayoutDashboard },
@@ -41,7 +46,15 @@ export const adminNavItems: AdminNavItem[] = [
     href: "/admin/creator-applications",
     icon: ClipboardList,
   },
-  { label: "企業委託管理", href: "/admin/quests", icon: Scroll },
+  {
+    id: "quests",
+    label: "企業委託管理",
+    icon: Scroll,
+    children: [
+      { label: "方案設定", href: "/admin/quests/plans" },
+      { label: "委託需求清單", href: "/admin/quests/requests" },
+    ],
+  },
   { label: "分潤管理", href: "/admin/revenue-sharing", icon: Percent },
   { label: "活動區塊管理", href: "/admin/activities", icon: ImageIcon },
   { label: "商品類別管理", href: "/admin/product-categories", icon: Tags },
