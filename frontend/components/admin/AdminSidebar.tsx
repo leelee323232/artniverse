@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -13,6 +15,12 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ open = false, onNavigate }: AdminSidebarProps) {
   const pathname = usePathname();
+
+  // 路由改變時重新依目前子頁展開；同一頁仍可自由收合。
+  const [expansion, setExpansion] = useState<{
+    pathname: string;
+    groups: Record<string, boolean>;
+  }>({ pathname, groups: {} });
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
@@ -32,7 +40,7 @@ export function AdminSidebar({ open = false, onNavigate }: AdminSidebarProps) {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen w-64 shrink-0 border-r border-border bg-card transition-transform md:translate-x-0",
+          "fixed top-0 left-0 z-40 h-screen w-64 shrink-0 overflow-y-auto border-r border-border bg-card transition-transform md:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -49,14 +57,70 @@ export function AdminSidebar({ open = false, onNavigate }: AdminSidebarProps) {
           <span className="text-white font-bold text-xl">Dashboard</span>
         </Link>
 
-        <nav className="flex flex-col gap-1 p-3">
+        <nav aria-label="後台主選單" className="flex flex-col gap-1 p-3">
           {adminNavItems.map((item) => {
             const Icon = item.icon;
+            if (item.children) {
+              const active = item.children.some((child) => isActive(child.href));
+              const expanded = expansion.pathname === pathname
+                ? expansion.groups[item.id] ?? active
+                : active;
+              const submenuId = `admin-nav-${item.id}`;
+
+              return (
+                <div key={item.id}>
+                  <button
+                    type="button"
+                    aria-expanded={expanded}
+                    aria-controls={submenuId}
+                    onClick={() => setExpansion((previous) => ({
+                      pathname,
+                      groups: {
+                        ...(previous.pathname === pathname ? previous.groups : {}),
+                        [item.id]: !expanded,
+                      },
+                    }))}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+                      active
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-primary hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="flex-1">{item.label}</span>
+                    <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
+                  </button>
+                  <div id={submenuId} hidden={!expanded} className="ml-5 mt-1 space-y-1 border-l border-border pl-3">
+                    {item.children.map((child) => {
+                      const childActive = isActive(child.href);
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={onNavigate}
+                          aria-current={childActive ? "page" : undefined}
+                          className={cn(
+                            "block rounded-lg px-3 py-2 text-sm transition-colors",
+                            childActive
+                              ? "bg-primary text-primary-foreground"
+                              : "text-muted-foreground hover:bg-primary hover:text-foreground",
+                          )}
+                        >
+                          {child.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            }
             const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 onClick={onNavigate}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
