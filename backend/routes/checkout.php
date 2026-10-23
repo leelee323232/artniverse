@@ -12,6 +12,9 @@ Route::post('payments/tappay/notify', [CheckoutController::class, 'notify'])
 
 Route::middleware(['auth:sanctum', 'throttle:30,1'])->group(function (): void {
     Route::get('payments/tappay/config', [CheckoutController::class, 'configuration']);
+    Route::get('orders', [CheckoutController::class, 'index']);
+    Route::get('orders/{order}', [CheckoutController::class, 'show'])->whereUuid('order');
+    Route::get('checkout/orders', [CheckoutController::class, 'index']);
     Route::post('checkout/orders', [CheckoutController::class, 'store'])->middleware('throttle:10,1');
     Route::get('checkout/orders/{order}', [CheckoutController::class, 'show'])->whereUuid('order');
     Route::post('checkout/orders/{order}/pay', [CheckoutController::class, 'pay'])->whereUuid('order')->middleware('throttle:5,1');

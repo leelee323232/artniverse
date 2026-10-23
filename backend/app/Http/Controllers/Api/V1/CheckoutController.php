@@ -13,6 +13,38 @@ use Illuminate\Http\Request;
 
 class CheckoutController extends Controller
 {
+    public function index(Request $request): JsonResponse
+    {
+        $filters = $request->validate([
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:50'],
+            'payment_method' => ['sometimes', 'required', 'in:card,line_pay,atm'],
+            'payment_status' => ['sometimes', 'required', 'in:pending,processing,unknown,authorized,paid,failed,cancelled,expired,refunded,partially_refunded'],
+        ]);
+
+        // Never accept a user_id from the browser. Reading the list does not call TapPay.
+        $query = CheckoutOrder::query()
+            ->where('user_id', $request->user()->getAuthIdentifier())
+            ->with('latestPaymentAttempt');
+        foreach (['payment_method', 'payment_status'] as $field) {
+            if (isset($filters[$field])) {
+                $query->where($field, $filters[$field]);
+            }
+        }
+        $orders = $query->orderByDesc('created_at')->orderByDesc('id')
+            ->paginate((int) ($filters['per_page'] ?? 20));
+
+        return response()->json([
+            'data' => $orders->getCollection()->map(fn (CheckoutOrder $order) => $this->orderData($order, false))->values(),
+            'meta' => [
+                'current_page' => $orders->currentPage(), 'per_page' => $orders->perPage(),
+                'last_page' => $orders->lastPage(), 'total' => $orders->total(),
+                'from' => $orders->firstItem(), 'to' => $orders->lastItem(),
+                'has_more_pages' => $orders->hasMorePages(),
+            ],
+        ])->header('Cache-Control', 'private, no-store');
+    }
+
     public function configuration(TapPayClient $client): JsonResponse
     {
         return response()->json(['data' => $client->configuration()])->header('Cache-Control', 'no-store');
@@ -85,25 +117,45 @@ class CheckoutController extends Controller
 
     private function orderResponse(CheckoutOrder $order, int $status = 200): JsonResponse
     {
-        $attempt = TapPayPaymentAttempt::where('checkout_order_id', $order->id)->orderByDesc('attempt_number')->first();
-        return response()->json(['data' => [
+        return response()->json(['data' => $this->orderData($order)], $status)
+            ->header('Cache-Control', 'private, no-store');
+    }
+
+    private function orderData(CheckoutOrder $order, bool $detail = true): array
+    {
+        $order->loadMissing('latestPaymentAttempt');
+        $attempt = $order->latestPaymentAttempt;
+        $data = [
             'id' => $order->id, 'environment' => $order->environment, 'currency' => $order->currency,
+            'created_at' => $order->created_at?->toIso8601String(),
+            'updated_at' => $order->updated_at?->toIso8601String(),
             'payment_method' => $order->payment_method,
-            'items' => $order->items, 'contact' => $order->contact,
+            'items' => $order->items,
             'subtotal' => $order->subtotal, 'shipping' => $order->shipping, 'total' => $order->total,
             'payment_status' => $order->payment_status, 'expires_at' => $order->expires_at->toIso8601String(),
+            // Expiry is a separate fact, not proof that an unresolved payment failed.
+            'payment_deadline_passed' => $order->expires_at->isPast(),
             'can_pay' => $order->environment === 'sandbox' && !$order->expires_at->isPast()
+                && in_array($order->payment_status, ['pending', 'failed', 'cancelled'], true)
                 && (!$attempt || in_array($attempt->status, ['failed', 'cancelled'], true)),
             'payment' => $attempt ? [
                 'id' => $attempt->id, 'status' => $attempt->status, 'payment_method' => $attempt->payment_method,
                 'bank_transaction_id' => $attempt->bank_transaction_id, 'rec_trade_id' => $attempt->rec_trade_id,
                 'gateway_status' => $attempt->gateway_status, 'record_status' => $attempt->record_status,
-                'payment_url' => $attempt->status === 'pending' ? $attempt->payment_url : null,
-                'payee_info' => $attempt->payment_method === 'atm' ? $attempt->payee_info : null,
                 'payment_expires_at' => $attempt->payment_expires_at?->toIso8601String(),
+                'updated_at' => $attempt->updated_at?->toIso8601String(),
                 'can_transfer' => $attempt->payment_method === 'atm' && $attempt->status === 'pending'
                     && $attempt->payee_info !== null && $attempt->payment_expires_at?->isFuture() === true,
             ] : null,
-        ]], $status)->header('Cache-Control', 'no-store');
+        ];
+        // Addresses, payment links and virtual accounts are only needed on the owner-only detail page.
+        if ($detail) {
+            $data['contact'] = $order->contact;
+            if ($attempt) {
+                $data['payment']['payment_url'] = $attempt->status === 'pending' ? $attempt->payment_url : null;
+                $data['payment']['payee_info'] = $attempt->payment_method === 'atm' ? $attempt->payee_info : null;
+            }
+        }
+        return $data;
     }
 }
