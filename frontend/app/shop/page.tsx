@@ -31,6 +31,12 @@ import {
 import { mockProducts } from "@/mocks/admin/products";
 import { mockProductCategories } from "@/mocks/admin/productCategories";
 import { getAuctionPrices } from "@/lib/products/status";
+import { normalizeShopProduct } from "@/lib/shop/shop";
+
+const shopProducts = mockProducts.map((product) => ({
+  ...product,
+  ...normalizeShopProduct({ ...product, images: [product.image] }),
+}));
 
 const categoryNameMap = Object.fromEntries(
   mockProductCategories.map((category) => [category.id, category.name]),
@@ -74,7 +80,7 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
 
-  const filteredProducts = mockProducts.filter((product) => {
+  const filteredProducts = shopProducts.filter((product) => {
     const categoryName = categoryNameMap[product.categoryId] ?? "";
     const matchesCategory =
       selectedCategory === "all" || product.categoryId === selectedCategory;
@@ -262,7 +268,8 @@ export default function ShopPage() {
                         image={product.image}
                         category={categoryName}
                         currentBackers={product.currentBackers ?? 0}
-                        targetBackers={product.targetBackers ?? 1}
+                        targetBackers={product.targetBackers}
+                        daysLeft={product.daysLeft}
                         presaleStartTime={product.presaleStartTime}
                         presaleEndTime={product.presaleEndTime}
                       />
@@ -283,6 +290,7 @@ export default function ShopPage() {
                         auctionMinIncrement={prices.auctionMinIncrement}
                         auctionStartTime={product.auctionStartTime}
                         auctionEndTime={product.auctionEndTime}
+                        hoursLeft={product.hoursLeft}
                       />
                     );
                   }
