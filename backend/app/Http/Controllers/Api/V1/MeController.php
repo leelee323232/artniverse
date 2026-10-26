@@ -74,6 +74,6 @@ class MeController extends Controller
     {
         return response()->json([
             'data' => $request->user(),
-        ]);
+        ])->header('Cache-Control', 'private, no-store');
     }
 }
