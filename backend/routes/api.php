@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\AuthTokenController;
 use App\Http\Controllers\Api\V1\HealthController;
+use App\Http\Controllers\Api\V1\ImageUploadController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\RegisterController;
 use App\Http\Controllers\Api\V1\RevokeAuthTokenController;
@@ -20,6 +21,10 @@ Route::prefix('v1')->group(function (): void {
         ->name('api.v1.health');
 
     Route::middleware('auth:sanctum')->group(function (): void {
+        Route::post('/images', ImageUploadController::class)
+            ->middleware('throttle:10,1')
+            ->name('api.v1.images.store');
+
         Route::get('/me', MeController::class)
             ->name('api.v1.me');
 
