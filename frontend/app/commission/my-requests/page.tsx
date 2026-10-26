@@ -17,9 +17,9 @@ export default function MyRequestsPage() {
   const [requests] = useState<CommissionRequest[]>(mockCommissionRequests)
   const [selectedRequest, setSelectedRequest] = useState<CommissionRequest | null>(null)
 
-  const pendingRequests = requests.filter((r) => r.status === "pending")
-  const activeRequests = requests.filter((r) => r.status === "in-progress")
-  const completedRequests = requests.filter((r) => r.status === "completed")
+  const pendingRequests = requests.filter((r) => r.status === "pending" || r.status === "approved" || r.status === "contracting")
+  const activeRequests = requests.filter((r) => r.status === "in-progress" || r.status === "delivery")
+  const completedRequests = requests.filter((r) => r.status === "completed" || r.status === "rejected")
 
   return (
     <div className="relative min-h-screen">
@@ -46,7 +46,7 @@ export default function MyRequestsPage() {
           <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
             <div className="text-center">
               <div className="text-3xl font-bold text-yellow-500">{pendingRequests.length}</div>
-              <div className="text-sm text-muted-foreground">等待媒合</div>
+              <div className="text-sm text-muted-foreground">待審核／媒合</div>
             </div>
           </Card>
           <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
@@ -68,7 +68,7 @@ export default function MyRequestsPage() {
           <TabsList className="mb-6 grid w-full max-w-2xl grid-cols-4">
             <TabsTrigger value="all">全部 ({requests.length})</TabsTrigger>
             <TabsTrigger value="pending">
-              等待中
+              待審核／媒合
               {pendingRequests.length > 0 && (
                 <Badge variant="secondary" className="ml-2">
                   {pendingRequests.length}
@@ -76,7 +76,7 @@ export default function MyRequestsPage() {
               )}
             </TabsTrigger>
             <TabsTrigger value="active">進行中 ({activeRequests.length})</TabsTrigger>
-            <TabsTrigger value="completed">已完成 ({completedRequests.length})</TabsTrigger>
+            <TabsTrigger value="completed">已完成／已拒絕 ({completedRequests.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">

@@ -1,10 +1,13 @@
 "use client"
 
 import type React from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Check, X, Users, Star, UserCheck, FileText } from "lucide-react"
-import type { CommissionRequest } from "@/types/commission-request"
+import { Check, X, Users, Star, UserCheck, FileText, ArrowRight, Paperclip, Download, Loader2 } from "lucide-react"
+import type { CommissionRequest, CommissionRequestStatus } from "@/types/commission-request"
+
+const REJECTABLE: CommissionRequestStatus[] = ["pending", "approved"]
 
 const TYPE_LABEL: Record<string, string> = {
   brand: "品牌設計",
@@ -12,6 +15,24 @@ const TYPE_LABEL: Record<string, string> = {
   product: "周邊商品設計",
   packaging: "包裝設計",
   custom: "客製化專案",
+}
+
+const STATUS_LABEL: Record<CommissionRequestStatus, string> = {
+  pending:       "待審核",
+  approved:      "待媒合",
+  contracting:   "待簽約",
+  "in-progress": "進行中",
+  delivery:      "待驗收",
+  completed:     "已完成",
+  rejected:      "已拒絕",
+}
+
+const NEXT_ACTION_LABEL: Partial<Record<CommissionRequestStatus, string>> = {
+  pending:       "審核通過",
+  approved:      "確認媒合，進入簽約",
+  contracting:   "合約確認，委託成立",
+  "in-progress": "提交驗收",
+  delivery:      "驗收通過，標記完成",
 }
 
 const APPLICANT_CONDITION_CONFIG: Record<string, { label: string; className: string; icon: React.ElementType }> = {
@@ -46,6 +67,26 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function CommissionRequestDetailModal({ request, onClose, onApprove, onReject, readOnly = false }: Props) {
+  const [loading, setLoading] = useState<"approve" | "reject" | null>(null)
+
+  const handleApprove = () => {
+    if (loading) return
+    setLoading("approve")
+    onApprove?.(request.id)
+    onClose()
+  }
+
+  const handleReject = () => {
+    if (loading) return
+    setLoading("reject")
+    onReject?.(request.id)
+    onClose()
+  }
+
+  const canReject = REJECTABLE.includes(request.status)
+  const nextLabel = NEXT_ACTION_LABEL[request.status]
+  const isTerminal = request.status === "completed" || request.status === "rejected"
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-40 p-4 animate-in fade-in duration-150">
       <div className="bg-background border border-border/80 rounded-xl shadow-xl max-w-lg w-full flex flex-col max-h-[90vh]">
@@ -98,6 +139,34 @@ export function CommissionRequestDetailModal({ request, onClose, onApprove, onRe
             </div>
           </div>
           <Field label="其他備註" value={request.notes} />
+          <div className="grid grid-cols-3 items-start gap-2 border-b border-border/30 pb-3">
+            <span className="text-sm font-medium text-muted-foreground pt-0.5">參考附件</span>
+            <div className="col-span-2">
+              {request.attachments.length === 0 ? (
+                <span className="text-sm text-foreground">—</span>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {request.attachments.map((url, index) => (
+                    <a key={index} href={url} target="_blank" rel="noreferrer" className="group relative block aspect-square overflow-hidden rounded-lg border border-border/40 bg-muted/20 hover:border-primary/50 transition-colors">
+                      <img
+                        src={url}
+                        alt={`附件 ${index + 1}`}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none"
+                          e.currentTarget.nextElementSibling?.classList.remove("hidden")
+                        }}
+                      />
+                      <div className="hidden h-full w-full flex-col items-center justify-center gap-1 text-muted-foreground">
+                        <Paperclip className="h-5 w-5" />
+                        <span className="text-[10px]">附件 {index + 1}</span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           <div className="grid grid-cols-3 items-start gap-2 pb-3">
             <span className="text-sm font-medium text-muted-foreground pt-0.5">企畫書</span>
             <div className="col-span-2">
@@ -109,9 +178,22 @@ export function CommissionRequestDetailModal({ request, onClose, onApprove, onRe
                     <li key={index} className="flex items-center gap-2 rounded-lg border border-border/40 bg-muted/20 px-3 py-2">
                       <FileText className="h-4 w-4 shrink-0 text-primary" />
                       <span className="truncate text-sm text-foreground">{file.name}</span>
-                      <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                      <span className="shrink-0 text-xs text-muted-foreground">
                         {(file.size / 1024 / 1024).toFixed(1)} MB
                       </span>
+                      {file.url ? (
+                        <a
+                          href={file.url}
+                          download={file.name}
+                          onClick={(e) => e.stopPropagation()}
+                          className="ml-auto shrink-0 p-1 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                          title="下載"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </a>
+                      ) : (
+                        <span className="ml-auto shrink-0 text-xs text-muted-foreground/50">無法下載</span>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -121,25 +203,40 @@ export function CommissionRequestDetailModal({ request, onClose, onApprove, onRe
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border/50 bg-muted/10 flex justify-end gap-3">
+        <div className="p-4 border-t border-border/50 bg-muted/10 flex items-center gap-3">
+          <span className="text-xs text-muted-foreground mr-auto">
+            目前狀態：<span className="font-medium text-foreground">{STATUS_LABEL[request.status]}</span>
+          </span>
           <Button variant="outline" onClick={onClose} className="bg-transparent text-muted-foreground hover:text-foreground">
             關閉
           </Button>
-          {!readOnly && (
+          {!readOnly && !isTerminal && (
             <>
-              <Button
-                variant="destructive"
-                onClick={() => { onReject?.(request.id); onClose() }}
-                className="gap-1.5"
-              >
-                <X className="h-4 w-4" /> 拒絕
-              </Button>
-              <Button
-                onClick={() => { onApprove?.(request.id); onClose() }}
-                className="gap-1.5 bg-gradient-to-r from-primary to-secondary text-primary-foreground"
-              >
-                <Check className="h-4 w-4" /> 通過
-              </Button>
+              {canReject && (
+                <Button
+                  variant="destructive"
+                  onClick={handleReject}
+                  disabled={!!loading}
+                  className="gap-1.5"
+                >
+                  {loading === "reject"
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : <X className="h-4 w-4" />}
+                  拒絕
+                </Button>
+              )}
+              {nextLabel && (
+                <Button
+                  onClick={handleApprove}
+                  disabled={!!loading}
+                  className="gap-1.5 bg-gradient-to-r from-primary to-secondary text-primary-foreground"
+                >
+                  {loading === "approve"
+                    ? <Loader2 className="h-4 w-4 animate-spin" />
+                    : <ArrowRight className="h-4 w-4" />}
+                  {nextLabel}
+                </Button>
+              )}
             </>
           )}
         </div>

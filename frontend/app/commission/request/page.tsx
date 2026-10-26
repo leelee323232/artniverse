@@ -23,9 +23,11 @@ export default function CommissionRequestPage() {
   const [targetCreator, setTargetCreator] = useState("")
   const [revenueShare, setRevenueShare] = useState(10)
   const [revenueShareError, setRevenueShareError] = useState("")
-  const [proposalFiles, setProposalFiles] = useState<File[]>([])
+  const [proposalFiles, setProposalFiles] = useState<{ name: string; size: number; url: string }[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [proposalFileError, setProposalFileError] = useState("")
+  const [attachmentError, setAttachmentError] = useState("")
+  const MAX_ATTACHMENTS = 8
 
   const ALLOWED_TYPES = [".pdf", ".doc", ".docx", ".ppt", ".pptx"]
   const MAX_FILE_SIZE_MB = 20
@@ -46,7 +48,10 @@ export default function CommissionRequestPage() {
       return
     }
     setProposalFileError("")
-    setProposalFiles((prev) => [...prev, ...incoming])
+    setProposalFiles((prev) => [
+      ...prev,
+      ...incoming.map((f) => ({ name: f.name, size: f.size, url: URL.createObjectURL(f) })),
+    ])
   }
   const { toast } = useToast()
 
@@ -56,10 +61,18 @@ export default function CommissionRequestPage() {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
-    if (files) {
-      const newFiles = Array.from(files).map((file) => URL.createObjectURL(file))
-      setAttachments([...attachments, ...newFiles])
+    if (!files) return
+    const remaining = MAX_ATTACHMENTS - attachments.length
+    if (remaining <= 0) return
+    const incoming = Array.from(files).slice(0, remaining)
+    if (Array.from(files).length > remaining) {
+      setAttachmentError(`最多上傳 ${MAX_ATTACHMENTS} 個檔案，已略去多餘的 ${Array.from(files).length - remaining} 個`)
+    } else {
+      setAttachmentError("")
     }
+    const newFiles = incoming.map((file) => URL.createObjectURL(file))
+    setAttachments([...attachments, ...newFiles])
+    e.target.value = ""
   }
 
   const removeAttachment = (index: number) => {
@@ -271,11 +284,14 @@ export default function CommissionRequestPage() {
                     <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border/50 bg-muted/20 transition-colors hover:border-primary/50 hover:bg-muted/30">
                       <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
                       <span className="text-xs text-muted-foreground">上傳檔案</span>
-                      <input type="file" accept="image/*" multiple onChange={handleFileUpload} className="hidden" />
+                      <input type="file" accept="image/*,.pdf,.doc,.docx,.ppt,.pptx" multiple onChange={handleFileUpload} className="hidden" />
                     </label>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">上傳參考圖片、靈感來源或相關資料（最多 8 個檔案）</p>
+                {attachmentError
+                  ? <p className="text-xs text-destructive">{attachmentError}</p>
+                  : <p className="text-xs text-muted-foreground">支援圖片、PDF、Word、PPT，最多 {MAX_ATTACHMENTS} 個檔案（已上傳 {attachments.length} / {MAX_ATTACHMENTS}）</p>
+                }
               </div>
 
               {/* Contact Info */}
@@ -344,7 +360,10 @@ export default function CommissionRequestPage() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => setProposalFiles((prev) => prev.filter((_, i) => i !== index))}
+                          onClick={() => setProposalFiles((prev) => {
+                            URL.revokeObjectURL(prev[index].url)
+                            return prev.filter((_, i) => i !== index)
+                          })}
                           className="ml-3 shrink-0 rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                         >
                           <X className="h-4 w-4" />
