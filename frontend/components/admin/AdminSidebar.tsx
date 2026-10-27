@@ -4,8 +4,6 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminNavEntries, type AdminNavEntry } from "./nav-config";
 
@@ -39,7 +37,8 @@ export function AdminSidebar({ open = false, onNavigate }: AdminSidebarProps) {
       .filter((e) => e.type === "group")
       .map((e) => [e.label, isGroupActive(e)]),
   );
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(initialOpen);
+  const [openGroups, setOpenGroups] =
+    useState<Record<string, boolean>>(initialOpen);
 
   const toggleGroup = (label: string) =>
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));

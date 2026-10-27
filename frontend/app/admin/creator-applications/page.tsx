@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { Eye, Check, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -25,8 +26,8 @@ interface Application {
   bankAccount: string;
   selectedCategories: string[]; // array
   creativePhilosophy: string;   // string
-  idFrontImage: string;         // file (暫存 URL 或檔名)
-  idBackImage: string;          // file (暫存 URL 或檔名)
+  idFrontImage: string;         // 身分證正面圖片網址
+  idBackImage: string;          // 身分證反面圖片網址
   agreeToContract: boolean;     // boolean
 }
 
@@ -46,8 +47,8 @@ const initialApplications: Application[] = [
     bankAccount: "987654321098",
     selectedCategories: ["潮流", "公仔"],
     creativePhilosophy: "幽默拯救世界，迷因就是力量。",
-    idFrontImage: "id_front.jpg",
-    idBackImage: "id_back.jpg",
+    idFrontImage: "https://placehold.co/856x540/png?text=Sample+ID+Front+2",
+    idBackImage: "https://placehold.co/856x540/png?text=Sample+ID+Back+2",
     agreeToContract: true
   },
   { 
@@ -66,8 +67,8 @@ const initialApplications: Application[] = [
     bankAccount: "554433221100",
     selectedCategories: ["科技", "模型"],
     creativePhilosophy: "將宇宙的奧秘，實體化呈現在桌面上。",
-    idFrontImage: "front.jpg",
-    idBackImage: "back.jpg",
+    idFrontImage: "https://placehold.co/856x540/png?text=Sample+ID+Front+3",
+    idBackImage: "https://placehold.co/856x540/png?text=Sample+ID+Back+3",
     agreeToContract: true
   },
 ];
@@ -153,7 +154,7 @@ export default function CreatorApplicationsPage() {
 
       {/* 第一層：詳細資料視窗 Modal (此處修改為完整呈現 14 項欄位) */}
       {selectedApp && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-40 p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-40 p-4 animate-in fade-in duration-150">
           <div className="bg-background border border-border/80 rounded-xl shadow-xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header */}
             <div className="p-5 border-b border-border/50 flex justify-between items-center bg-muted/20">
@@ -212,14 +213,28 @@ export default function CreatorApplicationsPage() {
                 <span className="font-medium text-muted-foreground">創作理念</span>
                 <span className="col-span-2 text-foreground whitespace-pre-wrap">{selectedApp.creativePhilosophy}</span>
               </div>
-              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
-                <span className="font-medium text-muted-foreground">身分證正面</span>
-                <span className="col-span-2 text-foreground font-mono text-xs">{selectedApp.idFrontImage}</span>
-              </div>
-              <div className="grid grid-cols-3 border-b border-border/30 pb-2">
-                <span className="font-medium text-muted-foreground">身分證反面</span>
-                <span className="col-span-2 text-foreground font-mono text-xs">{selectedApp.idBackImage}</span>
-              </div>
+              {[
+                { label: "身分證正面", url: selectedApp.idFrontImage },
+                { label: "身分證反面", url: selectedApp.idBackImage },
+              ].map(({ label, url }) => (
+                <div key={label} className="space-y-2 border-b border-border/30 pb-3">
+                  <span className="font-medium text-muted-foreground">{label}</span>
+                  {url ? (
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="block rounded-lg focus-visible:outline-2 focus-visible:outline-primary" aria-label={`在新分頁查看${label}原圖`}>
+                      <Image
+                        src={url}
+                        alt={`${selectedApp.realName}的${label}`}
+                        width={856}
+                        height={540}
+                        unoptimized
+                        className="h-auto w-full rounded-lg border border-border/50 bg-muted/20 object-contain"
+                      />
+                    </a>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">未提供圖片</p>
+                  )}
+                </div>
+              ))}
               <div className="grid grid-cols-3 border-b border-border/30 pb-2">
                 <span className="font-medium text-muted-foreground">同意條款</span>
                 <span className="col-span-2 text-foreground">{selectedApp.agreeToContract ? "已同意合約條款" : "未同意"}</span>
@@ -285,7 +300,7 @@ export default function CreatorApplicationsPage() {
 
       {/* 第二層：二次確認彈窗 Modal */}
       {confirmType && selectedApp && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
             
             {/* 通過確認 */}
