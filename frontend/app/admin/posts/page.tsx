@@ -1,7 +1,7 @@
 "use client";
 
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -65,18 +65,11 @@ export default function AdminPostsPage() {
   };
 
   return (
-    <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
-      <div className="mb-6 flex items-center justify-between">
-        {/* 左側標題 */}
-        <div>
-          <h1 className="text-xl font-bold text-foreground">貼文牆</h1>
-
-          <p className="text-sm text-muted-foreground">
-            發佈創作動態、新品花絮，與追蹤粉絲進行零距離留言互動。
-          </p>
-        </div>
-
-        <Dialog open={isPostModalOpen} onOpenChange={setIsPostModalOpen}>
+    <div>
+      <AdminPageHeader
+        title="貼文牆"
+        description="發佈創作動態、新品花絮，與追蹤粉絲進行零距離留言互動。"
+        action={<Dialog open={isPostModalOpen} onOpenChange={setIsPostModalOpen}>
           <DialogTrigger asChild>
             <Button className="gap-1.5 bg-gradient-to-r from-primary to-secondary shadow-lg shadow-primary/20">
               <Plus className="h-4 w-4" />
@@ -276,8 +269,8 @@ export default function AdminPostsPage() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
-      </div>
+        </Dialog>}
+      />
 
       {posts.length > 0 ? (
         <div className="w-full space-y-6">
@@ -313,6 +306,6 @@ export default function AdminPostsPage() {
           </p>
         </div>
       )}
-    </Card>
+    </div>
   );
 }

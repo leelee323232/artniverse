@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import React, { useState } from "react";
 import Image from "next/image";
 import { Eye, Check, X, RefreshCw } from "lucide-react";
@@ -102,10 +103,11 @@ export default function CreatorApplicationsPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto min-h-screen text-foreground">
-      <h1 className="text-2xl font-bold mb-6 tracking-wide text-foreground">
-        創作者申請審核管理
-      </h1>
+    <div>
+      <AdminPageHeader
+        title="創作者申請審核管理"
+        description="審核創作者申請資料與身分證明，管理申請狀態及退件原因。"
+      />
 
       {/* 列表表格：擴充顯示核心主要欄位 */}
       <div className="bg-background/80 backdrop-blur-lg rounded-xl border border-border/50 shadow-sm overflow-hidden">

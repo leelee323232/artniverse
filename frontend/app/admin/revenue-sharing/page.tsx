@@ -9,12 +9,21 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockCreators } from "@/mocks/admin/creators";
 import type { Creator } from "@/types/admin";
-import { mockCommissionRequests } from "@/types/commission-request";
+import { mockCommissionRequests, type CommissionRequestStatus } from "@/types/commission-request";
 
 const STORAGE_KEY = "admin_revenue_sharing_v1";
 const DEFAULT_RATE = 20;
 type Rates = Record<string, number>;
 type ShareRow = { id: string; name: string; detail: string; status: string };
+const QUEST_STATUS_LABELS: Record<CommissionRequestStatus, string> = {
+  pending: "待審核",
+  approved: "待媒合",
+  contracting: "待簽約",
+  "in-progress": "進行中",
+  delivery: "待驗收",
+  completed: "已完成",
+  rejected: "已拒絕",
+};
 
 function readRates(value: unknown): Rates {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
@@ -105,7 +114,7 @@ export default function RevenueSharingPage() {
   const questRows: ShareRow[] = mockCommissionRequests.map((quest) => ({
     id: `quest:${quest.id}`, name: quest.title,
     detail: `${quest.id} · 預算 NT$ ${quest.budget} · 截止 ${quest.deadline}`,
-    status: { pending: "未開始", "in-progress": "進行中", completed: "已完成" }[quest.status],
+    status: QUEST_STATUS_LABELS[quest.status],
   }));
   const filter = (items: ShareRow[]) => items.filter((item) =>
     `${item.name} ${item.detail}`.toLowerCase().includes(searchQuery.trim().toLowerCase()),

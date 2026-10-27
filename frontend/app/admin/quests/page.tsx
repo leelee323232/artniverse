@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { CommissionRequestRow } from "@/components/commission/commission-request-card";
@@ -280,23 +281,16 @@ export default function AdminQuestsPage() {
   };
 
   return (
-    <div className="space-y-6 p-6 min-h-screen text-foreground">
+    <div className="space-y-6">
       {/* 頂部列 */}
 
       {/* 委託需求清單 */}
-      <div className="space-y-4 border-t border-border/40">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">委託需求清單</h1>
-
-            <p className="text-sm text-muted-foreground">
-              顧客提交的委託申請，點擊列可查看詳情並推進或拒絕。
-            </p>
-          </div>
-          <span className="text-sm text-muted-foreground">
-            共 {commissionRequests.length} 筆
-          </span>
-        </div>
+      <div className="space-y-6">
+        <AdminPageHeader
+          title="委託需求清單"
+          description="顧客提交的委託申請，點擊列可查看詳情並推進或拒絕。"
+          action={<span className="text-sm text-muted-foreground">共 {commissionRequests.length} 筆</span>}
+        />
 
         {/* 五步驟流程提示 */}
         <div className="flex items-center gap-1 text-xs text-muted-foreground overflow-x-auto pb-1">

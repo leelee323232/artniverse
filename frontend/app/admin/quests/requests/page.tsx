@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { CommissionRequestCard } from "@/components/commission/commission-request-card";
@@ -55,15 +56,13 @@ export default function AdminCommissionRequestsPage() {
   };
 
   return (
-    <div className="space-y-6 p-6 min-h-screen text-foreground">
+    <div className="space-y-6">
       {/* 委託需求清單 */}
-      <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">委託需求清單</h1>
-          <p className="text-sm text-muted-foreground">
-            顧客提交的委託申請，點擊卡片可查看詳情並通過或拒絕。
-          </p>
-        </div>
+      <div className="space-y-6">
+        <AdminPageHeader
+          title="委託需求清單"
+          description="顧客提交的委託申請，點擊卡片可查看詳情並通過或拒絕。"
+        />
 
         {/* 狀態篩選 */}
         <div className="flex gap-2 flex-wrap">
