@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { adminNavEntries, type AdminNavEntry } from "./nav-config";
+import { ChevronDown } from "lucide-react";
 
 interface AdminSidebarProps {
   open?: boolean;
