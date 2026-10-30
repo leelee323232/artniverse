@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Truck, MapPin, Gift, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -88,11 +89,13 @@ export default function ShippingManagementPage() {
   const blocked = !ready || Boolean(loadError);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 text-foreground">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div><div className="mb-2 flex items-center gap-2"><Badge variant="outline">台灣配送</Badge><span className="text-xs text-muted-foreground">TWD · 新台幣</span></div><h1 className="text-2xl font-bold">運費管理</h1><p className="mt-2 text-sm text-muted-foreground">依配送區域與方式設定運費，管理每筆訂單的免運條件。</p></div>
-        <Button disabled={blocked} onClick={() => edit()} className="gap-2 bg-gradient-to-r from-primary to-secondary"><Plus className="h-4 w-4" />新增運費規則</Button>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="運費管理"
+        description="依配送區域與方式設定運費，管理每筆訂單的免運條件。"
+        action={<Button disabled={blocked} onClick={() => edit()} className="gap-2 bg-gradient-to-r from-primary to-secondary"><Plus className="h-4 w-4" />新增運費規則</Button>}
+      />
+      <div className="flex items-center gap-2"><Badge variant="outline">台灣配送</Badge><span className="text-xs text-muted-foreground">TWD · 新台幣</span></div>
       <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-muted-foreground">目前為管理頁預覽，設定儲存在此瀏覽器，尚未套用至購物車與結帳。超商與離島費率為範例，確認後可自行啟用。</div>
       {loadError && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">{loadError} 為避免覆蓋原資料，目前暫停編輯與試算。</p>}
       {notice && <p role="status" className="rounded-lg border border-border bg-card p-3 text-sm">{notice}</p>}

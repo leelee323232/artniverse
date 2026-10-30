@@ -22,6 +22,7 @@ export interface AdminNavLeaf {
   type: "leaf";
   label: string;
   href: string;
+  icon: LucideIcon;
 }
 
 export interface AdminNavGroup {
@@ -75,6 +76,6 @@ export const adminNavEntries: AdminNavEntry[] = [
       { type: "leaf", label: "貼文管理", href: "/admin/posts", icon: Newspaper },
     ],
   },
-  { type: "leaf", label: "分潤管理", href: "/admin/revenue-share", icon: DollarSign },
+  { type: "leaf", label: "分潤管理", href: "/admin/revenue-sharing", icon: DollarSign },
   { type: "leaf", label: "運費設定", href: "/admin/shipping", icon: Truck },
 ];

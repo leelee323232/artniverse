@@ -65,7 +65,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@next/eslint-plugin-next": "^16.3.3",
-    "@tailwindcss/postcss": "^4.3.3",
+"@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",

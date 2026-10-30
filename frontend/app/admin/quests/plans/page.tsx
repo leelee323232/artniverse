@@ -1,5 +1,6 @@
 "use client"
 
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -184,19 +185,16 @@ export default function AdminQuestsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6 min-h-screen text-foreground">
+    <div className="space-y-6">
       {/* 頂部列 */}
-      <div className="flex items-center justify-between border-b border-border/40 pb-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">方案設定</h1>
-          <p className="text-sm text-muted-foreground">配置前台顯示的企業長期訂閱方案內容、定價與交付規格。</p>
-        </div>
-        
-        <Button onClick={handleOpenAdd} className="bg-gradient-to-r from-primary to-secondary font-medium">
+      <AdminPageHeader
+        title="方案設定"
+        description="配置前台顯示的企業長期訂閱方案內容、定價與交付規格。"
+        action={<Button onClick={handleOpenAdd} className="bg-gradient-to-r from-primary to-secondary font-medium">
           <Plus className="mr-1.5 h-4 w-4" />
           新增方案
-        </Button>
-      </div>
+        </Button>}
+      />
 
       {/* 數據表格 */}
       <Card className="border-border/50 bg-card/30 backdrop-blur-sm overflow-hidden">

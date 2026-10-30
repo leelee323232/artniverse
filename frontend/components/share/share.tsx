@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type ReactElement } from "react";
-import { usePathname } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -29,8 +28,7 @@ export function Share({
   onOpenChange: externalOnOpenChange,
 }: ShareProps) {
   const [copied, setCopied] = useState(false);
-  const pathname = usePathname();
-  const resolvedUrl = shareUrl ?? (typeof window !== "undefined" ? `${window.location.origin}${pathname}` : "");
+  const resolvedUrl = shareUrl ?? (typeof window !== "undefined" ? window.location.href : "");
 
   const dialogProps =
     externalOpen !== undefined

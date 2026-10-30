@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import React, { useState } from "react";
 import { Eye, Check, X, CalendarIcon } from "lucide-react";
 import { mockProductCategories } from "@/mocks/admin/productCategories";
@@ -277,18 +278,17 @@ export default function PromoCodesPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto min-h-screen text-foreground">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold tracking-wide text-foreground">
-          優惠碼管理系統
-        </h1>
-        <Button
+    <div>
+      <AdminPageHeader
+        title="優惠碼管理系統"
+        description="管理優惠碼、折扣條件與使用期限，查看優惠碼的審核及啟用狀態。"
+        action={<Button
           onClick={handleOpenCreate}
           className="gap-2 bg-gradient-to-r from-primary to-secondary text-primary-foreground"
         >
           新增優惠碼
-        </Button>
-      </div>
+        </Button>}
+      />
 
       {/* 列表表格 */}
       <div className="bg-background/80 backdrop-blur-lg rounded-xl border border-border/50 shadow-sm overflow-hidden">

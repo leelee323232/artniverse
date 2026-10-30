@@ -1,55 +1,77 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card } from "@/components/ui/card"
-import { CommissionRequestCard } from "@/components/commission/commission-request-card"
-import { CommissionRequestDetailModal } from "@/components/admin/commission-request-detail-modal"
-import { mockCommissionRequests, type CommissionRequest, type CommissionRequestStatus } from "@/types/commission-request"
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { CommissionRequestCard } from "@/components/commission/commission-request-card";
+import { CommissionRequestDetailModal } from "@/components/admin/commission-request-detail-modal";
+import {
+  mockCommissionRequests,
+  type CommissionRequest,
+  type CommissionRequestStatus,
+} from "@/types/commission-request";
 
-const STATUS_TABS: { value: CommissionRequestStatus | "all"; label: string }[] = [
-  { value: "all", label: "全部" },
-  { value: "pending", label: "未開始" },
-  { value: "in-progress", label: "進行中" },
-  { value: "completed", label: "已完成" },
-]
+const STATUS_TABS: { value: CommissionRequestStatus | "all"; label: string }[] =
+  [
+    { value: "all", label: "全部" },
+    { value: "pending", label: "未開始" },
+    { value: "in-progress", label: "進行中" },
+    { value: "completed", label: "已完成" },
+  ];
 
 export default function AdminCommissionRequestsPage() {
   // 委託需求清單狀態
-  const [commissionRequests, setCommissionRequests] = useState<CommissionRequest[]>(mockCommissionRequests)
-  const [activeTab, setActiveTab] = useState<CommissionRequestStatus | "all">("all")
-  const [selectedRequest, setSelectedRequest] = useState<CommissionRequest | null>(null)
+  const [commissionRequests, setCommissionRequests] = useState<
+    CommissionRequest[]
+  >(mockCommissionRequests);
+  const [activeTab, setActiveTab] = useState<CommissionRequestStatus | "all">(
+    "all",
+  );
+  const [selectedRequest, setSelectedRequest] =
+    useState<CommissionRequest | null>(null);
 
-  const filteredRequests = activeTab === "all"
-    ? commissionRequests
-    : commissionRequests.filter((r) => r.status === activeTab)
+  const filteredRequests =
+    activeTab === "all"
+      ? commissionRequests
+      : commissionRequests.filter((r) => r.status === activeTab);
 
   const handleApprove = (id: string) => {
     setCommissionRequests((prev) =>
-      prev.map((r) => r.id === id ? { ...r, status: "in-progress" as CommissionRequestStatus } : r)
-    )
-  }
+      prev.map((r) =>
+        r.id === id
+          ? { ...r, status: "in-progress" as CommissionRequestStatus }
+          : r,
+      ),
+    );
+  };
 
   const handleReject = (id: string) => {
     setCommissionRequests((prev) =>
-      prev.map((r) => r.id === id ? { ...r, status: "completed" as CommissionRequestStatus } : r)
-    )
-  }
+      prev.map((r) =>
+        r.id === id
+          ? { ...r, status: "completed" as CommissionRequestStatus }
+          : r,
+      ),
+    );
+  };
 
   return (
-    <div className="space-y-6 p-6 min-h-screen text-foreground">
+    <div className="space-y-6">
       {/* 委託需求清單 */}
-      <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">委託需求清單</h1>
-          <p className="text-sm text-muted-foreground">顧客提交的委託申請，點擊卡片可查看詳情並通過或拒絕。</p>
-        </div>
+      <div className="space-y-6">
+        <AdminPageHeader
+          title="委託需求清單"
+          description="顧客提交的委託申請，點擊卡片可查看詳情並通過或拒絕。"
+        />
 
         {/* 狀態篩選 */}
         <div className="flex gap-2 flex-wrap">
           {STATUS_TABS.map((tab) => {
-            const count = tab.value === "all"
-              ? commissionRequests.length
-              : commissionRequests.filter((r) => r.status === tab.value).length
+            const count =
+              tab.value === "all"
+                ? commissionRequests.length
+                : commissionRequests.filter((r) => r.status === tab.value)
+                    .length;
             return (
               <button
                 key={tab.value}
@@ -63,7 +85,7 @@ export default function AdminCommissionRequestsPage() {
                 {tab.label}
                 <span className="ml-1.5 opacity-70">({count})</span>
               </button>
-            )
+            );
           })}
         </div>
 
@@ -95,5 +117,5 @@ export default function AdminCommissionRequestsPage() {
         />
       )}
     </div>
-  )
+  );
 }

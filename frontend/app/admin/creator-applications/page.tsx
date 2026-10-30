@@ -1,6 +1,8 @@
 "use client";
 
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import React, { useState } from "react";
+import Image from "next/image";
 import { Eye, Check, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -25,8 +27,8 @@ interface Application {
   bankAccount: string;
   selectedCategories: string[]; // array
   creativePhilosophy: string; // string
-  idFrontImage: string; // file (暫存 URL 或檔名)
-  idBackImage: string; // file (暫存 URL 或檔名)
+  idFrontImage: string; // 身分證正面圖片網址
+  idBackImage: string; // 身分證反面圖片網址
   agreeToContract: boolean; // boolean
 }
 
@@ -126,10 +128,11 @@ export default function CreatorApplicationsPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto min-h-screen text-foreground">
-      <h1 className="text-2xl font-bold mb-6 tracking-wide text-foreground">
-        創作者申請審核管理
-      </h1>
+    <div>
+      <AdminPageHeader
+        title="創作者申請審核管理"
+        description="審核創作者申請資料與身分證明，管理申請狀態及退件原因。"
+      />
 
       {/* 列表表格：擴充顯示核心主要欄位 */}
       <div className="bg-background/80 backdrop-blur-lg rounded-xl border border-border/50 shadow-sm overflow-hidden">
@@ -183,7 +186,7 @@ export default function CreatorApplicationsPage() {
 
       {/* 第一層：詳細資料視窗 Modal (此處修改為完整呈現 14 項欄位) */}
       {selectedApp && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-40 p-4 animate-in fade-in duration-150">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-40 p-4 animate-in fade-in duration-150">
           <div className="bg-background border border-border/80 rounded-xl shadow-xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
             {/* Header */}
             <div className="p-5 border-b border-border/50 flex justify-between items-center bg-muted/20">
@@ -384,7 +387,7 @@ export default function CreatorApplicationsPage() {
 
       {/* 第二層：二次確認彈窗 Modal */}
       {confirmType && selectedApp && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
             {/* 通過確認 */}
             {confirmType === "approve" && (

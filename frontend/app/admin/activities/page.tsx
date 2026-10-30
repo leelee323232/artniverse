@@ -343,6 +343,7 @@ export default function ActivitiesPage() {
     <div>
       <AdminPageHeader
         title="活動區塊管理"
+        description="管理前台活動區塊、曝光內容與顯示排序。"
         action={
           <Button onClick={crud.openCreate} className="gap-2">
             <Plus className="h-4 w-4" />

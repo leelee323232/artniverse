@@ -171,7 +171,7 @@ export default function ShopPage() {
       </section>
       <div className="container mx-auto px-4 pb-20">
         {/* Filters and Search */}
-        <div className="mb-8 sticky top-20 z-20 -mx-4 px-4 py-4 bg-[oklch(0.13_0.05_275)]/80 backdrop-blur-md flex flex-col gap-4 md:items-center md:justify-start w-full">
+        <div className="mb-8 md:sticky md:top-20 z-20 -mx-4 px-4 py-4 bg-[oklch(0.13_0.05_275)]/80 backdrop-blur-md flex flex-col gap-4 md:items-center md:justify-start w-full">
           <div className="flex w-full justify-between gap-8">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
