@@ -192,7 +192,7 @@ export default function CreatorApplyPage() {
               <p className="text-foreground mb-8">
                 請私訊{" "}
                 <a
-                  href="https://www.instagram.com/artniverse"
+                  href="https://www.instagram.com/artniverse_?utm_source=ig_web_button_share_sheet&cplk=ZDNlZDc0MzIxNw=="
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary hover:underline font-semibold"
