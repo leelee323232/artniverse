@@ -1,5 +1,7 @@
 "use client";
 
+import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
+
 import { useEffect, useState } from "react";
 import { Plus, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -79,6 +81,10 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 export default function ActivitiesPage() {
+  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
+  // TEMP: 未完成功能先顯示共用提示；原始流程保留於下方註解，串接完成後再恢復。
+  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
+
   const crud = useAdminCrud<Activity>("a", mockActivities);
   const [activeTab, setActiveTab] = useState<TabKey>("all");
   const [createForm, setCreateForm] =
@@ -180,55 +186,71 @@ export default function ActivitiesPage() {
       : null;
 
   const handleCreateSubmit = async () => {
-    if (!validateCreate()) return;
-    const ok = await crud.submit({
-      source: "ADMIN",
-      reviewStatus: "approved",
-      title: createForm.title.trim(),
-      linkUrl: createForm.linkUrl.trim(),
-      sortOrder: Number(createForm.sortOrder),
-      isActive: createForm.isActive,
-      startTime: toDateString(createForm.startTime),
-      endTime: toDateString(createForm.endTime),
-      publishStartTime: toDateString(createForm.publishStartTime),
-      publishEndTime: toDateString(createForm.publishEndTime),
-    });
-    if (ok) setActiveTab("approved");
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // if (!validateCreate()) return;
+    // const ok = await crud.submit({
+    //   source: "ADMIN",
+    //   reviewStatus: "approved",
+    //   title: createForm.title.trim(),
+    //   linkUrl: createForm.linkUrl.trim(),
+    //   sortOrder: Number(createForm.sortOrder),
+    //   isActive: createForm.isActive,
+    //   startTime: toDateString(createForm.startTime),
+    //   endTime: toDateString(createForm.endTime),
+    //   publishStartTime: toDateString(createForm.publishStartTime),
+    //   publishEndTime: toDateString(createForm.publishEndTime),
+    // });
+    // if (ok) setActiveTab("approved");
   };
 
   const handleEditSubmit = () => {
-    if (!validateEdit()) return;
-    crud.submit({
-      source: "ADMIN",
-      reviewStatus: "approved",
-      title: editForm.title.trim(),
-      linkUrl: editForm.linkUrl.trim(),
-      sortOrder: Number(editForm.sortOrder),
-      isActive: editForm.isActive,
-      startTime: toDateString(editForm.startTime),
-      endTime: toDateString(editForm.endTime),
-      publishStartTime: toDateString(editForm.publishStartTime),
-      publishEndTime: null,
-    });
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // if (!validateEdit()) return;
+    // crud.submit({
+    //   source: "ADMIN",
+    //   reviewStatus: "approved",
+    //   title: editForm.title.trim(),
+    //   linkUrl: editForm.linkUrl.trim(),
+    //   sortOrder: Number(editForm.sortOrder),
+    //   isActive: editForm.isActive,
+    //   startTime: toDateString(editForm.startTime),
+    //   endTime: toDateString(editForm.endTime),
+    //   publishStartTime: toDateString(editForm.publishStartTime),
+    //   publishEndTime: null,
+    // });
   };
 
   const handleDelete = (item: Activity) => {
-    if (window.confirm(`確定要刪除「${item.title}」嗎？`)) {
-      crud.remove(item.id);
-    }
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // if (window.confirm(`確定要刪除「${item.title}」嗎？`)) {
+    //   crud.remove(item.id);
+    // }
   };
 
   const [reviewingItem, setReviewingItem] = useState<Activity | null>(null);
 
   const handleReview = (item: Activity, status: "approved" | "rejected") => {
-    crud.replaceItems(
-      crud.items.map((i) =>
-        i.id === item.id
-          ? { ...i, reviewStatus: status, isActive: status === "approved" }
-          : i,
-      ),
-    );
-    setReviewingItem(null);
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // crud.replaceItems(
+    //   crud.items.map((i) =>
+    //     i.id === item.id
+    //       ? { ...i, reviewStatus: status, isActive: status === "approved" }
+    //       : i,
+    //   ),
+    // );
+    // setReviewingItem(null);
   };
 
   const SOURCE_BADGE: Record<Activity["source"], string> = {
@@ -299,7 +321,7 @@ export default function ActivitiesPage() {
       render: (i) => (
         <StatusToggle
           active={i.isActive}
-          onToggle={() => crud.toggleActive(i)}
+          onToggle={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => crud.toggleActive(i) */ showFeatureUnavailable}
         />
       ),
     },
@@ -319,17 +341,19 @@ export default function ActivitiesPage() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => setReviewingItem(i)}
+              onClick={/* TEMP: 暫時以阻擋視窗代替；原本：() => setReviewingItem(i) */ showFeatureUnavailable}
             >
               審核
             </Button>
           )}
           <AdminRowActions
-            onEdit={() => crud.openEdit(i)}
+            onEdit={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => crud.openEdit(i) */ showFeatureUnavailable}
             onDelete={() => handleDelete(i)}
             sortable={{
-              onMoveUp: () => crud.moveUp(i.id),
-              onMoveDown: () => crud.moveDown(i.id),
+              // TEMP: 原本 onMoveUp: () => crud.moveUp(i.id)，暫時以阻擋視窗代替。
+              onMoveUp: showFeatureUnavailable,
+              // TEMP: 原本 onMoveDown: () => crud.moveDown(i.id)，暫時以阻擋視窗代替。
+              onMoveDown: showFeatureUnavailable,
               isFirst: i.sortOrder === 1,
               isLast: i.sortOrder === crud.items.length,
             }}
@@ -339,13 +363,14 @@ export default function ActivitiesPage() {
     },
   ];
 
-  return (
+  return (<>
+      <FeatureUnavailableDialog open={featureUnavailableOpen} onOpenChange={setFeatureUnavailableOpen} />
     <div>
       <AdminPageHeader
         title="活動區塊管理"
         description="管理前台活動區塊、曝光內容與顯示排序。"
         action={
-          <Button onClick={crud.openCreate} className="gap-2">
+          <Button onClick={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 crud.openCreate */ showFeatureUnavailable} className="gap-2">
             <Plus className="h-4 w-4" />
             新增活動
           </Button>
@@ -696,7 +721,7 @@ export default function ActivitiesPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
+    </>);
 }
 
 function Row({ label, value }: { label: string; value: string }) {

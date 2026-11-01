@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
 import { AdminModal } from "@/components/admin/AdminModal";
+import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminRowActions } from "@/components/admin/AdminRowActions";
 import { StatusToggle } from "@/components/admin/StatusToggle";
@@ -27,6 +28,9 @@ export default function CreatorCategoriesPage() {
   const crud = useAdminCrud<CreatorCategory>("cc", mockCreatorCategories);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
+  // TEMP: 未完成功能先顯示共用提示；原始流程保留於下方註解，串接完成後再恢復。
+  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
 
   useEffect(() => {
     if (!crud.isModalOpen) return;
@@ -60,16 +64,18 @@ export default function CreatorCategoriesPage() {
     });
   };
 
-  const handleDelete = (item: CreatorCategory) => {
-    if (window.confirm(`確定要刪除「${item.name}」嗎？`)) {
-      crud.remove(item.id);
-    }
-  };
+  // TEMP: 以下原始處理函式暫時註解保留，入口目前改為 showFeatureUnavailable。
+  // 恢復時取消函式註解，並將對應入口切回旁邊記錄的原始 handler。
+  // const handleDelete = (item: CreatorCategory) => {
+  //   if (window.confirm(`確定要刪除「${item.name}」嗎？`)) {
+  //     crud.remove(item.id);
+  //   }
+  // };
 
   const columns: AdminTableColumn<CreatorCategory>[] = [
     { key: "sortOrder", header: "排序", className: "w-16 text-muted-foreground", render: (i) => i.sortOrder },
     { key: "name", header: "類別名稱", render: (i) => <span className="font-medium">{i.name}</span> },
-    { key: "status", header: "狀態", render: (i) => <StatusToggle active={i.isActive} onToggle={() => crud.toggleActive(i)} /> },
+    { key: "status", header: "狀態", render: (i) => <StatusToggle active={i.isActive} onToggle={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => crud.toggleActive(i) */ showFeatureUnavailable} /> },
     { key: "createdAt", header: "建立時間", className: "text-muted-foreground", render: (i) => i.createdAt },
     {
       key: "actions",
@@ -77,11 +83,13 @@ export default function CreatorCategoriesPage() {
       headClassName: "text-right",
       render: (i) => (
         <AdminRowActions
-          onEdit={() => crud.openEdit(i)}
-          onDelete={() => handleDelete(i)}
+          onEdit={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => crud.openEdit(i) */ showFeatureUnavailable}
+          onDelete={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => handleDelete(i) */ showFeatureUnavailable}
           sortable={{
-            onMoveUp: () => crud.moveUp(i.id),
-            onMoveDown: () => crud.moveDown(i.id),
+            // TEMP: 原本 onMoveUp: () => crud.moveUp(i.id)，暫時以阻擋視窗代替。
+              onMoveUp: showFeatureUnavailable,
+            // TEMP: 原本 onMoveDown: () => crud.moveDown(i.id)，暫時以阻擋視窗代替。
+              onMoveDown: showFeatureUnavailable,
             isFirst: i.sortOrder === 1,
             isLast: i.sortOrder === crud.items.length,
           }}
@@ -96,7 +104,7 @@ export default function CreatorCategoriesPage() {
         title="創作者類別管理"
         description="管理創作者分類，可調整排序與啟用狀態。"
         action={
-          <Button onClick={crud.openCreate} className="gap-2">
+          <Button onClick={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 crud.openCreate */ showFeatureUnavailable} className="gap-2">
             <Plus className="h-4 w-4" />
             新增類別
           </Button>
@@ -108,6 +116,11 @@ export default function CreatorCategoriesPage() {
         items={crud.items}
         loading={crud.loading}
         error={crud.error}
+      />
+
+      <FeatureUnavailableDialog
+        open={featureUnavailableOpen}
+        onOpenChange={setFeatureUnavailableOpen}
       />
 
       <AdminModal
