@@ -8,10 +8,17 @@ import { useCart } from "@/lib/commerce/cart-context";
 import { TYPE_LABEL } from "@/lib/commerce/cart";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ApiPayment } from "@/components/checkout/api-payment";
+import { uuidPattern } from "@/lib/commerce/checkout-api";
 
 const money = (value: number) => `NT$ ${value.toLocaleString("zh-TW")}`;
 const labels = { pending: "待付款", failed: "付款失敗", paid: "付款成功", expired: "付款逾期" };
-export default function PaymentPage() { return <Suspense fallback={<p>訂單載入中…</p>}><Payment /></Suspense>; }
+export default function PaymentPage() { return <Suspense fallback={<p>訂單載入中…</p>}><PaymentEntry /></Suspense>; }
+function PaymentEntry() {
+  const params = useSearchParams();
+  const id = params.get("order") ?? "";
+  return uuidPattern.test(id) || params.get("source") === "api" ? <ApiPayment orderId={id} /> : <Payment />;
+}
 function Payment() {
   const id = useSearchParams().get("order");
   const router = useRouter();
