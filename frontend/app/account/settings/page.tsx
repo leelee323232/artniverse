@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { useAuth } from "@/lib/auth-context"
 import { Bell, Lock, Globe, Moon, Smartphone, Mail, Shield, Loader2 } from "lucide-react"
+import { ComingSoon } from "@/components/common/ComingSoon"
 import Link from "next/link"
 
 export default function SettingsPage() {
@@ -141,9 +142,11 @@ export default function SettingsPage() {
                   <Label>雙重驗證</Label>
                   <p className="text-sm text-muted-foreground">啟用兩步驟驗證以增加帳號安全性</p>
                 </div>
-                <Button variant="outline" size="sm" className="bg-transparent">
-                  設定
-                </Button>
+                <ComingSoon>
+                  <Button variant="outline" size="sm" className="bg-transparent">
+                    設定
+                  </Button>
+                </ComingSoon>
               </div>
             </div>
           </Card>
@@ -199,9 +202,11 @@ export default function SettingsPage() {
                     <p className="text-sm text-muted-foreground">尚未連結</p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="bg-transparent">
-                  連結
-                </Button>
+                <ComingSoon>
+                  <Button variant="outline" size="sm" className="bg-transparent">
+                    連結
+                  </Button>
+                </ComingSoon>
               </div>
 
               <div className="flex items-center justify-between">
@@ -216,28 +221,32 @@ export default function SettingsPage() {
                     <p className="text-sm text-muted-foreground">尚未連結</p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" className="bg-transparent">
-                  連結
-                </Button>
+                <ComingSoon>
+                  <Button variant="outline" size="sm" className="bg-transparent">
+                    連結
+                  </Button>
+                </ComingSoon>
               </div>
             </div>
           </Card>
 
           <div className="mt-6 flex justify-end">
-            <Button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="bg-gradient-to-r from-primary to-secondary"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  儲存中...
-                </>
-              ) : (
-                "儲存所有變更"
-              )}
-            </Button>
+            <ComingSoon>
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-gradient-to-r from-primary to-secondary"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    儲存中...
+                  </>
+                ) : (
+                  "儲存所有變更"
+                )}
+              </Button>
+            </ComingSoon>
           </div>
         </div>
       </div>

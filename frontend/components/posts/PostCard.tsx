@@ -12,6 +12,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ComingSoon } from "@/components/common/ComingSoon";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -117,9 +118,11 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
               <span className="text-xs text-muted-foreground">·</span>
               <span className="text-xs text-muted-foreground">{post.createdAt}</span>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
+            <ComingSoon>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </ComingSoon>
           </div>
 
           {/* 內文 */}
@@ -183,14 +186,15 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
 
           {/* Threads 四大核心功能列 */}
           <div className="flex items-center gap-1 py-1 text-muted-foreground">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLike}
-              className={`h-8 w-8 hover:text-red-500 hover:bg-red-500/5 ${post.isLiked ? "text-red-500 fill-red-500" : ""}`}
-            >
-              <Heart className="h-4 w-4" />
-            </Button>
+            <ComingSoon>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hover:text-red-500 hover:bg-red-500/5"
+              >
+                <Heart className="h-4 w-4" />
+              </Button>
+            </ComingSoon>
             <Button
               variant="ghost"
               size="icon"
@@ -207,13 +211,15 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
             >
               <Send className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 hover:text-yellow-500 hover:bg-yellow-500/5 ml-auto"
-            >
-              <Bookmark className="h-4 w-4" />
-            </Button>
+            <ComingSoon>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hover:text-yellow-500 hover:bg-yellow-500/5 ml-auto"
+              >
+                <Bookmark className="h-4 w-4" />
+              </Button>
+            </ComingSoon>
           </div>
 
           {/* 讚數與回覆數快照 */}
@@ -264,9 +270,11 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
                   placeholder="留個言支持一下..."
                   className="bg-white/5 border-border/40 focus-visible:ring-primary h-8 text-xs"
                 />
-                <Button type="submit" size="sm" className="h-8 bg-primary hover:bg-primary/80 px-3">
-                  <Send className="h-3.5 w-3.5" />
-                </Button>
+                <ComingSoon>
+                  <Button type="button" size="sm" className="h-8 bg-primary hover:bg-primary/80 px-3">
+                    <Send className="h-3.5 w-3.5" />
+                  </Button>
+                </ComingSoon>
               </form>
             </div>
           )}

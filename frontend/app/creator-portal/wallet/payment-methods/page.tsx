@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, CreditCard, Plus, Trash2, Check } from "lucide-react"
+import { ComingSoon } from "@/components/common/ComingSoon"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 
@@ -105,20 +106,23 @@ export default function PaymentMethodsPage() {
                 </div>
                 <div className="flex gap-2">
                   {!method.isDefault && (
-                    <Button variant="outline" size="sm" onClick={() => handleSetDefault(method.id)}>
-                      <Check className="mr-1 h-4 w-4" />
-                      設為預設
-                    </Button>
+                    <ComingSoon>
+                      <Button variant="outline" size="sm">
+                        <Check className="mr-1 h-4 w-4" />
+                        設為預設
+                      </Button>
+                    </ComingSoon>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive hover:text-destructive bg-transparent"
-                    onClick={() => handleDelete(method.id)}
-                    disabled={method.isDefault}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <ComingSoon>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive bg-transparent"
+                      disabled={method.isDefault}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </ComingSoon>
                 </div>
               </div>
             </Card>
@@ -178,9 +182,11 @@ export default function PaymentMethodsPage() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 border-t border-border/50 pt-6">
-                  <Button type="submit" className="flex-1 bg-gradient-to-r from-primary to-secondary">
-                    新增帳戶
-                  </Button>
+                  <ComingSoon className="flex-1">
+                    <Button type="button" className="w-full bg-gradient-to-r from-primary to-secondary">
+                      新增帳戶
+                    </Button>
+                  </ComingSoon>
                   <Button
                     type="button"
                     variant="outline"

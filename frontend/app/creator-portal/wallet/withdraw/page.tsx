@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ArrowLeft, AlertCircle, CreditCard } from "lucide-react"
+import { ComingSoon } from "@/components/common/ComingSoon"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 
@@ -171,9 +172,11 @@ export default function WithdrawPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-3 border-t border-border/50 pt-6">
-                <Button type="submit" className="flex-1 bg-gradient-to-r from-primary to-secondary">
-                  確認提領
-                </Button>
+                <ComingSoon className="flex-1">
+                  <Button type="button" className="w-full bg-gradient-to-r from-primary to-secondary">
+                    確認提領
+                  </Button>
+                </ComingSoon>
                 <Link href="/creator-portal/wallet" className="flex-1">
                   <Button type="button" variant="outline" className="w-full bg-transparent">
                     取消

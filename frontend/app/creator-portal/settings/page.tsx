@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Upload } from "lucide-react"
+import { ComingSoon } from "@/components/common/ComingSoon"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
 
@@ -62,10 +63,12 @@ export default function CreatorSettingsPage() {
                     <div className="flex items-center gap-4">
                       <div className="h-24 w-24 overflow-hidden rounded-full bg-gradient-to-br from-primary to-secondary" />
                       <div>
-                        <Button type="button" variant="outline" size="sm">
-                          <Upload className="mr-2 h-4 w-4" />
-                          上傳圖片
-                        </Button>
+                        <ComingSoon>
+                          <Button type="button" variant="outline" size="sm">
+                            <Upload className="mr-2 h-4 w-4" />
+                            上傳圖片
+                          </Button>
+                        </ComingSoon>
                         <p className="mt-2 text-xs text-muted-foreground">建議尺寸：400x400px</p>
                       </div>
                     </div>
@@ -124,9 +127,11 @@ export default function CreatorSettingsPage() {
                   </div>
 
                   <div className="flex gap-3 border-t border-border/50 pt-6">
-                    <Button type="submit" className="bg-gradient-to-r from-primary to-secondary">
-                      儲存變更
-                    </Button>
+                    <ComingSoon>
+                      <Button type="button" className="bg-gradient-to-r from-primary to-secondary">
+                        儲存變更
+                      </Button>
+                    </ComingSoon>
                     <Button type="button" variant="outline">
                       取消
                     </Button>
@@ -172,10 +177,12 @@ export default function CreatorSettingsPage() {
                     <Label>星球橫幅圖片</Label>
                     <div className="aspect-[3/1] overflow-hidden rounded-lg bg-muted/30">
                       <div className="flex h-full items-center justify-center">
-                        <Button type="button" variant="outline">
-                          <Upload className="mr-2 h-4 w-4" />
-                          上傳橫幅
-                        </Button>
+                        <ComingSoon>
+                          <Button type="button" variant="outline">
+                            <Upload className="mr-2 h-4 w-4" />
+                            上傳橫幅
+                          </Button>
+                        </ComingSoon>
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground">建議尺寸：1200x400px</p>
@@ -185,15 +192,19 @@ export default function CreatorSettingsPage() {
                   <div className="space-y-3">
                     <Label>精選商品</Label>
                     <p className="text-sm text-muted-foreground">選擇最多 6 個商品在星球首頁展示</p>
-                    <Button type="button" variant="outline">
-                      選擇商品
-                    </Button>
+                    <ComingSoon>
+                      <Button type="button" variant="outline">
+                        選擇商品
+                      </Button>
+                    </ComingSoon>
                   </div>
 
                   <div className="flex gap-3 border-t border-border/50 pt-6">
-                    <Button type="submit" className="bg-gradient-to-r from-primary to-secondary">
-                      儲存變更
-                    </Button>
+                    <ComingSoon>
+                      <Button type="button" className="bg-gradient-to-r from-primary to-secondary">
+                        儲存變更
+                      </Button>
+                    </ComingSoon>
                     <Button type="button" variant="outline">
                       取消
                     </Button>
@@ -214,9 +225,11 @@ export default function CreatorSettingsPage() {
                       <h3 className="font-bold text-foreground">接受委託</h3>
                       <p className="text-sm text-muted-foreground">開放接受客製化設計委託</p>
                     </div>
-                    <Button type="button" variant="outline">
-                      開啟
-                    </Button>
+                    <ComingSoon>
+                      <Button type="button" variant="outline">
+                        開啟
+                      </Button>
+                    </ComingSoon>
                   </div>
 
                   {/* Commission Types */}
@@ -272,9 +285,11 @@ export default function CreatorSettingsPage() {
                   </div>
 
                   <div className="flex gap-3 border-t border-border/50 pt-6">
-                    <Button type="submit" className="bg-gradient-to-r from-primary to-secondary">
-                      儲存變更
-                    </Button>
+                    <ComingSoon>
+                      <Button type="button" className="bg-gradient-to-r from-primary to-secondary">
+                        儲存變更
+                      </Button>
+                    </ComingSoon>
                     <Button type="button" variant="outline">
                       取消
                     </Button>

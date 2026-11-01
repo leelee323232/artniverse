@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ComingSoon } from "@/components/common/ComingSoon"
 import { useAuth } from "@/lib/auth-context"
 import { ChevronDown, ChevronUp, Gavel } from "lucide-react"
 
@@ -222,16 +223,15 @@ function AuctionActions({ item }: { item: AuctionItem }) {
           </Button>
         </Link>
         {!withdrawn ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => {
-              if (window.confirm("確定要撤回對此商品的全部出價嗎？")) setWithdrawn(true)
-            }}
-          >
-            撤回出價
-          </Button>
+          <ComingSoon>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              撤回出價
+            </Button>
+          </ComingSoon>
         ) : (
           <span className="text-sm text-muted-foreground">已撤回</span>
         )}
