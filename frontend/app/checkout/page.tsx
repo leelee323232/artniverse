@@ -12,9 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ApiCheckout } from "@/components/checkout/api-checkout";
 
 const money = (value: number) => `NT$ ${value.toLocaleString("zh-TW")}`;
-export default function CheckoutPage() { return <Suspense fallback={<p>結帳資料載入中…</p>}><CheckoutForm /></Suspense>; }
+export default function CheckoutPage() { return <Suspense fallback={<p>結帳資料載入中…</p>}><CheckoutEntry /></Suspense>; }
+function CheckoutEntry() {
+  const params = useSearchParams();
+  return params.get('source') === 'api' ? <ApiCheckout draftId={params.get('draft') ?? ''} /> : <CheckoutForm />;
+}
 
 function CheckoutForm() {
   const params = useSearchParams();
