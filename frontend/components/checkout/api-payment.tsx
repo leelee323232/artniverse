@@ -134,6 +134,6 @@ function Payment({ orderId }: { orderId: string }) {
     {!loading && order?.can_pay && !available && <p>此付款方式尚未就緒或金額不符合限制。請確認後端設定後重新載入。</p>}
     {canPay && config && order && <Card className="p-5">{method === "card" ? <TapPayCard config={config} total={order.total} disabled={!canPay} onPay={pay} /> : <TapPayAlternativePayment config={config} method={method} total={order.total} disabled={!canPay} onPay={pay} />}</Card>}
     {method === "line_pay" && bankUrl && config?.environment === "sandbox" && order?.environment === "sandbox" && !uncertain && !loading && !busy && <Card className="p-5"><TapPayAlternativePayment config={config} method="line_pay" total={order.total} disabled={false} paymentUrl={bankUrl} onPay={pay} /></Card>}
-    <div className="flex gap-3"><Button asChild variant="outline"><Link href="/cart">返回購物車</Link></Button><Button variant="outline" disabled={loading || busy} onClick={() => setReload(n => n + 1)}>重新載入</Button></div>
+    <div className="flex flex-wrap gap-3"><Button asChild variant="outline"><Link href={`/account/orders/detail?id=${encodeURIComponent(orderId)}`}>查看訂單明細</Link></Button><Button asChild variant="outline"><Link href="/account/orders">我的訂單</Link></Button><Button asChild variant="outline"><Link href="/cart">返回購物車</Link></Button><Button variant="outline" disabled={loading || busy} onClick={() => setReload(n => n + 1)}>重新載入</Button></div>
   </div>;
 }

@@ -1,360 +1,60 @@
 "use client";
 
-import { useState } from "react";
-import { Navigation } from "@/components/navigation";
-import { UniverseBackground } from "@/components/universe-background";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ComingSoon } from "@/components/common/ComingSoon";
-import { useAuth } from "@/lib/auth-context";
-import {
-  Package,
-  Truck,
-  CheckCircle,
-  Clock,
-  ChevronRight,
-  MessageCircle,
-} from "lucide-react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-
-export const mockOrders = [
-  {
-    id: "ORD-2024-001",
-    date: "2024-01-15",
-    statusUpdatedAt: "2024-01-20 14:32",
-    status: "delivered",
-    total: 1280,
-    items: [
-      {
-        name: "星空筆記本",
-        quantity: 2,
-        price: 380,
-        image: "/cute-notebook-with-stars.jpg",
-        spec: "A5 / 深藍色",
-      },
-      {
-        name: "療癒小熊貼紙組",
-        quantity: 1,
-        price: 120,
-        image: "/cute-bear-stickers.jpg",
-        spec: "",
-      },
-      {
-        name: "夢境明信片套組",
-        quantity: 1,
-        price: 400,
-        image: "/dreamy-postcards.jpg",
-        spec: "10 入組",
-      },
-    ],
-    creator: "星空畫室",
-    trackingNumber: "7D1234567890",
-    paymentMethod: "信用卡",
-    receiver: "王小明",
-    phone: "0912-345-678",
-    deliveryType: "home",
-    address: "台北市信義區松仁路100號5樓",
-    storeInfo: null,
-  },
-  {
-    id: "ORD-2024-002",
-    date: "2024-01-18",
-    statusUpdatedAt: "2024-01-19 09:15",
-    status: "shipping",
-    total: 850,
-    items: [
-      {
-        name: "宇宙帆布袋",
-        quantity: 1,
-        price: 450,
-        image: "/universe-tote-bag.jpg",
-        spec: "自然米色",
-      },
-      {
-        name: "星球徽章組",
-        quantity: 2,
-        price: 200,
-        image: "/planet-badges.jpg",
-        spec: "",
-      },
-    ],
-    creator: "月光工作室",
-    trackingNumber: "7D0987654321",
-    paymentMethod: "LINE Pay",
-    receiver: "林美玲",
-    phone: "0987-654-321",
-    deliveryType: "store",
-    address: null,
-    storeInfo: "7-ELEVEN 信義門市（台北市信義路五段7號）",
-  },
-  {
-    id: "ORD-2024-003",
-    date: "2024-01-20",
-    statusUpdatedAt: "2024-01-20 11:00",
-    status: "processing",
-    total: 560,
-    items: [
-      {
-        name: "手繪風格海報",
-        quantity: 1,
-        price: 560,
-        image: "/hand-drawn-illustration-poster.jpg",
-        spec: "A3 / 霧面",
-      },
-    ],
-    creator: "森林畫家",
-    trackingNumber: null,
-    paymentMethod: "ATM 轉帳",
-    receiver: "陳大華",
-    phone: "0955-111-222",
-    deliveryType: "home",
-    address: "新北市板橋區文化路一段188號3樓",
-    storeInfo: null,
-  },
-  {
-    id: "ORD-2024-004",
-    date: "2024-01-22",
-    statusUpdatedAt: "2024-01-22 16:48",
-    status: "pending",
-    total: 320,
-    items: [
-      {
-        name: "可愛吉祥物設計",
-        quantity: 1,
-        price: 320,
-        image: "/cute-mascot-design.jpg",
-        spec: "",
-      },
-    ],
-    creator: "夢想插畫",
-    trackingNumber: null,
-    paymentMethod: "信用卡",
-    receiver: "張小芳",
-    phone: "0922-333-444",
-    deliveryType: "home",
-    address: "台中市西屯區台灣大道三段99號",
-    storeInfo: null,
-  },
-];
+import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { OrdersLayout, OrdersLogin, OrderError, OrderBadge, OrderItems } from "@/components/orders/order-shared";
+import { listMyOrders, methodLabels, statusLabels, orderDate, orderMoney, orderError, retryDelay, type OrderPage } from "@/lib/commerce/my-orders-api";
 
 export default function OrdersPage() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("all");
+  const { user, isLoading } = useAuth();
+  return <OrdersLayout><h1 className="text-3xl font-bold">我的訂單</h1>
+    {isLoading ? <p role="status">確認登入中…</p> : !user ? <OrdersLogin /> : <OrderList key={String(user.id)} />}
+  </OrdersLayout>;
+}
 
-  if (!user) {
-    return (
-      <div className="relative min-h-screen">
-        <UniverseBackground />
-        <Navigation />
-        <div className="container mx-auto flex min-h-screen items-center justify-center px-4 pt-16">
-          <Card className="border-border/50 bg-card/30 p-8 backdrop-blur-md text-center">
-            <p className="mb-4 text-foreground">請先登入以查看訂單</p>
-            <Link href="/login">
-              <Button className="bg-gradient-to-r from-primary to-secondary">
-                前往登入
-              </Button>
-            </Link>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case "pending":
-        return {
-          label: "待付款",
-          color: "bg-yellow-500/20 text-yellow-500",
-          icon: Clock,
-        };
-      case "processing":
-        return {
-          label: "處理中",
-          color: "bg-blue-500/20 text-blue-500",
-          icon: Package,
-        };
-      case "shipping":
-        return {
-          label: "運送中",
-          color: "bg-purple-500/20 text-purple-500",
-          icon: Truck,
-        };
-      case "delivered":
-        return {
-          label: "已送達",
-          color: "bg-green-500/20 text-green-500",
-          icon: CheckCircle,
-        };
-      default:
-        return { label: status, color: "bg-muted", icon: Package };
-    }
-  };
-
-  const filteredOrders =
-    activeTab === "all"
-      ? mockOrders
-      : mockOrders.filter((order) => order.status === activeTab);
-
-  return (
-    <div className="relative min-h-screen">
-      <UniverseBackground />
-      <Navigation />
-
-      <div className="container mx-auto px-4 pt-24 pb-20">
-        <div className="mx-auto max-w-4xl">
-          <h1 className="mb-8 text-3xl font-bold text-foreground">我的訂單</h1>
-
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <TabsList className="mb-6 grid w-full grid-cols-5">
-              <TabsTrigger value="all">全部</TabsTrigger>
-              <TabsTrigger value="pending">待付款</TabsTrigger>
-              <TabsTrigger value="processing">處理中</TabsTrigger>
-              <TabsTrigger value="shipping">運送中</TabsTrigger>
-              <TabsTrigger value="delivered">已送達</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value={activeTab} className="space-y-4">
-              {filteredOrders.length === 0 ? (
-                <Card className="border-border/50 bg-card/30 p-12 backdrop-blur-md text-center">
-                  <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                  <p className="text-muted-foreground">目前沒有符合的訂單</p>
-                </Card>
-              ) : (
-                filteredOrders.map((order) => {
-                  const statusInfo = getStatusInfo(order.status);
-                  const StatusIcon = statusInfo.icon;
-
-                  return (
-                    <Card
-                      key={order.id}
-                      className="border-border/50 bg-card/30 backdrop-blur-md overflow-hidden"
-                    >
-                      {/* Order Header */}
-                      <div className="flex items-center justify-between border-b border-border/50 bg-white/5 px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <p className="font-medium text-foreground">
-                              {order.id}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {order.date}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Badge className={statusInfo.color}>
-                            <StatusIcon className="mr-1 h-3 w-3" />
-                            {statusInfo.label}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      {/* Order Items */}
-                      <div className="p-6">
-                        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>來自</span>
-                          <span className="font-medium text-primary">
-                            {order.creator}
-                          </span>
-                        </div>
-
-                        <div className="space-y-4">
-                          {order.items.map((item, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-4"
-                            >
-                              <div className="h-16 w-16 overflow-hidden rounded-lg bg-muted/30">
-                                <img
-                                  src={item.image || "/placeholder.svg"}
-                                  alt={item.name}
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-medium text-foreground">
-                                  {item.name}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  x{item.quantity}
-                                </p>
-                              </div>
-                              <p className="font-medium text-foreground">
-                                NT$ {item.price}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Tracking */}
-                        {order.trackingNumber && (
-                          <div className="mt-4 rounded-lg bg-white/5 p-3">
-                            <p className="text-sm text-muted-foreground">
-                              物流單號：
-                              <span className="font-medium text-foreground">
-                                {order.trackingNumber}
-                              </span>
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Order Footer */}
-                      <div className="flex items-center justify-between border-t border-border/50 px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <ComingSoon>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-transparent"
-                            >
-                              <MessageCircle className="mr-2 h-4 w-4" />
-                              聯繫賣家
-                            </Button>
-                          </ComingSoon>
-                          {order.status === "delivered" && (
-                            <ComingSoon>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="bg-transparent"
-                              >
-                                評價商品
-                              </Button>
-                            </ComingSoon>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <p className="text-sm text-muted-foreground">
-                              訂單金額
-                            </p>
-                            <p className="text-xl font-bold text-primary">
-                              NT$ {order.total}
-                            </p>
-                          </div>
-                          <Link href={`/account/orders/detail?id=${order.id}`}>
-                            <Button variant="ghost" size="icon">
-                              <ChevronRight className="h-5 w-5" />
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-    </div>
-  );
+function OrderList() {
+  const [method, setMethod] = useState("");
+  const [status, setStatus] = useState("");
+  const [page, setPage] = useState(1);
+  const [reload, setReload] = useState(0);
+  const [result, setResult] = useState<OrderPage | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = window.setTimeout(() => setCooldown(n => Math.max(0, n - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [cooldown]);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setResult(null); setError("");
+    void listMyOrders(page, method, status, controller.signal).then(data => {
+      if (!controller.signal.aborted) setResult(data);
+    }).catch(e => {
+      if (!controller.signal.aborted) { setError(orderError(e)); setCooldown(retryDelay(e)); }
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [page, method, status, reload]);
+  const disabled = loading || cooldown > 0;
+  return <div className="space-y-5">
+    <Card className="flex flex-wrap items-end gap-4 bg-card/50 p-4">
+      <label className="space-y-2"><span className="block text-sm">付款狀態</span><select className="rounded-md border bg-background p-2" value={status} disabled={disabled} onChange={e => { setStatus(e.target.value); setPage(1); }}><option value="">全部狀態</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label className="space-y-2"><span className="block text-sm">付款方式</span><select className="rounded-md border bg-background p-2" value={method} disabled={disabled} onChange={e => { setMethod(e.target.value); setPage(1); }}><option value="">全部方式</option>{Object.entries(methodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <Button variant="outline" disabled={disabled} onClick={() => setReload(n => n + 1)}>{cooldown > 0 ? `${cooldown} 秒後可重試` : "重新載入"}</Button>
+    </Card>
+    <p className="text-sm text-muted-foreground">付款與出貨狀態分開記錄，目前尚未提供物流進度。訂單時間均為台灣時間。</p>
+    {error && <OrderError message={error} />}
+    {loading && <p role="status">載入訂單中…</p>}
+    {!loading && result && result.data.length === 0 && <Card className="space-y-4 p-8 text-center"><p>目前沒有符合條件的訂單。</p>{page > 1 ? <Button variant="outline" onClick={() => setPage(1)}>返回第一頁</Button> : <Button asChild variant="outline"><Link href="/shop">瀏覽商品</Link></Button>}</Card>}
+    {!loading && result?.data.map(order => <Card key={order.id} className="overflow-hidden border-border/50 bg-card/50">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b p-5"><div className="min-w-0"><p className="break-all text-sm font-medium">訂單 {order.id}</p><p className="mt-1 text-sm text-muted-foreground">{orderDate(order.created_at)}</p></div><OrderBadge order={order} /></div>
+      <div className="px-5"><OrderItems order={order} /></div>
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t p-5"><div><p className="text-sm text-muted-foreground">{methodLabels[order.payment_method] ?? "其他付款方式"}{order.environment === "sandbox" ? "・測試訂單" : ""}</p><p className="text-xl font-bold">{orderMoney(order.total, order.currency)}</p></div><Button asChild><Link href={`/account/orders/detail?id=${encodeURIComponent(order.id)}`}>查看訂單</Link></Button></div>
+    </Card>)}
+    {!loading && result && <nav aria-label="訂單分頁" className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-muted-foreground">共 {result.meta.total} 筆・第 {result.meta.current_page} / {result.meta.last_page} 頁</p><div className="flex gap-2"><Button variant="outline" disabled={disabled || page <= 1} onClick={() => setPage(n => n - 1)}>上一頁</Button><Button variant="outline" disabled={disabled || !result.meta.has_more_pages} onClick={() => setPage(n => n + 1)}>下一頁</Button></div></nav>}
+  </div>;
 }
