@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Heart, 
-  MessageCircle, 
-  Send, 
-  Share2, 
+import {
+  Heart,
+  MessageCircle,
+  Send,
+  Share2,
   MoreHorizontal,
   Bookmark,
   ChevronLeft,
@@ -49,31 +49,34 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
-  const handleLike = () => {
-    if (onLike) onLike(post.id);
-  };
+  // TEMP: 原始互動邏輯暫時停用，改用 ComingSoon；恢復功能時取消下方註解。
+// const handleLike = () => {
+//     if (onLike) onLike(post.id);
+//   };
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentText.trim()) return;
-    if (onAddComment) {
-      onAddComment(post.id, commentText.trim());
-      setCommentText("");
-    }
-  };
+  // TEMP: 原始互動邏輯暫時停用，改用 ComingSoon；恢復功能時取消下方註解。
+// const handleCommentSubmit = (e: React.FormEvent) => {
+//     e.preventDefault();
+//     if (!commentText.trim()) return;
+//     if (onAddComment) {
+//       onAddComment(post.id, commentText.trim());
+//       setCommentText("");
+//     }
+//   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: `${post.authorName} 的貼文`,
-        text: post.content,
-        url: window.location.href,
-      }).catch(console.error);
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert("已複製貼文連結至剪貼簿！");
-    }
-  };
+  // TEMP: 原始互動邏輯暫時停用，改用 ComingSoon；恢復功能時取消下方註解。
+// const handleShare = () => {
+//     if (navigator.share) {
+//       navigator.share({
+//         title: `${post.authorName} 的貼文`,
+//         text: post.content,
+//         url: window.location.href,
+//       }).catch(console.error);
+//     } else {
+//       navigator.clipboard.writeText(window.location.href);
+//       alert("已複製貼文連結至剪貼簿！");
+//     }
+//   };
 
   const nextImage = () => {
     if (currentImgIndex < post.images.length - 1) {
@@ -118,7 +121,7 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
               <span className="text-xs text-muted-foreground">·</span>
               <span className="text-xs text-muted-foreground">{post.createdAt}</span>
             </div>
-            <ComingSoon>
+            <ComingSoon className="flex-1">
               <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -133,7 +136,7 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
           {/* 圖片輪播牆 (最多 10 張) */}
           {post.images.length > 0 && (
             <div className="relative overflow-hidden rounded-xl border border-border/30 bg-black/20">
-              <div 
+              <div
                 className="flex transition-transform duration-300 ease-out"
                 style={{ transform: `translateX(-${currentImgIndex * 100}%)` }}
               >
@@ -186,8 +189,17 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
 
           {/* Threads 四大核心功能列 */}
           <div className="flex items-center gap-1 py-1 text-muted-foreground">
-            <ComingSoon>
-              <Button
+            <ComingSoon className="flex-1">
+              {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hover:text-red-500 hover:bg-red-500/5"
+              >
+                <Heart className="h-4 w-4" />
+              </Button>
+*/}
+<Button aria-label="按讚"
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 hover:text-red-500 hover:bg-red-500/5"
@@ -195,7 +207,8 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
                 <Heart className="h-4 w-4" />
               </Button>
             </ComingSoon>
-            <Button
+            {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<Button
               variant="ghost"
               size="icon"
               onClick={() => setShowComments(!showComments)}
@@ -203,7 +216,19 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
             >
               <MessageCircle className="h-4 w-4" />
             </Button>
-            <Button
+*/}
+<ComingSoon className="flex-1">
+<Button aria-label="留言"
+              variant="ghost"
+              size="icon"
+
+              className="h-8 w-8 hover:text-primary hover:bg-primary/5"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </Button>
+</ComingSoon>
+            {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<Button
               variant="ghost"
               size="icon"
               onClick={handleShare}
@@ -211,8 +236,28 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
             >
               <Send className="h-4 w-4" />
             </Button>
-            <ComingSoon>
-              <Button
+*/}
+<ComingSoon className="flex-1">
+<Button aria-label="分享貼文"
+              variant="ghost"
+              size="icon"
+
+              className="h-8 w-8 hover:text-green-500 hover:bg-green-500/5"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+</ComingSoon>
+            <ComingSoon className="flex-1">
+              {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 hover:text-yellow-500 hover:bg-yellow-500/5 ml-auto"
+              >
+                <Bookmark className="h-4 w-4" />
+              </Button>
+*/}
+<Button aria-label="收藏貼文"
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 hover:text-yellow-500 hover:bg-yellow-500/5 ml-auto"
@@ -226,12 +271,22 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>{post.likes} 個讚</span>
             <span>·</span>
-            <span 
+            {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<span
               className="hover:underline cursor-pointer"
               onClick={() => setShowComments(!showComments)}
             >
               {post.comments.length} 則回覆
             </span>
+*/}
+<ComingSoon className="flex-1">
+<span
+              className="hover:underline cursor-pointer"
+
+            >
+              {post.comments.length} 則回覆
+            </span>
+</ComingSoon>
           </div>
 
           {/* 單層簡易留言板 */}
@@ -263,15 +318,22 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
               )}
 
               {/* 新增留言 Input */}
-              <form onSubmit={handleCommentSubmit} className="flex gap-2">
+              <form
+                // TEMP: 原本 onSubmit={handleCommentSubmit}；留言功能暫時使用 ComingSoon 阻擋，保留防止原生送出。
+                onSubmit={(event) => event.preventDefault()} className="flex gap-2">
                 <Input
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="留個言支持一下..."
                   className="bg-white/5 border-border/40 focus-visible:ring-primary h-8 text-xs"
                 />
-                <ComingSoon>
-                  <Button type="button" size="sm" className="h-8 bg-primary hover:bg-primary/80 px-3">
+                <ComingSoon className="flex-1">
+                  {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<Button type="button" size="sm" className="h-8 bg-primary hover:bg-primary/80 px-3">
+                    <Send className="h-3.5 w-3.5" />
+                  </Button>
+*/}
+<Button aria-label="送出留言" type="button" size="sm" className="h-8 bg-primary hover:bg-primary/80 px-3">
                     <Send className="h-3.5 w-3.5" />
                   </Button>
                 </ComingSoon>
