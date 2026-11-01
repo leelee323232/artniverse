@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Navigation } from "@/components/navigation"
 import { UniverseBackground } from "@/components/universe-background"
 import { Card } from "@/components/ui/card"
@@ -8,25 +8,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth, normalizeUser, type User } from "@/lib/auth-context"
+import { saveProfile, uploadAvatar, profileError } from "@/lib/profile-api"
 import { Camera, Save, Loader2 } from "lucide-react"
-import { ComingSoon } from "@/components/common/ComingSoon"
 import Link from "next/link"
 
 export default function ProfilePage() {
-  const { user, updateUser } = useAuth()
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [formData, setFormData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phone: "",
-    birthday: "",
-    address: "",
-    bio: "",
-  })
+  const { user, isLoading } = useAuth()
+
+  if (isLoading) return (
+    <div className="relative min-h-screen">
+      <UniverseBackground /><Navigation />
+      <main className="container mx-auto px-4 pt-24" role="status">載入個人資料中…</main>
+    </div>
+  )
 
   if (!user) {
     return (
@@ -45,12 +40,49 @@ export default function ProfilePage() {
     )
   }
 
+  return <ProfileForm key={user.id} user={user} />
+}
+
+function profileFields(user: User) {
+  return { name: user.name, email: user.email, phone: user.phone ?? "",
+    birthday: user.birthday ?? "", address: user.address ?? "", bio: user.bio ?? "" }
+}
+
+function ProfileForm({ user }: { user: User }) {
+  const { updateUser } = useAuth()
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const busy = useRef(false)
+  const active = useRef(true)
+  const [formData, setFormData] = useState(() => profileFields(user))
+  useEffect(() => { active.current = true; return () => { active.current = false } }, [])
+  useEffect(() => {
+    if (!isEditing) setFormData(profileFields(user))
+  }, [user, isEditing])
+
   const handleSave = async () => {
-    setIsSaving(true)
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    updateUser({ name: formData.name })
-    setIsSaving(false)
-    setIsEditing(false)
+    if (busy.current) return
+    busy.current = true
+    setIsSaving(true); setError(""); setMessage("")
+    try {
+      const saved = normalizeUser(await saveProfile({
+        name: formData.name.trim(), phone: formData.phone.trim() || null,
+        birthday: formData.birthday || null, address: formData.address.trim() || null,
+        bio: formData.bio.trim() || null,
+      }))
+      if (!active.current || saved.id !== String(user.id)) return
+      updateUser(saved)
+      setFormData(profileFields(saved)); setIsEditing(false); setMessage("個人資料已儲存。")
+    } catch (err) {
+      if (active.current) setError(profileError(err))
+    } finally {
+      busy.current = false
+      if (active.current) setIsSaving(false)
+    }
   }
 
   const handleAvatarClick = () => {
@@ -59,47 +91,38 @@ export default function ProfilePage() {
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    e.target.value = ""
     if (!file) return
+    if (busy.current) return
+    setError(""); setMessage("")
 
     // 驗證檔案類型
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"]
     if (!allowedTypes.includes(file.type)) {
-      alert("只支援 JPG、PNG、WEBP、GIF 格式的圖片")
+      setError("只支援 JPG、PNG、WEBP、GIF 格式的圖片")
       return
     }
 
     // 驗證檔案大小（上限 5MB）
     const maxSize = 5 * 1024 * 1024
     if (file.size > maxSize) {
-      alert("圖片大小不可超過 5MB")
+      setError("圖片大小不可超過 5MB")
       return
     }
 
+    busy.current = true
     setIsUploadingAvatar(true)
 
     try {
-      // 以 FormData 夾帶檔案（multipart/form-data）送到後端
-      const formPayload = new FormData()
-      formPayload.append("avatar", file)
-
-      // TODO: 接上真正的後端上傳 API，例如：
-      // const res = await fetch("/api/account/avatar", {
-      //   method: "POST",
-      //   body: formPayload, // 不要手動設定 Content-Type，瀏覽器會自動帶 boundary
-      // })
-      // const data = await res.json() // { url: "https://.../avatar.jpg" }
-      // updateUser({ avatar: data.url })
-
-      // 目前為前端模擬：用本地預覽網址暫時顯示
-      await new Promise((resolve) => setTimeout(resolve, 800))
-      const previewUrl = URL.createObjectURL(file)
-      updateUser({ avatar: previewUrl })
-    } catch {
-      alert("頭像上傳失敗，請稍後再試")
+      const saved = normalizeUser(await uploadAvatar(file))
+      if (!active.current || saved.id !== String(user.id)) return
+      updateUser(saved)
+      setMessage("頭像已更新。")
+    } catch (err) {
+      if (active.current) setError(profileError(err))
     } finally {
-      setIsUploadingAvatar(false)
-      // 清空 input 讓同一張圖可再次選取觸發 onChange
-      e.target.value = ""
+      busy.current = false
+      if (active.current) setIsUploadingAvatar(false)
     }
   }
 
@@ -113,6 +136,8 @@ export default function ProfilePage() {
           <h1 className="mb-8 text-3xl font-bold text-foreground">個人資料</h1>
 
           <Card className="border-border/50 bg-card/30 p-8 backdrop-blur-md">
+            {error && <p role="alert" className="mb-4 text-sm text-destructive">{error}</p>}
+            {message && <p role="status" className="mb-4 text-sm text-primary">{message}</p>}
             {/* Avatar Section */}
             <div className="mb-8 flex items-center gap-6">
               <div className="relative">
@@ -136,15 +161,19 @@ export default function ProfilePage() {
                   onChange={handleAvatarChange}
                   className="hidden"
                 />
-                <ComingSoon className="absolute bottom-0 right-0">
-                  <button
-                    type="button"
-                    aria-label="更換頭像"
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  >
+                <button
+                  type="button"
+                  onClick={handleAvatarClick}
+                  disabled={isUploadingAvatar || isSaving}
+                  aria-label="更換頭像"
+                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-70"
+                >
+                  {isUploadingAvatar ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
                     <Camera className="h-4 w-4" />
-                  </button>
-                </ComingSoon>
+                  )}
+                </button>
               </div>
               <div>
                 <h2 className="text-xl font-bold text-foreground">{user.name}</h2>
@@ -164,9 +193,10 @@ export default function ProfilePage() {
                   <Label htmlFor="name">姓名</Label>
                   <Input
                     id="name"
+                    maxLength={40}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    disabled={!isEditing}
+                    disabled={!isEditing || isSaving}
                     className="bg-white/5"
                   />
                 </div>
@@ -189,7 +219,7 @@ export default function ProfilePage() {
                     id="phone"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    disabled={!isEditing}
+                    disabled={!isEditing || isSaving}
                     placeholder="0912-345-678"
                     className="bg-white/5"
                   />
@@ -201,7 +231,7 @@ export default function ProfilePage() {
                     type="date"
                     value={formData.birthday}
                     onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
-                    disabled={!isEditing}
+                    disabled={!isEditing || isSaving}
                     className="bg-white/5"
                   />
                 </div>
@@ -211,9 +241,10 @@ export default function ProfilePage() {
                 <Label htmlFor="address">地址</Label>
                 <Input
                   id="address"
+                    maxLength={200}
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  disabled={!isEditing}
+                  disabled={!isEditing || isSaving}
                   placeholder="請輸入收件地址"
                   className="bg-white/5"
                 />
@@ -223,9 +254,10 @@ export default function ProfilePage() {
                 <Label htmlFor="bio">個人簡介</Label>
                 <Textarea
                   id="bio"
+                  maxLength={2000}
                   value={formData.bio}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                  disabled={!isEditing}
+                  disabled={!isEditing || isSaving}
                   placeholder="介紹一下自己..."
                   className="min-h-[100px] bg-white/5"
                 />
@@ -236,20 +268,32 @@ export default function ProfilePage() {
                   <>
                     <Button
                       variant="outline"
-                      onClick={() => setIsEditing(false)}
+                      onClick={() => { setFormData(profileFields(user)); setIsEditing(false); setError(""); setMessage("") }}
+                      disabled={isSaving || isUploadingAvatar}
                       className="bg-transparent"
                     >
                       取消
                     </Button>
-                    <ComingSoon>
-                      <Button className="bg-gradient-to-r from-primary to-secondary">
-                        <Save className="mr-2 h-4 w-4" />
-                        儲存變更
-                      </Button>
-                    </ComingSoon>
+                    <Button
+                      onClick={handleSave}
+                      disabled={isSaving || isUploadingAvatar}
+                      className="bg-gradient-to-r from-primary to-secondary"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          儲存中...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          儲存變更
+                        </>
+                      )}
+                    </Button>
                   </>
                 ) : (
-                  <Button onClick={() => setIsEditing(true)} variant="outline" className="bg-transparent">
+                  <Button onClick={() => { setIsEditing(true); setError(""); setMessage("") }} disabled={isUploadingAvatar} variant="outline" className="bg-transparent">
                     編輯資料
                   </Button>
                 )}

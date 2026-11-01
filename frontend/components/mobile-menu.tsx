@@ -34,7 +34,7 @@ export function MobileMenu() {
       return;
     }
 
-    if (user.isCreator) {
+    if (user.is_creator) {
       router.push("/creator-portal");
     } else {
       router.push("/creator-apply");

@@ -16,6 +16,10 @@ export interface User {
   email: string
   name: string
   avatar: string
+  phone?: string | null
+  birthday?: string | null
+  address?: string | null
+  bio?: string | null
   is_creator: boolean
   creatorProfile?: {
     brandName: string
@@ -32,11 +36,15 @@ export interface User {
   }
 }
 
-interface ApiUser {
+export interface ApiUser {
   id: number | string
   email: string
   name: string
   avatar?: string | null
+  phone?: string | null
+  birthday?: string | null
+  address?: string | null
+  bio?: string | null
   is_creator?: boolean
   creator_profile?: User["creatorProfile"]
 }
@@ -80,13 +88,17 @@ interface AuthContextType {
 const AuthContext =
   createContext<AuthContextType | undefined>(undefined)
 
-function normalizeUser(apiUser: ApiUser): User {
+export function normalizeUser(apiUser: ApiUser): User {
   return {
     id: String(apiUser.id),
     email: apiUser.email,
     name: apiUser.name,
     avatar: apiUser.avatar ?? "",
-    isCreator: apiUser.is_creator ?? false,
+    is_creator: apiUser.is_creator ?? false,
+    phone: apiUser.phone ?? null,
+    birthday: apiUser.birthday ?? null,
+    address: apiUser.address ?? null,
+    bio: apiUser.bio ?? null,
     creatorProfile: apiUser.creator_profile,
   }
 }
@@ -215,7 +227,7 @@ export function AuthProvider({
       const response = await api.get("/api/v1/me")
       const authenticatedUser = response.data.data ?? response.data
 
-      setUser(authenticatedUser)
+      setUser(normalizeUser(authenticatedUser))
 
       return {
         success: true,
@@ -273,13 +285,12 @@ export function AuthProvider({
     updates: Partial<User>,
   ): void {
     /*
-     * 現在只更新前端記憶體。
-     * 等後端建立 PUT /api/v1/me 後，
-     * 再改成先呼叫 API，成功後更新 state。
+     * 僅同步前端會員狀態；個人資料頁先完成 PATCH /me 或 POST /me/avatar，
+     * 再傳入後端回傳的資料。拒絕套用其他會員的延遲回應。
      */
     setUser((currentUser) => {
-      if (!currentUser) {
-        return null
+      if (!currentUser || (updates.id !== undefined && String(updates.id) !== String(currentUser.id))) {
+        return currentUser
       }
 
       return {
@@ -299,7 +310,7 @@ export function AuthProvider({
     setUser((currentUser) => {
       if (
         !currentUser ||
-        !currentUser.isCreator
+        !currentUser.is_creator
       ) {
         return currentUser
       }
@@ -340,7 +351,7 @@ export function AuthProvider({
     })
 
     const response = await api.get("/api/v1/me")
-    setUser(response.data.data)
+    setUser(normalizeUser(response.data.data))
 
     return { success: true }
   } catch (error) {

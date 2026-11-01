@@ -2,11 +2,9 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
-import { useCart } from "@/lib/commerce/cart-context";
-import { purchaseIssue, normalizeProductId } from "@/lib/commerce/cart";
-import { mockProducts } from "@/mocks/admin/products";
+import { addCatalogItem, catalogError } from "@/lib/commerce/catalog-api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Heart } from "lucide-react";
@@ -14,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TheCard } from "@/components/common/TheCard";
 
 interface ProductCardProps {
+  source?: "api" | "demo";
   id: string;
   name: string;
   price: number;
@@ -26,6 +25,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({
+  source = "demo",
   id,
   name,
   price,
@@ -40,9 +40,9 @@ export function ProductCard({
   const isControlled = onToggleFavorite !== undefined;
   const isLiked = isControlled ? !!isFavorited : internalLiked;
   const { toast } = useToast();
-  const { addItem, ready, now } = useCart();
-  const product = mockProducts.find(p => p.id === normalizeProductId(id));
-  const unavailable = ready ? purchaseIssue(product, now) : "商品載入中";
+  const [saving, setSaving] = useState(false);
+  const locked = useRef(false);
+  const unavailable = source !== "api" ? "請從商店選擇資料庫商品" : saving ? "加入中…" : stock < 1 ? "商品已售完" : null;
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -53,15 +53,18 @@ export function ProductCard({
     }
   };
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
-    const result = addItem(id);
-    toast({ title: result.ok ? "已加入購物車" : "無法加入購物車", description: result.message, variant: result.ok ? "default" : "destructive" });
+    if (locked.current || unavailable) return;
+    locked.current = true; setSaving(true);
+    try { await addCatalogItem(id); toast({ title: "已加入購物車", description: name }); }
+    catch (error) { toast({ title: "無法加入購物車", description: catalogError(error), variant: "destructive" }); }
+    finally { locked.current = false; setSaving(false); }
   };
 
   return (
     <TheCard className="group overflow-hidden border-border/50 bg-card/50 pt-0 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10">
-      <Link href={{ pathname: "/product", query: { id } }}>
+      <Link href={source === "api" ? { pathname: "/product", query: { id } } : "/shop"}>
         <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img
             src={image || "/placeholder.svg"}

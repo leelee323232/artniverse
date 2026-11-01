@@ -1,0 +1,98 @@
+[
+  {
+    "id": "2",
+    "name": "宇宙圖騰抱枕",
+    "price": 880,
+    "originalPrice": 1080,
+    "images": [
+      "/dreamy-postcards.jpg",
+      "/cute-notebook-with-stars.jpg",
+      "/universe-tote-bag.jpg"
+    ],
+    "category": "客廳",
+    "categoryId": "living-room",
+    "stock": 23,
+    "sold": 512,
+    "creatorId": "2",
+    "creatorName": "夢境畫師",
+    "description": "獨特的宇宙圖騰設計，由知名插畫家手繪創作。採用高密度記憶棉填充，觸感柔軟舒適。外套可拆洗，方便日常清潔保養。",
+    "features": [
+      "原創手繪宇宙圖騰",
+      "高密度記憶棉填充",
+      "外套可拆洗設計",
+      "雙面不同圖案",
+      "環保印染不褪色"
+    ],
+    "specifications": {
+      "材質": "天鵝絨面料 + 記憶棉",
+      "尺寸": "45cm x 45cm",
+      "重量": "450g",
+      "填充物": "高密度記憶棉",
+      "清洗方式": "外套可機洗"
+    }
+  },
+  {
+    "id": "3",
+    "name": "星座馬克杯組",
+    "price": 650,
+    "originalPrice": 780,
+    "images": [
+      "/planet-badges.jpg",
+      "/cute-bear-stickers.jpg",
+      "/cute-notebook-with-stars.jpg"
+    ],
+    "category": "廚房",
+    "categoryId": "kitchen",
+    "stock": 8,
+    "sold": 892,
+    "creatorId": "3",
+    "creatorName": "色彩魔法師",
+    "description": "十二星座系列馬克杯，每個杯子都印有獨特的星座圖案和幸運色系。食品級陶瓷材質，可微波加熱，適合日常使用。",
+    "features": [
+      "十二星座獨特設計",
+      "食品級陶瓷材質",
+      "可微波加熱",
+      "大容量350ml",
+      "附精美禮盒包裝"
+    ],
+    "specifications": {
+      "材質": "高溫燒製陶瓷",
+      "容量": "350ml",
+      "尺寸": "直徑 8.5cm x 高 10cm",
+      "重量": "320g",
+      "包裝": "精美禮盒"
+    }
+  },
+  {
+    "id": "5",
+    "name": "銀河系香氛掛飾",
+    "price": 450,
+    "originalPrice": 520,
+    "images": [
+      "/cute-bear-stickers.jpg",
+      "/cute-notebook-with-stars.jpg",
+      "/dreamy-postcards.jpg"
+    ],
+    "category": "車用",
+    "categoryId": "car",
+    "stock": 67,
+    "sold": 1203,
+    "creatorId": "4",
+    "creatorName": "奇幻製造者",
+    "description": "銀河系造型香氛掛飾，內含天然精油香氛片，可持續散發清新香氣約30天。獨特的星球造型設計，為您的愛車增添藝術氣息。",
+    "features": [
+      "天然精油配方",
+      "持香約30天",
+      "可替換香氛片",
+      "360度旋轉設計",
+      "多款星球造型可選"
+    ],
+    "specifications": {
+      "材質": "鋅合金 + 水晶玻璃",
+      "尺寸": "5cm x 5cm x 8cm",
+      "重量": "45g",
+      "香氛成分": "天然植物精油",
+      "持香時間": "約30天"
+    }
+  }
+]
