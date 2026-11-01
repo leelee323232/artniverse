@@ -1,40 +1,22 @@
 "use client";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import React, { useState } from "react";
-import Image from "next/image";
+import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
+import {
+  listCreatorApplications, getCreatorApplication, reviewCreatorApplication,
+  getCreatorDocument, creatorReviewError,
+  type ApplicationSummary, type ApplicationStatus, type CreatorApplication as Application,
+} from "@/lib/admin-creator-applications-api";
 import { Eye, Check, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-type ApplicationStatus = "pending" | "approved" | "rejected";
-
-// 根據 JSON 格式擴充 Interface，包含所有填寫欄位
-interface Application {
-  id: string;
-  date: string;
-  status: ApplicationStatus;
-  rejectReason?: string;
-
-  // JSON 欄位對接
-  email: string;
-  realName: string;
-  brandName: string;
-  storePickup: string;
-  phone: string;
-  birthday: string;
-  address: string;
-  bankCode: string;
-  bankAccount: string;
-  selectedCategories: string[]; // array
-  creativePhilosophy: string; // string
-  idFrontImage: string; // 身分證正面圖片網址
-  idBackImage: string; // 身分證反面圖片網址
-  agreeToContract: boolean; // boolean
-}
-
 const initialApplications: Application[] = [
   {
-    id: "2",
+    id: "demo-2",
+    version: 1,
+    isDemo: true,
     date: "2026-06-19",
     status: "approved",
     email: "mei@example.com",
@@ -53,7 +35,9 @@ const initialApplications: Application[] = [
     agreeToContract: true,
   },
   {
-    id: "3",
+    id: "demo-3",
+    version: 1,
+    isDemo: true,
     date: "2026-06-18",
     status: "rejected",
     rejectReason: "資料格式不正確",
@@ -75,13 +59,101 @@ const initialApplications: Application[] = [
 ];
 
 export default function CreatorApplicationsPage() {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <p role="status">確認登入中…</p>;
+  if (!user) return <p>請先以管理員帳號<Link href="/login/" className="underline">登入</Link>。</p>;
+  return <CreatorApplications key={user.id} />;
+}
+
+function IdentityDocument({ id, side, isDemo }: { id: string; side: "front" | "back"; isDemo?: boolean }) {
+  const [url, setUrl] = useState("");
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    if (isDemo) return;
+    const controller = new AbortController();
+    let objectUrl = "";
+    setUrl(""); setError("");
+    void getCreatorDocument(id, side, controller.signal).then(blob => {
+      if (controller.signal.aborted) return;
+      objectUrl = URL.createObjectURL(blob);
+      setUrl(objectUrl);
+    }).catch(err => { if (!controller.signal.aborted) setError(creatorReviewError(err)); });
+    return () => { controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [id, side, isDemo, attempt]);
+  if (isDemo) return <span>示範資料，無實際證件</span>;
+  if (error) return <div role="alert">{error}<Button type="button" variant="outline" size="sm" onClick={() => setAttempt(value => value + 1)}>重試圖片</Button></div>;
+  if (!url) return <span role="status">證件載入中…</span>;
+  // Authenticated blobs remain in memory and are revoked when the dialog closes.
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={url} alt={side === "front" ? "身分證正面" : "身分證反面"} className="h-auto max-w-full rounded border" onError={() => setError("圖片無法顯示，請重試。")}/>;
+}
+
+function CreatorApplications() {
   const [applications, setApplications] =
-    useState<Application[]>(initialApplications);
+    useState<ApplicationSummary[]>([]);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [confirmType, setConfirmType] = useState<
     "approve" | "reject" | "re-evaluate" | null
   >(null);
   const [rejectInputReason, setRejectInputReason] = useState("");
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [reload, setReload] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState("");
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
+  const [reviewError, setReviewError] = useState("");
+  const [needsRefresh, setNeedsRefresh] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const busy = useRef(false);
+  const active = useRef(true);
+  const detailRequest = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    active.current = true;
+    return () => { active.current = false; detailRequest.current?.abort(); };
+  }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setListError(""); setApplications([]);
+    void listCreatorApplications(page, controller.signal).then(result => {
+      if (controller.signal.aborted) return;
+      setApplications(result.data); setLastPage(result.meta.last_page); setTotal(result.meta.total);
+    }).catch(err => { if (!controller.signal.aborted) setListError(creatorReviewError(err)); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [page, reload]);
+
+  const openApplication = async (app: ApplicationSummary) => {
+    if (busy.current) return;
+    detailRequest.current?.abort();
+    setSelectedApp(null); setConfirmType(null); setRejectInputReason("");
+    setDetailError(""); setReviewError(""); setNeedsRefresh(false);
+    if (app.isDemo) {
+      setDetailLoading(false);
+      setSelectedApp(initialApplications.find(item => item.id === app.id) ?? null);
+      return;
+    }
+    const controller = new AbortController();
+    detailRequest.current = controller;
+    setDetailLoading(true);
+    try {
+      const detail = await getCreatorApplication(app.id, controller.signal);
+      if (!controller.signal.aborted) setSelectedApp(detail);
+    } catch (err) {
+      if (!controller.signal.aborted) setDetailError(creatorReviewError(err));
+    } finally {
+      if (!controller.signal.aborted) setDetailLoading(false);
+    }
+  };
+  const closeApplication = () => {
+    if (busy.current) return;
+    detailRequest.current?.abort();
+    setSelectedApp(null); setConfirmType(null); setReviewError(""); setDetailLoading(false);
+  };
 
   const renderStatusBadge = (status: ApplicationStatus) => {
     switch (status) {
@@ -106,25 +178,28 @@ export default function CreatorApplicationsPage() {
     }
   };
 
-  const handleStatusChange = (
+  const handleStatusChange = async (
     id: string,
     newStatus: ApplicationStatus,
     reason?: string,
   ) => {
-    setApplications((prev) =>
-      prev.map((app) =>
-        app.id === id
-          ? { ...app, status: newStatus, rejectReason: reason || "" }
-          : app,
-      ),
-    );
-    setSelectedApp((prev) =>
-      prev && prev.id === id
-        ? { ...prev, status: newStatus, rejectReason: reason || "" }
-        : prev,
-    );
-    setConfirmType(null);
-    setRejectInputReason("");
+    if (busy.current || needsRefresh || !selectedApp || selectedApp.id !== id || selectedApp.isDemo) return;
+    if (newStatus === "rejected" && !reason?.trim()) return;
+    busy.current = true; setSaving(true); setReviewError("");
+    try {
+      const updated = await reviewCreatorApplication(selectedApp, newStatus, reason);
+      if (!active.current) return;
+      setSelectedApp(updated);
+      setConfirmType(null); setRejectInputReason("");
+      setReload(value => value + 1);
+    } catch (err) {
+      if (!active.current) return;
+      setReviewError(creatorReviewError(err));
+      setNeedsRefresh(true); setConfirmType(null);
+    } finally {
+      busy.current = false;
+      if (active.current) setSaving(false);
+    }
   };
 
   return (
@@ -134,8 +209,18 @@ export default function CreatorApplicationsPage() {
         description="審核創作者申請資料與身分證明，管理申請狀態及退件原因。"
       />
 
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Button variant="outline" disabled={loading || saving} onClick={() => setReload(value => value + 1)}>重新載入</Button>
+        {!loading && !listError && <span className="text-sm text-muted-foreground">正式申請共 {total} 筆；示範資料僅供查看，不會寫入資料庫。</span>}
+      </div>
+      {loading && <p role="status" className="mb-4">載入申請列表中…</p>}
+      {listError && <p role="alert" className="mb-4 text-destructive">{listError} <Link href="/login/" className="underline">前往登入</Link></p>}
+      {detailLoading && <p role="status" className="mb-4">載入詳細資料中…</p>}
+      {detailError && <p role="alert" className="mb-4 text-destructive">{detailError} 請再次點選申請重試。</p>}
+      {!loading && !listError && total === 0 && <p className="mb-4 text-muted-foreground">目前沒有正式申請，以下為保留的示範資料。</p>}
+
       {/* 列表表格：擴充顯示核心主要欄位 */}
-      <div className="bg-background/80 backdrop-blur-lg rounded-xl border border-border/50 shadow-sm overflow-hidden">
+      <div className="bg-background/80 backdrop-blur-lg rounded-xl border border-border/50 shadow-sm overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-muted/30 border-b border-border/50 text-muted-foreground text-sm font-semibold">
@@ -150,14 +235,14 @@ export default function CreatorApplicationsPage() {
             </tr>
           </thead>
           <tbody>
-            {applications.map((app) => (
+            {(!loading && !listError ? [...applications, ...(page === 1 ? initialApplications : [])] : []).map((app) => (
               <tr
                 key={app.id}
-                onClick={() => setSelectedApp(app)}
+                onClick={() => void openApplication(app)}
                 className="border-b border-border/40 hover:bg-muted/40 cursor-pointer transition-colors text-muted-foreground hover:text-foreground text-sm"
               >
                 <td className="p-4 font-medium text-foreground">
-                  {app.realName}
+                  {app.realName}{app.isDemo && <span className="ml-2 text-xs text-muted-foreground">示範</span>}
                 </td>
                 <td className="p-4">{app.brandName}</td>
                 <td className="p-4">{app.email}</td>
@@ -172,7 +257,7 @@ export default function CreatorApplicationsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setSelectedApp(app)}
+                    onClick={() => void openApplication(app)}
                     className="text-muted-foreground hover:text-foreground"
                   >
                     <Eye className="h-4 w-4" />
@@ -184,6 +269,12 @@ export default function CreatorApplicationsPage() {
         </table>
       </div>
 
+      {!loading && !listError && <div className="my-4 flex items-center justify-end gap-3">
+        <Button variant="outline" disabled={page <= 1} onClick={() => setPage(value => value - 1)}>上一頁</Button>
+        <span className="text-sm">第 {page} / {lastPage} 頁</span>
+        <Button variant="outline" disabled={page >= lastPage} onClick={() => setPage(value => value + 1)}>下一頁</Button>
+      </div>}
+
       {/* 第一層：詳細資料視窗 Modal (此處修改為完整呈現 14 項欄位) */}
       {selectedApp && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-40 p-4 animate-in fade-in duration-150">
@@ -194,7 +285,8 @@ export default function CreatorApplicationsPage() {
                 創作者詳細申請資料
               </h3>
               <button
-                onClick={() => setSelectedApp(null)}
+                disabled={saving}
+                onClick={closeApplication}
                 className="text-muted-foreground hover:text-foreground text-xl transition-colors"
               >
                 &times;
@@ -293,17 +385,17 @@ export default function CreatorApplicationsPage() {
                 <span className="font-medium text-muted-foreground">
                   身分證正面
                 </span>
-                <span className="col-span-2 text-foreground font-mono text-xs">
-                  {selectedApp.idFrontImage}
-                </span>
+                <div className="col-span-2 text-foreground text-xs">
+                  <IdentityDocument key={selectedApp.id + "-front"} id={selectedApp.id} side="front" isDemo={selectedApp.isDemo} />
+                </div>
               </div>
               <div className="grid grid-cols-3 border-b border-border/30 pb-2">
                 <span className="font-medium text-muted-foreground">
                   身分證反面
                 </span>
-                <span className="col-span-2 text-foreground font-mono text-xs">
-                  {selectedApp.idBackImage}
-                </span>
+                <div className="col-span-2 text-foreground text-xs">
+                  <IdentityDocument key={selectedApp.id + "-back"} id={selectedApp.id} side="back" isDemo={selectedApp.isDemo} />
+                </div>
               </div>
               <div className="grid grid-cols-3 border-b border-border/30 pb-2">
                 <span className="font-medium text-muted-foreground">
@@ -313,6 +405,23 @@ export default function CreatorApplicationsPage() {
                   {selectedApp.agreeToContract ? "已同意合約條款" : "未同意"}
                 </span>
               </div>
+
+              {selectedApp.contractContent && <details className="rounded border border-border/50 p-3">
+                <summary className="cursor-pointer text-foreground">送件時同意的合約（{selectedApp.contractVersion}）</summary>
+                <p className="my-2 text-xs">同意時間：{selectedApp.consentedAt || "—"}</p>
+                <pre className="whitespace-pre-wrap break-words font-sans text-sm">{selectedApp.contractContent}</pre>
+              </details>}
+              {!!selectedApp.reviewHistory?.length && <details className="rounded border border-border/50 p-3">
+                <summary className="cursor-pointer text-foreground">審核紀錄</summary>
+                {selectedApp.reviewHistory.map((entry, index) => <div key={index} className="mt-3 space-y-2 border-t pt-2 text-sm">
+                  <p>{entry.created_at}・管理員 {entry.reviewer_id}</p>
+                  <div className="flex items-center gap-2">{renderStatusBadge(entry.from_status)} → {renderStatusBadge(entry.to_status)}</div>
+                  {entry.reason && <p className="whitespace-pre-wrap">{entry.reason}</p>}
+                </div>)}
+              </details>}
+              {selectedApp.isDemo && <p className="text-sm">此筆為示範資料，僅供查看，無法送出審核。</p>}
+              {reviewError && <p role="alert" className="text-destructive">{reviewError}</p>}
+              {needsRefresh && <Button variant="outline" onClick={() => void openApplication(selectedApp)}>重新載入此申請</Button>}
 
               {/* 現有系統保留規格 */}
               <div className="grid grid-cols-3 border-b border-border/30 pb-2">
@@ -348,22 +457,25 @@ export default function CreatorApplicationsPage() {
             <div className="p-4 border-t border-border/50 bg-muted/10 flex justify-end gap-3">
               <Button
                 variant="outline"
-                onClick={() => setSelectedApp(null)}
+                disabled={saving}
+                onClick={closeApplication}
                 className="bg-transparent text-muted-foreground hover:text-foreground"
               >
                 關閉
               </Button>
 
-              {selectedApp.status === "pending" && (
+              {!selectedApp.isDemo && !needsRefresh && selectedApp.status === "pending" && (
                 <>
                   <Button
                     variant="destructive"
+                    disabled={saving}
                     onClick={() => setConfirmType("reject")}
                     className="gap-2"
                   >
                     <X className="h-4 w-4" /> 拒絕
                   </Button>
                   <Button
+                    disabled={saving}
                     onClick={() => setConfirmType("approve")}
                     className="gap-2 bg-gradient-to-r from-primary to-secondary text-primary-foreground"
                   >
@@ -372,8 +484,9 @@ export default function CreatorApplicationsPage() {
                 </>
               )}
 
-              {selectedApp.status === "rejected" && (
+              {!selectedApp.isDemo && !needsRefresh && selectedApp.status === "rejected" && (
                 <Button
+                  disabled={saving}
                   onClick={() => setConfirmType("re-evaluate")}
                   className="gap-2 bg-gradient-to-r from-primary to-secondary text-primary-foreground"
                 >
@@ -389,6 +502,7 @@ export default function CreatorApplicationsPage() {
       {confirmType && selectedApp && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-background border border-border rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            {saving && <p role="status">審核儲存中，請稍候…</p>}
             {/* 通過確認 */}
             {confirmType === "approve" && (
               <>
@@ -401,14 +515,16 @@ export default function CreatorApplicationsPage() {
                 <div className="flex justify-end gap-3 pt-2">
                   <Button
                     variant="outline"
+                    disabled={saving}
                     onClick={() => setConfirmType(null)}
                     className="bg-transparent text-muted-foreground hover:text-foreground"
                   >
                     取消
                   </Button>
                   <Button
+                    disabled={saving}
                     onClick={() =>
-                      handleStatusChange(selectedApp.id, "approved")
+                      void handleStatusChange(selectedApp.id, "approved")
                     }
                     className="bg-gradient-to-r from-primary to-secondary text-primary-foreground"
                   >
@@ -432,6 +548,8 @@ export default function CreatorApplicationsPage() {
                     請填寫拒絕原因：
                   </label>
                   <textarea
+                    maxLength={2000}
+                    disabled={saving}
                     value={rejectInputReason}
                     onChange={(e) => setRejectInputReason(e.target.value)}
                     placeholder="請輸入拒絕原因..."
@@ -441,16 +559,17 @@ export default function CreatorApplicationsPage() {
                 <div className="flex justify-end gap-3 pt-2">
                   <Button
                     variant="outline"
+                    disabled={saving}
                     onClick={() => setConfirmType(null)}
                     className="bg-transparent text-muted-foreground hover:text-foreground"
                   >
                     取消
                   </Button>
                   <Button
-                    disabled={!rejectInputReason.trim()}
+                    disabled={saving || !rejectInputReason.trim()}
                     variant="destructive"
                     onClick={() =>
-                      handleStatusChange(
+                      void handleStatusChange(
                         selectedApp.id,
                         "rejected",
                         rejectInputReason,
@@ -476,14 +595,16 @@ export default function CreatorApplicationsPage() {
                 <div className="flex justify-end gap-3 pt-2">
                   <Button
                     variant="outline"
+                    disabled={saving}
                     onClick={() => setConfirmType(null)}
                     className="bg-transparent text-muted-foreground hover:text-foreground"
                   >
                     取消
                   </Button>
                   <Button
+                    disabled={saving}
                     onClick={() =>
-                      handleStatusChange(selectedApp.id, "pending")
+                      void handleStatusChange(selectedApp.id, "pending")
                     }
                     className="bg-gradient-to-r from-primary to-secondary text-primary-foreground"
                   >
