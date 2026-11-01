@@ -339,6 +339,7 @@ function CreatorApplyForm({ user }: { user: User }) {
                   </Label>
                   <Input
                     id="email"
+                    maxLength={255}
                     type="email"
                     required
                     placeholder="your@email.com"
@@ -360,6 +361,7 @@ function CreatorApplyForm({ user }: { user: User }) {
                   </Label>
                   <Input
                     id="realName"
+                    maxLength={100}
                     type="text"
                     required
                     placeholder="請輸入真實姓名"
@@ -381,6 +383,7 @@ function CreatorApplyForm({ user }: { user: User }) {
                   </Label>
                   <Input
                     id="brandName"
+                    maxLength={100}
                     type="text"
                     required
                     placeholder="請輸入您的品牌名稱"
@@ -405,6 +408,7 @@ function CreatorApplyForm({ user }: { user: User }) {
                   </p>
                   <Input
                     id="storePickup"
+                    maxLength={255}
                     type="text"
                     required
                     placeholder="7-11 復興門市"
@@ -426,6 +430,7 @@ function CreatorApplyForm({ user }: { user: User }) {
                   </Label>
                   <Input
                     id="phone"
+                    maxLength={32}
                     type="tel"
                     required
                     placeholder="0912-345-678"
@@ -467,6 +472,7 @@ function CreatorApplyForm({ user }: { user: User }) {
                   </Label>
                   <Input
                     id="address"
+                    maxLength={255}
                     type="text"
                     required
                     placeholder="請輸入完整地址"
@@ -499,6 +505,7 @@ function CreatorApplyForm({ user }: { user: User }) {
                   </p>
                   <Input
                     id="bankCode"
+                    maxLength={100}
                     type="text"
                     required
                     placeholder="郵局 700"
@@ -523,6 +530,10 @@ function CreatorApplyForm({ user }: { user: User }) {
                   </p>
                   <Input
                     id="bankAccount"
+                    inputMode="numeric"
+                    pattern="[0-9]{6,32}"
+                    maxLength={32}
+                    title="請輸入 6 至 32 位數字的收款帳號"
                     type="text"
                     required
                     placeholder="請輸入收款帳號"
@@ -592,6 +603,7 @@ function CreatorApplyForm({ user }: { user: User }) {
                 請簡短說明您的創作理念。告訴我們你的作品想傳達什麼故事、情感或理念，讓我們更了解你的創作背景。
               </p>
               <Textarea
+                maxLength={5000}
                 placeholder="分享您的創作故事、靈感來源、想傳達的理念..."
                 value={formData.creativePhilosophy}
                 onChange={(e) =>
@@ -612,6 +624,7 @@ function CreatorApplyForm({ user }: { user: User }) {
               </h2>
               <p className="text-sm text-muted-foreground mb-6">
                 身分證正反面照片上傳，核對身分及後續領款手續申報用
+                。支援 JPG、PNG、WebP，每張最多 {Math.floor(options.maxImageBytes / 1024 / 1024)} MB。
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* ID Front */}
