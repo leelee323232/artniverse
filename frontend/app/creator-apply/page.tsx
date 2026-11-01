@@ -1,6 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useAuth, type User } from "@/lib/auth-context";
+import {
+  creatorApplicationOptions, myCreatorApplication, submitCreatorApplication,
+  applicationError, applicationCanEdit,
+  type CreatorApplicationOptions, type MyCreatorApplication,
+} from "@/lib/creator-applications-api";
 import { Navigation } from "@/components/navigation";
 import { UniverseBackground } from "@/components/universe-background";
 import { Button } from "@/components/ui/button";
@@ -29,115 +35,29 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const productCategories = [
-  "T-shirt / 上衣",
-  "帽子",
-  "托特包 / 袋類",
-  "襪子",
-  "貼紙",
-  "明信片",
-  "海報",
-  "筆記本 / 文具",
-  "手機殼",
-  "馬克杯 / 杯墊",
-  "鑰匙圈 / 吊飾",
-  "抱枕",
-  "地墊",
-  "其他（請於創作理念欄補充說明）",
-];
-
-const contractContent = `ARTNIVERSE 創作者合約書
-
-藝術宇宙文創孵化有限公司（以下簡稱甲方）
-申請合作品牌（以下簡稱乙方）
-
-緣甲、乙雙方願本於誠信原則進行合作，由乙方授權其著作與甲方進行商品製造及品牌推廣活動並擔任甲方之專屬設計師，俾提升雙方之品牌形象與業務拓展，創造互惠雙贏成果，爰本於誠信互利之基礎訂立條款如下（下稱本合約）：
-
-第一條 授權範圍
-
-一、乙方應於本合約存續期間，將其自行創作（其範圍得經乙方以Email方式提供圖檔增加）所示著作（下稱系爭著作）之著作財產權授權甲方不受時間、地域、次數，於履行本合約之目的內進行利用，包含重製、公開播送、公開展示、改作、編輯、出租、公開傳輸、散布、相關產品之發行及販售，並承諾不對甲方行使著作人格權。
-
-二、本合約為獨家授權，乙方於本合約存續期間內不得未經甲方同意將系爭著作授權與第三人作同品項的產品生產，如有違反願賠償甲方懲罰性違約金新台幣五千元，並立即銷毀乙方私自授權生產之產品，本約定就懲罰性違約金部分經公證後得逕付強制執行。
-
-三、乙方應擔保所提供之系爭著作及與系爭著作相關之素材並無侵犯他人智慧財產權及任何法律上權利之虞，如侵害他人之權利或有違法之瑕疵，乙方應自行承擔一切相關民、刑事法律責任（包含但不限於賠償律師費、法院裁判費）。
-
-四、乙方如因前項事由導致甲方形象受損或有其他財產上及非財產上損害，甲方除得向乙方追究民、刑事責任外，尚得向乙方請求懲罰性違約金新臺幣十萬元，本約定就懲罰性違約金部分經公證後得逕付強制執行。
-
-五、乙方於本合約存續期間授權甲方利用系爭著作所為之一切行為（包含但不限於甲方發布以系爭著作重製之網路貼文、影片、照片、音訊、文字、主視覺等），其授權效力不因本合約存續期間屆至而受影響，乙方不得請求甲方刪除、銷毀，亦不得對之提起民、刑事訴訟，但本合約另有約定者不在此限。
-
-六、乙方同意甲方於本合約存續期間屆至後得保留系爭著作素材作為參加民間及政府創業競賽、甲方品牌行銷之用。
-
-第二條 合作方式
-
-一、商品產銷
-1. 甲方得使用系爭著作進行商品（下稱商品）之產銷（即生產、銷售），並有權決定與商品產銷相關（包含但不限於商品售價、通路）之一切事項。
-2. 甲方利用系爭著作為商品之產銷前應告知乙方商品之生產成本、種類並檢附商品之成品示意圖或樣品與乙方，經乙方同意後始得為之，惟乙方收受甲方前項通知後 3 日內未為答覆者即視為乙方同意之。
-3. 乙方依前款同意甲方為商品產銷後不得任意請求終止，但乙方得依本合約第六條第二項終止本合約時不在此限。
-4. 本合約期限已屆至，且甲、乙雙方並未依本合約第五條續約時，乙方應同意甲方無限期銷售剩餘之庫存品至售完為止或請求甲方將前開庫存品下架，但乙方請求下架庫存品時，應以生產成本加計 3 成之價格購買上開庫存品之全部；如甲、乙雙方於本合約屆至後 5 日內未能就庫存品之處理方式達成合意且因可歸責乙方之事由致未能執行完畢者，視為乙方同意甲方無限期銷售庫存品直至售完為止。
-5. 乙方依本合約第六條第二項終止本合約時，得請求甲方銷毀尚未銷售完畢之商品。
-6. 甲方於本合約存續期間產銷之商品自本合約終止後即為絕版品，乙方非經甲方同意不得自行產銷，如有違反願賠償甲方懲罰性違約金新臺幣五千元，並立即銷毀乙方私自授權生產之產品，本約定就懲罰性違約金部分經公證後得逕付強制執行。
-
-二、商業活動合作
-1. 甲方及第三人因共同進行商業活動有設計著作之需求時，得說明商業活動內容並經乙方同意後，請求乙方擔任甲方於該商業活動之專屬設計師，乙方應依甲方及該第三人之需求為著作之設計及授權；乙方因商業活動設計之著作視為系爭著作之一部，但該著作賣斷與第三人者不在此限。
-2. 乙方同意擔任前款商業活動之專屬設計師後，應忠實協助甲方履行與商業活動相關之一切義務（包含與第三人間因該商業活動所生之保密義務），縱本合約之存續期間於商業活動結束前已屆至者亦同，如因可歸責乙方之事由致甲方受有損害，乙方應負損害賠償責任（包含但不限於律師費、法院裁判費）。
-3. 未經甲方同意，乙方不得私下聯繫與甲方具合作關係之第三人進行合作，如有違反，甲方除得依本合約第六條終止合約並請求損害賠償外，尚得請求乙方因該合作所得報酬之十倍作為懲罰性違約金。
-
-三、商品產銷及商業活動合作並行
-甲方因與第三人共同進行商業活動而同時有商品產銷及著作設計之需求時，其「商品產銷」及「著作設計」部分分別依本條第一、二約定執行之，但甲、乙雙方另有約定者不在此限。
-
-第三條 分潤
-
-一、商品產銷
-1. 甲方得自由決定商品售價，並於商品出售時，以出售價格扣除生產成本後將剩餘所得之 2 成分潤與乙方取得，其餘利潤由甲方取得。
-2. 乙方得以成本價加計 3 成向甲方購買商品後自行銷售或委託甲方銷售。乙方自行銷售者，其銷售所得利潤由乙方全數取得，乙方委託甲方銷售者，於商品出售時應給付商品售價之 1 成與甲方作為服務費。未經甲方同意，乙方銷售商品之價格不得低於銷售時甲方於官網標示之商品售價。
-3. 商品如經甲方出售，甲方應於次月 16 日前提供售出商品數據於本網站之個人頁面中供乙方確認，經乙方確認無誤後，乙方可自行於網站上選擇是否將利潤匯至乙方申報之指定帳戶。
-
-二、商業活動合作
-1. 甲方因商業活動自第三人取得之利潤時，除有另外約定或特殊案件外，應扣除稅務成本後分配 9 成與乙方，經乙方確認無誤後，於收受該利潤後 7 日前於本網顯示至乙方錢包內，其餘利潤由甲方取得。
-2. 乙方除前款利潤外，不得向甲方請求其他設計費用。
-
-三、商品產銷及商業活動合作並行
-甲方因與第三人共同進行商業活動而同時有商品產銷及著作設計之需求時，其「商品產銷」及「著作設計」部分之分潤分別依本條第一、二約定執行之，但甲、乙雙方另有約定者不在此限。
-
-第四條 終止合約
-
-一、甲、乙雙方非經他方同意，不得任意終止本合約。
-二、甲、乙雙方有違反本合約之事由時，守約方應訂30日以上期間催告違約方改善，違約方逾期未改善者，守約方得終止本合約並請求損害賠償（包含但不限於律師費、法院裁判費）及懲罰性違約金新台幣十萬元，但懲罰性違約金數額於本合約另有約定者不在此限，本約定就懲罰性違約金部分經公證後得逕付強制執行。
-
-第五條 合約轉讓
-
-甲、乙雙方未經他方同意，不得將本合約之全部或一部轉讓與第三人。
-
-第六條 合約變更
-
-本合約未經甲、乙雙方同意，不得修改。
-
-第七條 保密義務
-
-甲、乙雙方同意，除非係基於法院命令或其他法令之要求，就有關本合約簽署之內容應嚴格保密，並承諾不得以任何方式（包括但不限於社交媒體平臺譬如 Facebook、Twitter、YouTube、部落格及相似之平臺）披露、散佈或公開（不論以印刷、廣播或數位形式包含網路為之）本合約之內容，包括但不限於本合約任一方當事人之身分、本合約條款、簽署後之處置、達成協議前之任何協商內容或與本事件有關之一切事項，亦承諾不向媒體或第三人提供任何訊息或為任何評論，如有違反，除願給付他方懲罰性賠償金新台幣十萬元外，並願按本合約第六條第二項賠償他方所受之損害（包含但不限於律師費、法院裁判費），本約定就懲罰性違約金部分經公證後得逕付強制執行。
-
-第八條 準據法及管轄
-
-本合約以中華民國法律為準據法，甲、乙雙方因本合約涉訟時，同意以臺灣臺北地方法院為一審管轄法院。
-
-第九條 合約份數
-
-本合約一式二份，由甲、乙雙方各執一份為據。
-
-立約人
-甲方：藝術宇宙文創孵化有限公司
-統一編號：60670422
-地址：屏東縣長治鄉長興路 406 號`;
-
 export default function CreatorApplyPage() {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <ApplyNotice><p role="status">確認登入中…</p></ApplyNotice>;
+  if (!user) return <ApplyNotice><p>請先登入再提交創作者申請。</p><Button asChild><Link href="/login">前往登入</Link></Button></ApplyNotice>;
+  return <CreatorApplyForm key={user.id} user={user} />;
+}
+
+function ApplyNotice({ children }: { children: ReactNode }) {
+  return <div className="min-h-screen bg-background"><UniverseBackground /><Navigation />
+    <main className="container relative z-10 mx-auto px-4 pb-20 pt-32"><div className="mx-auto max-w-3xl space-y-5 rounded-3xl border border-primary/20 bg-card/40 p-8">
+      <h1 className="text-3xl font-bold">創作者申請</h1>{children}
+    </div></main></div>;
+}
+
+function CreatorApplyForm({ user }: { user: User }) {
   const [formData, setFormData] = useState({
-    email: "",
-    realName: "",
+    email: user.email,
+    realName: user.name,
     brandName: "",
     storePickup: "",
-    phone: "",
-    birthday: "",
-    address: "",
+    phone: user.phone ?? "",
+    birthday: user.birthday ?? "",
+    address: user.address ?? "",
     bankCode: "",
     bankAccount: "",
     selectedCategories: [] as string[],
@@ -148,6 +68,34 @@ export default function CreatorApplyPage() {
   });
   const [isContractOpen, setIsContractOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [receipt, setReceipt] = useState<MyCreatorApplication | null>(null);
+  const [options, setOptions] = useState<CreatorApplicationOptions | null>(null);
+  const [latest, setLatest] = useState<MyCreatorApplication | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [frozen, setFrozen] = useState(false);
+  const [reload, setReload] = useState(0);
+  const pending = useRef<FormData | null>(null);
+  const busy = useRef(false);
+  const active = useRef(true);
+
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setLoadError("");
+    void Promise.all([creatorApplicationOptions(controller.signal), myCreatorApplication(controller.signal)])
+      .then(([settings, application]) => {
+        if (controller.signal.aborted) return;
+        setOptions(settings); setLatest(application);
+        // Consent must be renewed whenever the displayed contract is refreshed.
+        setFormData(previous => ({ ...previous, agreeToContract: false }));
+      })
+      .catch(err => { if (!controller.signal.aborted) setLoadError(applicationError(err)); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [reload]);
 
   const handleCategoryChange = (category: string, checked: boolean) => {
     setFormData((prev) => ({
@@ -162,14 +110,66 @@ export default function CreatorApplyPage() {
     field: "idFrontImage" | "idBackImage",
     file: File | null,
   ) => {
+    setError("");
+    if (file && options) {
+      if (!options.imageTypes.includes(file.type)) {
+        setFormData(prev => ({ ...prev, [field]: null }));
+        setError("證件僅支援 JPG、PNG、WebP 圖片。");
+        return;
+      }
+      if (file.size > options.maxImageBytes || file.size === 0) {
+        setFormData(prev => ({ ...prev, [field]: null }));
+        setError("證件圖片不可為空，每張最多 5 MB。");
+        return;
+      }
+    }
     setFormData((prev) => ({ ...prev, [field]: file }));
+  };
+
+  const sendApplication = async () => {
+    if (busy.current || !options || loading || loadError) return;
+    setError("");
+    if (!pending.current) {
+      if (!formData.agreeToContract || !formData.idFrontImage || !formData.idBackImage) {
+        setError("請提供身分證正反面圖片，並閱讀及同意合約。"); return;
+      }
+      const body = new FormData();
+      body.append("requestKey", crypto.randomUUID());
+      for (const field of ["email", "realName", "brandName", "storePickup", "phone", "birthday", "address", "bankCode", "bankAccount", "creativePhilosophy"] as const) {
+        body.append(field, formData[field].trim());
+      }
+      body.append("selectedCategories", JSON.stringify(formData.selectedCategories));
+      body.append("agreeToContract", "1");
+      body.append("contractVersion", options.contractVersion);
+      body.append("contractHash", options.contractHash);
+      body.append("idFrontImage", formData.idFrontImage);
+      body.append("idBackImage", formData.idBackImage);
+      // Keep the identical key, fields and files on uncertain retries; memory only.
+      pending.current = body;
+    }
+    busy.current = true; setSaving(true); setFrozen(true);
+    try {
+      const application = await submitCreatorApplication(pending.current);
+      if (!active.current) return;
+      setReceipt(application); setLatest(application); setIsSubmitted(true);
+      pending.current = null;
+      setFormData(previous => ({ ...previous, idFrontImage: null, idBackImage: null, bankAccount: "" }));
+    } catch (err) {
+      if (!active.current) return;
+      setError(applicationError(err));
+      if (applicationCanEdit(err)) {
+        pending.current = null; setFrozen(false);
+        setReload(value => value + 1);
+      }
+    } finally {
+      busy.current = false;
+      if (active.current) setSaving(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log("Form submitted:", formData);
-    setIsSubmitted(true);
+    void sendApplication();
   };
 
   if (isSubmitted) {
@@ -184,10 +184,10 @@ export default function CreatorApplyPage() {
                 <CheckCircle2 className="w-10 h-10 text-primary" />
               </div>
               <h1 className="text-3xl font-bold text-foreground mb-4">
-                感謝您的填寫！
+                申請已送出！
               </h1>
               <p className="text-muted-foreground text-lg mb-6">
-                我們很期待能與您攜手，一起把創意變成美好的作品。
+                申請編號：{receipt?.id}。{receipt?.status === "approved" ? "申請已通過。" : receipt?.status === "rejected" ? "申請已退回，請重新載入確認原因。" : "資料已收到，請等待團隊審核。"}
               </p>
               <p className="text-foreground mb-8">
                 請私訊{" "}
@@ -213,6 +213,19 @@ export default function CreatorApplyPage() {
       </div>
     );
   }
+
+  if (loading) return <ApplyNotice><p role="status">載入申請狀態與合約中…</p></ApplyNotice>;
+  if (loadError || !options) return <ApplyNotice>
+    <p role="alert" className="text-destructive">{loadError || "無法載入申請設定。"}</p>
+    <Button onClick={() => setReload(value => value + 1)}>重新載入</Button>
+    <a href="/login/" target="_blank" rel="noopener noreferrer" className="ml-3 underline">另開分頁登入</a>
+  </ApplyNotice>;
+  if (user.is_creator || latest?.status === "approved" || latest?.status === "pending") return <ApplyNotice>
+    <p>{user.is_creator || latest?.status === "approved" ? "你已具有創作者身分，無需重複申請。" : "你的申請正在審核中，無需重複送出。"}</p>
+    {latest && <p className="text-sm text-muted-foreground">申請編號：{latest.id}・申請日期：{latest.date}</p>}
+    <Button variant="outline" onClick={() => setReload(value => value + 1)}>更新申請狀態</Button>
+    <Button asChild variant="outline"><Link href="/account">返回會員中心</Link></Button>
+  </ApplyNotice>;
 
   return (
     <div className="min-h-screen bg-background">
@@ -298,7 +311,21 @@ export default function CreatorApplyPage() {
           </div>
 
           {/* Application Form */}
+          {latest?.status === "rejected" && <div role="status" className="mb-6 rounded-xl border border-destructive/40 p-4">
+            <p>上次申請未通過，可修正資料後重新申請。</p>
+            <p className="mt-2 whitespace-pre-wrap text-sm">退件原因：{latest.rejectReason || "未提供"}</p>
+          </div>}
+          {error && <p role="alert" className="mb-4 whitespace-pre-wrap text-destructive">{error}</p>}
+          {frozen && !saving && <div className="mb-6 space-y-3 rounded-xl border p-4">
+            <p>尚未確認送件結果，已保留本次內容。請先查詢狀態，避免重複申請。</p>
+            <div className="flex flex-wrap gap-3">
+              <Button type="button" onClick={() => setReload(value => value + 1)}>查詢申請狀態</Button>
+              <Button type="button" variant="outline" onClick={() => void sendApplication()}>重試原申請</Button>
+              <a href="/login/" target="_blank" rel="noopener noreferrer" className="self-center underline">另開分頁登入</a>
+            </div>
+          </div>}
           <form onSubmit={handleSubmit} className="space-y-6">
+            <fieldset disabled={saving || frozen} className="min-w-0 space-y-6">
             {/* Basic Info */}
             <div className="bg-card/40 backdrop-blur-xl border border-primary/20 rounded-3xl p-8">
               <h2 className="text-xl font-semibold text-foreground mb-6">
@@ -525,10 +552,11 @@ export default function CreatorApplyPage() {
                 請選擇您有興趣製作的產品類型，選完後歡迎主動與我們聯繫！如果您有其他想法，也非常歡迎和我們討論
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {productCategories.map((category) => (
+                {options.categories.map((category) => (
                   <div key={category} className="flex items-center space-x-3">
                     <Checkbox
                       id={category}
+                      disabled={saving || frozen}
                       checked={formData.selectedCategories.includes(category)}
                       onCheckedChange={(checked) =>
                         handleCategoryChange(category, checked as boolean)
@@ -595,7 +623,7 @@ export default function CreatorApplyPage() {
                     <input
                       type="file"
                       id="idFront"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
                       className="hidden"
                       onChange={(e) =>
                         handleFileChange(
@@ -603,7 +631,6 @@ export default function CreatorApplyPage() {
                           e.target.files?.[0] || null,
                         )
                       }
-                      required
                     />
                     <label htmlFor="idFront" className="cursor-pointer">
                       {formData.idFrontImage ? (
@@ -634,7 +661,7 @@ export default function CreatorApplyPage() {
                     <input
                       type="file"
                       id="idBack"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
                       className="hidden"
                       onChange={(e) =>
                         handleFileChange(
@@ -642,7 +669,6 @@ export default function CreatorApplyPage() {
                           e.target.files?.[0] || null,
                         )
                       }
-                      required
                     />
                     <label htmlFor="idBack" className="cursor-pointer">
                       {formData.idBackImage ? (
@@ -674,11 +700,12 @@ export default function CreatorApplyPage() {
               <div className="flex items-start space-x-3">
                 <Checkbox
                   id="agreeToContract"
+                  disabled={saving || frozen}
                   checked={formData.agreeToContract}
                   onCheckedChange={(checked) => {
                     setFormData((prev) => ({
                       ...prev,
-                      agreeToContract: checked as boolean,
+                      agreeToContract: checked === true,
                     }));
                     if (checked) {
                       setIsContractOpen(true);
@@ -712,7 +739,7 @@ export default function CreatorApplyPage() {
                         </DialogHeader>
                         <div className="prose prose-sm prose-invert max-w-none">
                           <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-sans leading-relaxed">
-                            {contractContent}
+                            {options.contractContent}
                           </pre>
                         </div>
                         <div className="flex justify-end pt-4 border-t border-border/50">
@@ -741,12 +768,13 @@ export default function CreatorApplyPage() {
                 type="submit"
                 size="lg"
                 className="bg-primary hover:bg-primary/90 text-primary-foreground px-12 py-6 text-lg rounded-full"
-                disabled={!formData.agreeToContract}
+                disabled={saving || frozen || !formData.agreeToContract}
               >
                 <Sparkles className="w-5 h-5 mr-2" />
-                提交申請
+                {saving ? "申請送出中…" : "提交申請"}
               </Button>
             </div>
+            </fieldset>
           </form>
         </div>
       </main>
