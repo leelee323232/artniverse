@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Navigation } from "@/components/navigation";
@@ -12,12 +12,11 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
 import { User, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { TheButton } from "@/components/common/TheButton";
-import { userAPI } from "@/apis";
 import axios from "axios";
 
 // email 的基本正規格式檢查
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// 密碼長度需大於 8 個字元
+// 與後端一致：密碼至少 8 個字元
 const PASSWORD_MIN_LENGTH = 8;
 
 export default function RegisterPage() {
@@ -35,6 +34,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitting = useRef(false);
 
   const handleChange = (key: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -51,8 +51,8 @@ export default function RegisterPage() {
     if (!formData.confirmPassword) return "請再次輸入密碼";
 
     if (!EMAIL_REGEX.test(email)) return "電子郵件格式不正確";
-    if (formData.password.length <= PASSWORD_MIN_LENGTH) {
-      return `密碼長度需大於 ${PASSWORD_MIN_LENGTH} 個字元`;
+    if (formData.password.length < PASSWORD_MIN_LENGTH) {
+      return `密碼至少需要 ${PASSWORD_MIN_LENGTH} 個字元`;
     }
     if (formData.password !== formData.confirmPassword) {
       return "兩次輸入的密碼不一致";
@@ -64,6 +64,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting.current || isLoading) return;
     setError("");
 
     const validationError = validate();
@@ -72,16 +73,21 @@ export default function RegisterPage() {
       return;
     }
 
+    submitting.current = true;
     setIsSubmitting(true);
 
     try {
-      await register(
+      const result = await register(
         formData.name.trim(),
         formData.email.trim(),
         formData.password,
         formData.confirmPassword,
       );
-      router.push("/");
+      if (!result.success) {
+        setError(result.error ?? "註冊失敗，請稍後再試");
+        return;
+      }
+      router.replace("/");
     } catch (err) {
       if (axios.isAxiosError(err)) {
         // 後端常見結構：{ message, errors: { email: ["..."] } }
@@ -96,6 +102,7 @@ export default function RegisterPage() {
         setError("註冊失敗，請稍後再試");
       }
     } finally {
+      submitting.current = false;
       setIsSubmitting(false);
     }
   };
@@ -104,8 +111,12 @@ export default function RegisterPage() {
     provider: "google" | "facebook" | "apple",
   ) => {
     setError("");
-    await loginWithProvider(provider);
-    router.push("/");
+    try {
+      await loginWithProvider(provider);
+      router.replace("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "第三方註冊目前無法使用");
+    }
   };
 
   return (
@@ -195,7 +206,7 @@ export default function RegisterPage() {
           {/* Email Register Form */}
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {error && (
-              <div className="whitespace-pre-line rounded-lg bg-destructive/20 p-3 text-sm text-destructive">
+              <div role="alert" className="whitespace-pre-line rounded-lg bg-destructive/20 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -206,6 +217,8 @@ export default function RegisterPage() {
                 <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="name"
+                  maxLength={100}
+                  autoComplete="name"
                   type="text"
                   placeholder="請輸入您的姓名"
                   value={formData.name}
@@ -222,6 +235,8 @@ export default function RegisterPage() {
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="email"
+                  maxLength={255}
+                  autoComplete="email"
                   type="email"
                   placeholder="your@email.com"
                   value={formData.email}
@@ -239,7 +254,8 @@ export default function RegisterPage() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="需大於 8 個字元"
+                  placeholder="至少 8 個字元"
+                  autoComplete="new-password"
                   value={formData.password}
                   onChange={(e) => handleChange("password", e.target.value)}
                   className="pl-10 pr-10 bg-white/5"
@@ -265,6 +281,7 @@ export default function RegisterPage() {
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="confirmPassword"
+                  autoComplete="new-password"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="再次輸入密碼"
                   value={formData.confirmPassword}
