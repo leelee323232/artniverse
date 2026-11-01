@@ -32,6 +32,25 @@ return [
 
     'disks' => [
 
+        'creator_documents' => [
+            'driver' => 'local',
+            'root' => storage_path('app/creator-documents'),
+            'serve' => false,
+            'visibility' => 'private',
+            'throw' => true,
+        ],
+
+        'r2_private' => [
+            'driver' => 's3',
+            'key' => env('R2_PRIVATE_ACCESS_KEY_ID'),
+            'secret' => env('R2_PRIVATE_SECRET_ACCESS_KEY'),
+            'region' => 'auto',
+            'bucket' => env('R2_PRIVATE_BUCKET'),
+            'endpoint' => env('R2_PRIVATE_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'throw' => true,
+        ],
+
         // Public display images only. Access is configured on the R2 bucket,
         // not through S3 public-read ACLs. Keep private documents elsewhere.
         'r2' => [

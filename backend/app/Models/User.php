@@ -29,6 +29,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_creator' => 'boolean',
+            'is_admin' => 'boolean',
             'birthday' => 'date:Y-m-d',
         ];
     }
