@@ -1,5 +1,7 @@
 "use client";
 
+import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
+
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Truck, MapPin, Gift, Calculator } from "lucide-react";
@@ -22,6 +24,10 @@ const freshDraft = (): RuleDraft => ({ name: "", zone: "mainland", method: "home
 const freeLabel = (rule: ShippingRule) => rule.freeShipping === "always" ? "無條件免運" : rule.freeShipping === "threshold" ? `滿 ${money(rule.threshold!)} 免運` : "不免運";
 
 export default function ShippingManagementPage() {
+  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
+  // TEMP: 未完成功能先顯示共用提示；原始流程保留於下方註解，串接完成後再恢復。
+  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
+
   const [rules, setRules] = useState<ShippingRule[]>(DEFAULT_SHIPPING_RULES);
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState("");
@@ -55,32 +61,44 @@ export default function ShippingManagementPage() {
   }
 
   function edit(rule?: ShippingRule) {
-    setFormError(""); setNotice("");
-    setDraft(rule ? { id: rule.id, name: rule.name, zone: rule.zone, method: rule.method, fee: String(rule.fee), freeShipping: rule.freeShipping, threshold: String(rule.threshold ?? 1000), enabled: rule.enabled } : freshDraft());
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // setFormError(""); setNotice("");
+    // setDraft(rule ? { id: rule.id, name: rule.name, zone: rule.zone, method: rule.method, fee: String(rule.fee), freeShipping: rule.freeShipping, threshold: String(rule.threshold ?? 1000), enabled: rule.enabled } : freshDraft());
   }
 
   function save() {
-    if (!draft || !ready || loadError) return;
-    const current = rules.find(rule => rule.id === draft.id);
-    const next: ShippingRule = {
-      id: draft.id ?? crypto.randomUUID(), name: draft.name.trim(), country: "TW", currency: "TWD",
-      zone: draft.zone, method: draft.method,
-      fee: draft.freeShipping === "always" ? 0 : draft.fee.trim() ? Number(draft.fee) : NaN,
-      freeShipping: draft.freeShipping, threshold: draft.freeShipping === "threshold" ? (draft.threshold.trim() ? Number(draft.threshold) : NaN) : null,
-      enabled: draft.enabled, version: (current?.version ?? 0) + 1,
-    };
-    const issue = validateShippingRule(next, rules);
-    if (issue) { setFormError(issue); return; }
-    if (persist(current ? rules.map(rule => rule.id === current.id ? next : rule) : [...rules, next])) {
-      setDraft(null); setNotice(`已儲存「${next.name}」。`);
-    }
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // if (!draft || !ready || loadError) return;
+    // const current = rules.find(rule => rule.id === draft.id);
+    // const next: ShippingRule = {
+    //   id: draft.id ?? crypto.randomUUID(), name: draft.name.trim(), country: "TW", currency: "TWD",
+    //   zone: draft.zone, method: draft.method,
+    //   fee: draft.freeShipping === "always" ? 0 : draft.fee.trim() ? Number(draft.fee) : NaN,
+    //   freeShipping: draft.freeShipping, threshold: draft.freeShipping === "threshold" ? (draft.threshold.trim() ? Number(draft.threshold) : NaN) : null,
+    //   enabled: draft.enabled, version: (current?.version ?? 0) + 1,
+    // };
+    // const issue = validateShippingRule(next, rules);
+    // if (issue) { setFormError(issue); return; }
+    // if (persist(current ? rules.map(rule => rule.id === current.id ? next : rule) : [...rules, next])) {
+    //   setDraft(null); setNotice(`已儲存「${next.name}」。`);
+    // }
   }
 
   function toggle(rule: ShippingRule) {
-    const next = { ...rule, enabled: !rule.enabled, version: rule.version + 1 };
-    const issue = validateShippingRule(next, rules);
-    if (issue) { setNotice(issue); return; }
-    if (persist(rules.map(item => item.id === rule.id ? next : item))) setNotice(`已${next.enabled ? "啟用" : "停用"}「${rule.name}」。`);
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // const next = { ...rule, enabled: !rule.enabled, version: rule.version + 1 };
+    // const issue = validateShippingRule(next, rules);
+    // if (issue) { setNotice(issue); return; }
+    // if (persist(rules.map(item => item.id === rule.id ? next : item))) setNotice(`已${next.enabled ? "啟用" : "停用"}「${rule.name}」。`);
   }
 
   const active = rules.filter(rule => rule.enabled);
@@ -88,7 +106,8 @@ export default function ShippingManagementPage() {
   const quote = quoteShipping(rules, testZone, testMethod, testSubtotal.trim() ? Number(testSubtotal) : NaN);
   const blocked = !ready || Boolean(loadError);
 
-  return (
+  return (<>
+      <FeatureUnavailableDialog open={featureUnavailableOpen} onOpenChange={setFeatureUnavailableOpen} />
     <div className="space-y-6">
       <AdminPageHeader
         title="運費管理"
@@ -96,7 +115,7 @@ export default function ShippingManagementPage() {
         action={<Button disabled={blocked} onClick={() => edit()} className="gap-2 bg-gradient-to-r from-primary to-secondary"><Plus className="h-4 w-4" />新增運費規則</Button>}
       />
       <div className="flex items-center gap-2"><Badge variant="outline">台灣配送</Badge><span className="text-xs text-muted-foreground">TWD · 新台幣</span></div>
-      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-muted-foreground">目前為管理頁預覽，設定儲存在此瀏覽器，尚未套用至購物車與結帳。超商與離島費率為範例，確認後可自行啟用。</div>
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-muted-foreground">運費設定功能未完成，敬請期待。</div>
       {loadError && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">{loadError} 為避免覆蓋原資料，目前暫停編輯與試算。</p>}
       {notice && <p role="status" className="rounded-lg border border-border bg-card p-3 text-sm">{notice}</p>}
       <div className="grid gap-4 sm:grid-cols-3">
@@ -129,5 +148,5 @@ export default function ShippingManagementPage() {
         </>}
       </AdminModal>
     </div>
-  );
+    </>);
 }

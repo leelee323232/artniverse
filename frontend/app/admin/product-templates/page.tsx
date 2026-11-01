@@ -18,6 +18,7 @@ import {
   type AdminTableColumn,
 } from "@/components/admin/AdminTable";
 import { AdminModal } from "@/components/admin/AdminModal";
+import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
 import { AdminField } from "@/components/admin/AdminField";
 import { StatusToggle } from "@/components/admin/StatusToggle";
 import { useAdminCrud } from "@/lib/admin/useAdminCrud";
@@ -124,6 +125,9 @@ export default function ProductTemplatesPage() {
   const crud = useAdminCrud<ProductTemplate>("pt", mockProductTemplates);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
+  // TEMP: 原始流程就地註解保留，串接完成後再恢復。
+  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
   const [storageReady, setStorageReady] = useState(false);
   const templateFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -176,79 +180,87 @@ export default function ProductTemplatesPage() {
   }, [crud.editingItem, crud.isModalOpen, crud.items.length]);
 
   const handleSubmit = () => {
-    const printZones = parsePrintZones(form.printZonesInput);
-    const optionGroups = parseJsonArray<ProductOptionGroup>(
-      form.optionGroupsInput,
-    );
-    const stockDiscountTiers = parseJsonArray<StockDiscountTier>(
-      form.stockDiscountTiersInput,
-    );
-    const errors: Record<string, string> = {};
-    if (!form.name.trim()) errors.name = "請輸入英文名稱";
-    if (!form.nameZh.trim()) errors.nameZh = "請輸入中文名稱";
-    if (!form.category.trim()) errors.category = "請輸入商品類別";
-    if (Number.isNaN(Number(form.baseCost))) errors.baseCost = "請輸入有效成本";
-    if (!printZones.length)
-      errors.printZones = "至少新增一個印刷區域（名稱|寬|高|x|y|w|h）";
-    if (!stockDiscountTiers)
-      errors.stockDiscountTiers = "優惠級距需為 JSON 陣列";
-    if (form.designSource === "templateFile" && !form.templateFileUrl.trim()) {
-      errors.templateFileUrl = "模板檔案模式需提供模板檔案網址";
-    }
-    setErrors(errors);
-    if (Object.keys(errors).length) return;
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯註解。
+    showFeatureUnavailable();
 
-    crud.submit({
-      name: form.name.trim(),
-      nameZh: form.nameZh.trim(),
-      category: form.category.trim(),
-      baseCost: Number(form.baseCost),
-      minOrder: Number(form.minOrder) || 1,
-      hasMinQuantity: form.hasMinQuantity,
-      designSource: form.designSource,
-      specs: form.specs
-        .split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      optionGroups: optionGroups ?? [],
-      stockDiscountTiers: stockDiscountTiers ?? [],
-      printZones,
-      templateFile:
-        form.designSource === "templateFile"
-          ? {
-              name: form.templateFileName.trim() || "商品模板檔案",
-              url: form.templateFileUrl.trim(),
-            }
-          : undefined,
-      sortOrder: Number(form.sortOrder) || 1,
-      isActive: form.isActive,
-    });
+    // 原始邏輯（暫時停用，請保留）：
+    // const printZones = parsePrintZones(form.printZonesInput);
+    // const optionGroups = parseJsonArray<ProductOptionGroup>(
+    //   form.optionGroupsInput,
+    // );
+    // const stockDiscountTiers = parseJsonArray<StockDiscountTier>(
+    //   form.stockDiscountTiersInput,
+    // );
+    // const errors: Record<string, string> = {};
+    // if (!form.name.trim()) errors.name = "請輸入英文名稱";
+    // if (!form.nameZh.trim()) errors.nameZh = "請輸入中文名稱";
+    // if (!form.category.trim()) errors.category = "請輸入商品類別";
+    // if (Number.isNaN(Number(form.baseCost))) errors.baseCost = "請輸入有效成本";
+    // if (!printZones.length)
+    //   errors.printZones = "至少新增一個印刷區域（名稱|寬|高|x|y|w|h）";
+    // if (!stockDiscountTiers)
+    //   errors.stockDiscountTiers = "優惠級距需為 JSON 陣列";
+    // if (form.designSource === "templateFile" && !form.templateFileUrl.trim()) {
+    //   errors.templateFileUrl = "模板檔案模式需提供模板檔案網址";
+    // }
+    // setErrors(errors);
+    // if (Object.keys(errors).length) return;
+    //
+    // crud.submit({
+    //   name: form.name.trim(),
+    //   nameZh: form.nameZh.trim(),
+    //   category: form.category.trim(),
+    //   baseCost: Number(form.baseCost),
+    //   minOrder: Number(form.minOrder) || 1,
+    //   hasMinQuantity: form.hasMinQuantity,
+    //   designSource: form.designSource,
+    //   specs: form.specs
+    //     .split("\n")
+    //     .map((item) => item.trim())
+    //     .filter(Boolean),
+    //   optionGroups: optionGroups ?? [],
+    //   stockDiscountTiers: stockDiscountTiers ?? [],
+    //   printZones,
+    //   templateFile:
+    //     form.designSource === "templateFile"
+    //       ? {
+    //           name: form.templateFileName.trim() || "商品模板檔案",
+    //           url: form.templateFileUrl.trim(),
+    //         }
+    //       : undefined,
+    //   sortOrder: Number(form.sortOrder) || 1,
+    //   isActive: form.isActive,
+    // });
   };
 
   const handleTemplateFileUpload = (file?: File) => {
-    if (!file) return;
-    const extension = file.name.split(".").pop()?.toLowerCase();
-    if (!extension || !["png", "ai", "psd", "stl"].includes(extension)) {
-      setErrors((current) => ({
-        ...current,
-        templateFileUrl: "請上傳去背檔、AI、PS 或 STL 檔案",
-      }));
-      return;
-    }
-    if (file.size > 20 * 1024 * 1024) {
-      setErrors((current) => ({
-        ...current,
-        templateFileUrl: "檔案不可超過 20MB",
-      }));
-      return;
-    }
-    setForm((current) => ({
-      ...current,
-      templateFileName: file.name,
-      templateFileUrl: URL.createObjectURL(file),
-    }));
-    setErrors((current) => ({ ...current, templateFileUrl: "" }));
-    if (templateFileInputRef.current) templateFileInputRef.current.value = "";
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // if (!file) return;
+    // const extension = file.name.split(".").pop()?.toLowerCase();
+    // if (!extension || !["png", "ai", "psd", "stl"].includes(extension)) {
+    //   setErrors((current) => ({
+    //     ...current,
+    //     templateFileUrl: "請上傳去背檔、AI、PS 或 STL 檔案",
+    //   }));
+    //   return;
+    // }
+    // if (file.size > 20 * 1024 * 1024) {
+    //   setErrors((current) => ({
+    //     ...current,
+    //     templateFileUrl: "檔案不可超過 20MB",
+    //   }));
+    //   return;
+    // }
+    // setForm((current) => ({
+    //   ...current,
+    //   templateFileName: file.name,
+    //   templateFileUrl: URL.createObjectURL(file),
+    // }));
+    // setErrors((current) => ({ ...current, templateFileUrl: "" }));
+    // if (templateFileInputRef.current) templateFileInputRef.current.value = "";
   };
 
   const columns: AdminTableColumn<ProductTemplate>[] = [
@@ -280,7 +292,7 @@ export default function ProductTemplatesPage() {
       render: (item) => (
         <StatusToggle
           active={item.isActive}
-          onToggle={() => crud.toggleActive(item)}
+          onToggle={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => crud.toggleActive(item) */ showFeatureUnavailable}
         />
       ),
     },
@@ -288,7 +300,7 @@ export default function ProductTemplatesPage() {
       key: "actions",
       header: "操作",
       render: (item) => (
-        <Button variant="ghost" size="sm" onClick={() => crud.openEdit(item)}>
+        <Button variant="ghost" size="sm" onClick={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => crud.openEdit(item) */ showFeatureUnavailable}>
           <Pencil className="mr-1 h-4 w-4" />
           編輯
         </Button>
@@ -302,7 +314,7 @@ export default function ProductTemplatesPage() {
         title="商品模板管理"
         description="維護創作者新增商品第一步會讀取的商品模板、印刷區域與規格。"
         action={
-          <Button onClick={crud.openCreate}>
+          <Button onClick={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 crud.openCreate */ showFeatureUnavailable}>
             <Plus className="mr-2 h-4 w-4" />
             新增模板
           </Button>
@@ -314,6 +326,11 @@ export default function ProductTemplatesPage() {
         items={crud.items}
         loading={crud.loading}
         error={crud.error}
+      />
+
+      <FeatureUnavailableDialog
+        open={featureUnavailableOpen}
+        onOpenChange={setFeatureUnavailableOpen}
       />
 
       <AdminModal

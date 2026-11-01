@@ -1,5 +1,7 @@
 "use client";
 
+import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
+
 import { useEffect, useState } from "react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { AdminTable, type AdminTableColumn } from "@/components/admin/AdminTable";
@@ -33,6 +35,10 @@ function readRates(value: unknown): Rates {
 }
 
 export default function RevenueSharingPage() {
+  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
+  // TEMP: 未完成功能先顯示共用提示；原始流程保留於下方註解，串接完成後再恢復。
+  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
+
   const [creators, setCreators] = useState<Creator[]>(mockCreators);
   const [rates, setRates] = useState<Rates>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -55,21 +61,25 @@ export default function RevenueSharingPage() {
   }, []);
 
   const save = (id: string) => {
-    const value = drafts[id] ?? String(rates[id] ?? DEFAULT_RATE);
-    const rate = Number(value);
-    if (!/^\d+$/.test(value) || !Number.isInteger(rate) || rate < 0 || rate > 100) {
-      setMessage("請輸入 0～100 之間的整數分潤百分比。");
-      return;
-    }
-    const next = { ...rates, [id]: rate };
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      setRates(next);
-      setDrafts((previous) => { const copy = { ...previous }; delete copy[id]; return copy; });
-      setMessage("分潤設定已儲存至此瀏覽器。");
-    } catch {
-      setMessage("儲存失敗，請確認瀏覽器允許本機儲存後重試。");
-    }
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // const value = drafts[id] ?? String(rates[id] ?? DEFAULT_RATE);
+    // const rate = Number(value);
+    // if (!/^\d+$/.test(value) || !Number.isInteger(rate) || rate < 0 || rate > 100) {
+    //   setMessage("請輸入 0～100 之間的整數分潤百分比。");
+    //   return;
+    // }
+    // const next = { ...rates, [id]: rate };
+    // try {
+    //   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    //   setRates(next);
+    //   setDrafts((previous) => { const copy = { ...previous }; delete copy[id]; return copy; });
+    //   setMessage("分潤設定已儲存至此瀏覽器。");
+    // } catch {
+    //   setMessage("儲存失敗，請確認瀏覽器允許本機儲存後重試。");
+    // }
   };
 
   const columns: AdminTableColumn<ShareRow>[] = [
@@ -99,7 +109,9 @@ export default function RevenueSharingPage() {
     { key: "actions", header: "操作", headClassName: "text-right", render: (item) => (
       <div className="flex justify-end gap-2 whitespace-nowrap">
         <Button variant="ghost" size="sm" disabled={!ready || (drafts[item.id] ?? String(rates[item.id] ?? DEFAULT_RATE)) === "20"}
-          onClick={() => { setDrafts({ ...drafts, [item.id]: "20" }); setMessage("已填入預設 20%，請按儲存套用。"); }}>重設 20%</Button>
+          onClick={/* TEMP: 暫時以阻擋視窗代替；恢復時改回下方原始 callback。
+            () => { setDrafts({ ...drafts, [item.id]: "20" }); setMessage("已填入預設 20%，請按儲存套用。"); }
+          */ showFeatureUnavailable}>重設 20%</Button>
         <Button size="sm" disabled={!ready || drafts[item.id] === undefined || drafts[item.id] === String(rates[item.id] ?? DEFAULT_RATE)}
           onClick={() => save(item.id)}>儲存</Button>
       </div>
@@ -120,12 +132,13 @@ export default function RevenueSharingPage() {
     `${item.name} ${item.detail}`.toLowerCase().includes(searchQuery.trim().toLowerCase()),
   );
 
-  return (
+  return (<>
+      <FeatureUnavailableDialog open={featureUnavailableOpen} onOpenChange={setFeatureUnavailableOpen} />
     <div className="space-y-4">
       <AdminPageHeader title="分潤管理" description="管理一般創作者與企業委託案的平台分潤比例。" />
       <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm">
         預設平台分潤 <strong className="text-primary">20%</strong>，其餘 80% 歸創作者。可針對各創作者或委託案個別調整。
-        <p className="mt-1 text-xs text-muted-foreground">MVP 示範：設定僅儲存於此瀏覽器，尚未串接實際結算。</p>
+        <p className="mt-1 text-xs text-muted-foreground">分潤設定功能未完成，敬請期待。</p>
       </div>
       <Tabs defaultValue="creators" onValueChange={() => { setQuery(""); setSearchQuery(""); setMessage(""); }}>
         <TabsList aria-label="分潤管理類別">
@@ -141,5 +154,5 @@ export default function RevenueSharingPage() {
         <TabsContent value="quests"><AdminTable columns={columns} items={filter(questRows)} loading={!ready} emptyText="找不到符合條件的企業委託案" /></TabsContent>
       </Tabs>
     </div>
-  );
+    </>);
 }
