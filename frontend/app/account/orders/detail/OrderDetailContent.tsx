@@ -1,235 +1,85 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Navigation } from "@/components/navigation";
-import { UniverseBackground } from "@/components/universe-background";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth-context";
-import { mockOrders } from "../page";
 import Link from "next/link";
-import { ArrowLeft, Clock, Package, Truck, CheckCircle } from "lucide-react";
-
-const getStatusInfo = (status: string) => {
-  switch (status) {
-    case "pending":
-      return {
-        label: "待付款",
-        icon: Clock,
-        color: "text-yellow-400",
-      };
-    case "processing":
-      return {
-        label: "未出貨",
-        icon: Package,
-        color: "text-blue-400",
-      };
-    case "shipping":
-      return {
-        label: "已出貨",
-        icon: Truck,
-        color: "text-purple-400",
-      };
-    case "delivered":
-      return {
-        label: "已送達",
-        icon: CheckCircle,
-        color: "text-green-400",
-      };
-    default:
-      return {
-        label: "已完成",
-        icon: CheckCircle,
-        color: "text-green-400",
-      };
-  }
-};
+import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { OrdersLayout, OrdersLogin, OrderError, OrderBadge, OrderItems } from "@/components/orders/order-shared";
+import { getMyOrder, refreshMyOrder, methodLabels, orderDate, orderMoney, orderError, orderUuid, retryDelay, type OrderDetail } from "@/lib/commerce/my-orders-api";
 
 export default function OrderDetailContent() {
-  // 從 URL 取得訂單 ID
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id") ?? "";
+  const id = useSearchParams().get("id") ?? "";
+  const { user, isLoading } = useAuth();
+  return <OrdersLayout><Link href="/account/orders" className="text-sm underline">返回我的訂單</Link><h1 className="text-3xl font-bold">訂單明細</h1>
+    {isLoading ? <p role="status">確認登入中…</p> : !user ? <OrdersLogin /> : !orderUuid.test(id) ? <p role="alert">訂單編號無效，請從我的訂單列表開啟。示範訂單不屬於真實訂單。</p> : <Detail key={`${user.id}:${id}`} id={id} />}
+  </OrdersLayout>;
+}
 
-  const { user } = useAuth();
-
-  if (!user) {
-    return (
-      <div className="relative min-h-screen">
-        <UniverseBackground />
-        <Navigation />
-        <div className="container mx-auto flex min-h-screen items-center justify-center px-4 pt-16">
-          <Card className="border-border/50 bg-card/30 p-8 backdrop-blur-md text-center">
-            <p className="mb-4 text-foreground">請先登入以查看訂單</p>
-            <Link href="/login">
-              <Button className="bg-gradient-to-r from-primary to-secondary">
-                前往登入
-              </Button>
-            </Link>
-          </Card>
-        </div>
-      </div>
-    );
+function Detail({ id }: { id: string }) {
+  const [order, setOrder] = useState<OrderDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [uncertain, setUncertain] = useState(false);
+  const [reload, setReload] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
+  const [now, setNow] = useState(0);
+  const request = useRef<AbortController | null>(null);
+  const locked = useRef(false);
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = window.setInterval(() => { setNow(Date.now()); setCooldown(n => Math.max(0, n - 1)); }, 1000);
+    return () => { window.clearInterval(timer); request.current?.abort(); };
+  }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setOrder(null); setError("");
+    void getMyOrder(id, controller.signal).then(data => {
+      if (!controller.signal.aborted) setOrder(data);
+    }).catch(e => {
+      if (!controller.signal.aborted) { setError(orderError(e, true)); setCooldown(retryDelay(e)); }
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [id, reload]);
+  async function refresh() {
+    if (locked.current || loading || cooldown > 0) return;
+    locked.current = true; setBusy(true); setError(""); setUncertain(true);
+    const controller = new AbortController();
+    request.current = controller;
+    try {
+      const data = await refreshMyOrder(id, controller.signal);
+      if (!controller.signal.aborted) { setOrder(data); setUncertain(false); setCooldown(5); }
+    } catch (e) {
+      if (!controller.signal.aborted) { setError(orderError(e, true)); setCooldown(retryDelay(e)); }
+    } finally { locked.current = false; if (!controller.signal.aborted) setBusy(false); }
   }
-
-  const order = mockOrders.find((o) => o.id === id);
-
-  if (!order) {
-    return (
-      <div className="relative min-h-screen">
-        <UniverseBackground />
-        <Navigation />
-        <div className="container mx-auto flex min-h-screen items-center justify-center px-4 pt-16">
-          <Card className="border-border/50 bg-card/30 p-8 backdrop-blur-md text-center">
-            <p className="mb-4 text-foreground">找不到此訂單</p>
-            <Link href="/account/orders">
-              <Button variant="outline" className="bg-transparent">
-                返回我的訂單
-              </Button>
-            </Link>
-          </Card>
+  const deadline = Date.parse(order?.expires_at ?? "");
+  const expired = !Number.isFinite(deadline) || now >= deadline;
+  const payee = order?.payment_method === "atm" ? order.payment?.payee_info : null;
+  const disabled = loading || busy || cooldown > 0;
+  return <div className="space-y-5">
+    {loading && <p role="status">載入訂單明細中…</p>}
+    {error && <OrderError message={error} />}
+    {order && <>
+      {order.environment === "sandbox" && <p className="rounded-lg bg-amber-500/10 p-3 text-sm">TapPay 測試訂單，不會實際扣款或出貨。ATM 測試帳號請勿真實轉帳。</p>}
+      <Card className="space-y-3 bg-card/50 p-5"><OrderBadge order={order} /><p className="break-all">訂單編號：{order.id}</p><p>下單時間：{orderDate(order.created_at)}</p><p>訂單更新：{orderDate(order.updated_at)}</p><p>付款方式：{methodLabels[order.payment_method] ?? "其他付款方式"}</p><p className="text-sm text-muted-foreground">時間均為台灣時間。畫面顯示後端已保存的狀態，可按下方按鈕向金流查詢。</p>
+        {order.payment_status === "authorized" && <p>交易已授權，請勿重複付款；已授權與已請款分開顯示。</p>}
+        {order.payment_status === "paid" && <p className="text-green-500">後端已確認付款完成。</p>}
+        {uncertain && <p role="status" className="text-amber-500">尚未確認最新付款結果，請先查詢付款狀態，勿重複付款。</p>}
+        <div className="flex flex-wrap gap-3"><Button variant="outline" disabled={disabled} onClick={() => void refresh()}>{busy ? "查詢中…" : cooldown > 0 ? `${cooldown} 秒後可再查詢` : "查詢付款狀態"}</Button>
+          {!uncertain && !loading && !busy && <Button asChild variant="outline"><Link href={`/checkout/payment?source=api&order=${encodeURIComponent(order.id)}`}>{order.can_pay && !expired ? "前往付款" : "開啟付款紀錄"}</Link></Button>}
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative min-h-screen">
-      <UniverseBackground />
-      <Navigation />
-
-      <div className="container mx-auto px-4 pt-24 pb-20">
-        <div className="mx-auto max-w-2xl space-y-4">
-          {/* 返回按鈕 */}
-          <Link
-            href="/account/orders"
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            我的訂單
-          </Link>
-
-          {/* 訂單狀態 */}
-          {(() => {
-            const statusInfo = getStatusInfo(order.status);
-            const StatusIcon = statusInfo.icon;
-
-            return (
-              <Card className="border-border/50 bg-card/30 backdrop-blur-md p-6 text-center">
-                <StatusIcon
-                  className={`mx-auto mb-3 h-12 w-12 ${statusInfo.color}`}
-                />
-                <p className={`text-3xl font-bold ${statusInfo.color}`}>
-                  {statusInfo.label}
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  更新時間：{order.statusUpdatedAt}
-                </p>
-              </Card>
-            );
-          })()}
-
-          {/* 賣場 + 商品清單 */}
-          <Card className="border-border/50 bg-card/30 backdrop-blur-md overflow-hidden">
-            <div className="border-b border-border/50 bg-white/5 px-6 py-3">
-              <p className="text-sm text-muted-foreground">
-                賣場：
-                <span className="font-medium text-primary">
-                  {order.creator}
-                </span>
-              </p>
-            </div>
-
-            <div className="divide-y divide-border/30">
-              {order.items.map((item, index) => (
-                <div key={index} className="flex items-center gap-4 px-6 py-4">
-                  <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted/30">
-                    <img
-                      src={item.image || "/placeholder.svg"}
-                      alt={item.name}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-foreground">{item.name}</p>
-                    {item.spec && (
-                      <p className="mt-0.5 text-sm text-muted-foreground">
-                        {item.spec}
-                      </p>
-                    )}
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                      x{item.quantity}
-                    </p>
-                  </div>
-
-                  <p className="shrink-0 font-medium text-foreground">
-                    NT$ {item.price}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-end border-t border-border/50 bg-white/5 px-6 py-3">
-              <p className="text-sm text-muted-foreground">
-                訂單總金額：
-                <span className="ml-2 text-lg font-bold text-primary">
-                  NT$ {order.total}
-                </span>
-              </p>
-            </div>
-          </Card>
-
-          {/* 訂單資訊 */}
-          <Card className="border-border/50 bg-card/30 backdrop-blur-md px-6 py-4 space-y-3">
-            <p className="font-semibold text-foreground">訂單資訊</p>
-
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">訂單編號</span>
-                <span className="font-medium text-foreground">{order.id}</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">下單時間</span>
-                <span className="text-foreground">{order.date}</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">付款方式</span>
-                <span className="text-foreground">{order.paymentMethod}</span>
-              </div>
-            </div>
-          </Card>
-
-          {/* 收件資訊 */}
-          <Card className="border-border/50 bg-card/30 backdrop-blur-md px-6 py-4 space-y-3">
-            <p className="font-semibold text-foreground">收件資訊</p>
-
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">收件人</span>
-                <span className="text-foreground">{order.receiver}</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">電話</span>
-                <span className="text-foreground">{order.phone}</span>
-              </div>
-
-              <div className="flex justify-between gap-4">
-                <span className="shrink-0 text-muted-foreground">
-                  {order.deliveryType === "store" ? "取貨門市" : "配送地址"}
-                </span>
-                <span className="text-right text-foreground">
-                  {order.deliveryType === "store"
-                    ? order.storeInfo
-                    : order.address}
-                </span>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
+      </Card>
+      <Card className="bg-card/50 p-5"><h2 className="text-lg font-bold">訂購商品</h2><OrderItems order={order} /><div className="space-y-2 border-t pt-4"><p className="flex justify-between"><span>商品小計</span><span>{orderMoney(order.subtotal, order.currency)}</span></p><p className="flex justify-between"><span>運費</span><span>{orderMoney(order.shipping, order.currency)}</span></p><p className="flex justify-between text-xl font-bold"><span>訂單總額</span><span>{orderMoney(order.total, order.currency)}</span></p></div></Card>
+      <Card className="space-y-3 bg-card/50 p-5"><h2 className="text-lg font-bold">收件資料</h2><p>收件人：{order.contact.name}</p><p>電話：{order.contact.phone}</p><p className="break-all">Email：{order.contact.email}</p><p className="break-words">地址：{order.contact.address}</p><p className="text-sm text-muted-foreground">目前尚未提供物流進度與追蹤單號。</p></Card>
+      <Card className="space-y-3 bg-card/50 p-5"><h2 className="text-lg font-bold">付款資訊</h2><p>付款截止：{orderDate(order.expires_at)}</p>
+        {expired && !["paid", "authorized", "refunded", "partially_refunded"].includes(order.payment_status) && <p>付款期限已過；若已付款，請查詢確認是否入帳，勿重新付款。</p>}
+        {order.payment?.rec_trade_id && <p className="break-all">交易識別碼：{order.payment.rec_trade_id}</p>}
+        {payee && <div className="space-y-2 rounded-md border p-4"><h3 className="font-semibold">ATM 繳費資訊</h3><p>銀行代碼：<span className="font-mono">{payee.vacc_bank_code}</span></p><p className="break-all">虛擬帳號：<span className="font-mono">{payee.vacc_no}</span></p><p>繳費金額：{orderMoney(order.total, order.currency)}</p><p>繳費期限：{orderDate(order.payment?.payment_expires_at)}</p><p className="text-sm">取得帳號不代表已付款，入帳結果以後端查詢為準。</p></div>}
+      </Card>
+    </>}
+    <Button variant="outline" disabled={disabled} onClick={() => setReload(n => n + 1)}>{cooldown > 0 ? `${cooldown} 秒後可重試` : "重新載入訂單"}</Button>
+  </div>;
 }
