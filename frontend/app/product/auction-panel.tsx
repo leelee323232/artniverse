@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/commerce/cart-context";
 import { cartGroupId } from "@/lib/commerce/cart";
 import { Clock, Gavel, RotateCcw, ShoppingCart } from "lucide-react";
+import { ComingSoon } from "@/components/common/ComingSoon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -463,12 +464,11 @@ export function AuctionPanel({ product }: { product: Product }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>返回</AlertDialogCancel>
-            <Button
-              onClick={confirmAction}
-              disabled={status !== "live" || (dialog === "bid" && !validAmount)}
-            >
-              {dialog === "withdraw" ? "確認撤回全部出價" : "確認送出"}
-            </Button>
+            <ComingSoon>
+              <Button disabled={status !== "live" || (dialog === "bid" && !validAmount)}>
+                {dialog === "withdraw" ? "確認撤回全部出價" : "確認送出"}
+              </Button>
+            </ComingSoon>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

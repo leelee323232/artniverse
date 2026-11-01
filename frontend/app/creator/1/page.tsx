@@ -2,6 +2,7 @@
 
 import { Share } from "@/components/share/share";
 import { useState } from "react";
+import { ComingSoon } from "@/components/common/ComingSoon";
 import { Navigation } from "@/components/navigation";
 import { UniverseBackground } from "@/components/universe-background";
 import { ProductCard } from "@/components/product-card";
@@ -349,13 +350,15 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-primary to-secondary"
-                >
-                  <Heart className="mr-2 h-4 w-4" />
-                  追蹤創作者
-                </Button>
+                <ComingSoon>
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-primary to-secondary"
+                  >
+                    <Heart className="mr-2 h-4 w-4" />
+                    追蹤創作者
+                  </Button>
+                </ComingSoon>
 
                 {/* Super Subscription / Tip Button */}
                 {creatorData.superSubscription.enabled ? (
@@ -414,14 +417,15 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                             </ul>
                           </div>
 
-                          <Button
-                            onClick={handleSubscribe}
-                            className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-600 hover:to-orange-600"
-                            size="lg"
-                          >
-                            <Crown className="mr-2 h-4 w-4" />
-                            立即訂閱
-                          </Button>
+                          <ComingSoon className="w-full">
+                            <Button
+                              className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-600 hover:to-orange-600"
+                              size="lg"
+                            >
+                              <Crown className="mr-2 h-4 w-4" />
+                              立即訂閱
+                            </Button>
+                          </ComingSoon>
                         </div>
                       ) : (
                         <div className="space-y-6 py-4 text-center">
@@ -519,13 +523,15 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                           />
                         </div>
 
-                        <Button
-                          className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white"
-                          size="lg"
-                        >
-                          <Coins className="mr-2 h-4 w-4" />
-                          送出 NT$ {tipAmount}
-                        </Button>
+                        <ComingSoon className="w-full">
+                          <Button
+                            className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white"
+                            size="lg"
+                          >
+                            <Coins className="mr-2 h-4 w-4" />
+                            送出 NT$ {tipAmount}
+                          </Button>
+                        </ComingSoon>
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -838,13 +844,15 @@ export default function CreatorPage({ params }: { params: { id: string } }) {
                         >
                           取消
                         </Button>
-                        <Button
-                          type="submit"
-                          className="bg-gradient-to-r from-primary to-secondary"
-                        >
-                          <Send className="mr-2 h-4 w-4" />
-                          送出委託
-                        </Button>
+                        <ComingSoon>
+                          <Button
+                            type="button"
+                            className="bg-gradient-to-r from-primary to-secondary"
+                          >
+                            <Send className="mr-2 h-4 w-4" />
+                            送出委託
+                          </Button>
+                        </ComingSoon>
                       </DialogFooter>
                     </form>
                   ) : (

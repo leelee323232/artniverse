@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { ComingSoon } from "@/components/common/ComingSoon"
 import { useRouter, useSearchParams } from "next/navigation"
 import { mockProducts } from "@/mocks/admin/products"
 import { mockProductCategories } from "@/mocks/admin/productCategories"
@@ -370,18 +371,15 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
                   % OFF
                 </Badge>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-4 top-4 bg-background/50 backdrop-blur-sm hover:bg-background/80"
-                onClick={() => setIsLiked(!isLiked)}
-              >
-                <Heart
-                  className={`h-5 w-5 ${
-                    isLiked ? "fill-red-500 text-red-500" : "text-foreground"
-                  }`}
-                />
-              </Button>
+              <ComingSoon>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-4 top-4 bg-background/50 backdrop-blur-sm hover:bg-background/80"
+                >
+                  <Heart className="h-5 w-5 text-foreground" />
+                </Button>
+              </ComingSoon>
             </div>
 
             <div className="flex gap-3">
@@ -735,22 +733,26 @@ function ProductDetail({ product }: { product: (typeof allProducts)[number] }) {
                             </div>
                           )}
                           <div className="mt-4 flex items-center gap-4">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-muted-foreground"
-                            >
-                              <ThumbsUp className="mr-1 h-4 w-4" />
-                              有幫助 ({review.helpful})
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-muted-foreground"
-                            >
-                              <MessageCircle className="mr-1 h-4 w-4" />
-                              回覆
-                            </Button>
+                            <ComingSoon>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-muted-foreground"
+                              >
+                                <ThumbsUp className="mr-1 h-4 w-4" />
+                                有幫助 ({review.helpful})
+                              </Button>
+                            </ComingSoon>
+                            <ComingSoon>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-muted-foreground"
+                              >
+                                <MessageCircle className="mr-1 h-4 w-4" />
+                                回覆
+                              </Button>
+                            </ComingSoon>
                           </div>
                         </div>
                       </div>

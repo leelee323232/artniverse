@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/lib/auth-context"
 import { Camera, Save, Loader2 } from "lucide-react"
+import { ComingSoon } from "@/components/common/ComingSoon"
 import Link from "next/link"
 
 export default function ProfilePage() {
@@ -135,19 +136,15 @@ export default function ProfilePage() {
                   onChange={handleAvatarChange}
                   className="hidden"
                 />
-                <button
-                  type="button"
-                  onClick={handleAvatarClick}
-                  disabled={isUploadingAvatar}
-                  aria-label="更換頭像"
-                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-70"
-                >
-                  {isUploadingAvatar ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
+                <ComingSoon className="absolute bottom-0 right-0">
+                  <button
+                    type="button"
+                    aria-label="更換頭像"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
                     <Camera className="h-4 w-4" />
-                  )}
-                </button>
+                  </button>
+                </ComingSoon>
               </div>
               <div>
                 <h2 className="text-xl font-bold text-foreground">{user.name}</h2>
@@ -244,23 +241,12 @@ export default function ProfilePage() {
                     >
                       取消
                     </Button>
-                    <Button
-                      onClick={handleSave}
-                      disabled={isSaving}
-                      className="bg-gradient-to-r from-primary to-secondary"
-                    >
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          儲存中...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="mr-2 h-4 w-4" />
-                          儲存變更
-                        </>
-                      )}
-                    </Button>
+                    <ComingSoon>
+                      <Button className="bg-gradient-to-r from-primary to-secondary">
+                        <Save className="mr-2 h-4 w-4" />
+                        儲存變更
+                      </Button>
+                    </ComingSoon>
                   </>
                 ) : (
                   <Button onClick={() => setIsEditing(true)} variant="outline" className="bg-transparent">

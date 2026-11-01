@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { ComingSoon } from "@/components/common/ComingSoon"
 import Image from "next/image"
 import Link from "next/link"
 import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal } from "lucide-react"
@@ -40,10 +41,11 @@ export function PostCard({ post }: PostCardProps) {
   const [likes, setLikes] = useState(post.likes)
   const [showComments, setShowComments] = useState(false)
 
-  const handleLike = () => {
-    setIsLiked(!isLiked)
-    setLikes(isLiked ? likes - 1 : likes + 1)
-  }
+  // TEMP: 原始互動邏輯暫時停用，改用 ComingSoon；恢復功能時取消下方註解。
+// const handleLike = () => {
+//     setIsLiked(!isLiked)
+//     setLikes(isLiked ? likes - 1 : likes + 1)
+//   }
 
   return (
     <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow">
@@ -57,7 +59,7 @@ export function PostCard({ post }: PostCardProps) {
           </Avatar>
         </Link>
         <div className="flex-1 min-w-0">
-          <Link 
+          <Link
             href={`/creator/${post.creator.id}`}
             className="font-semibold text-foreground hover:text-primary transition-colors"
           >
@@ -67,14 +69,29 @@ export function PostCard({ post }: PostCardProps) {
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+            <Button aria-label="貼文選單" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem>追蹤此創作者</DropdownMenuItem>
-            <DropdownMenuItem>分享貼文</DropdownMenuItem>
-            <DropdownMenuItem>檢舉</DropdownMenuItem>
+            {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<DropdownMenuItem>追蹤此創作者</DropdownMenuItem>
+*/}
+<ComingSoon className="flex-1">
+<DropdownMenuItem onSelect={(event) => event.preventDefault()}>追蹤此創作者</DropdownMenuItem>
+</ComingSoon>
+            {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<DropdownMenuItem>分享貼文</DropdownMenuItem>
+*/}
+<ComingSoon className="flex-1">
+<DropdownMenuItem onSelect={(event) => event.preventDefault()}>分享貼文</DropdownMenuItem>
+</ComingSoon>
+            {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<DropdownMenuItem>檢舉</DropdownMenuItem>
+*/}
+<ComingSoon className="flex-1">
+<DropdownMenuItem onSelect={(event) => event.preventDefault()}>檢舉</DropdownMenuItem>
+</ComingSoon>
           </DropdownMenuContent>
         </DropdownMenu>
       </CardHeader>
@@ -95,38 +112,85 @@ export function PostCard({ post }: PostCardProps) {
       <CardFooter className="flex flex-col items-start gap-3 p-4">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<Button
+              variant="ghost"
+              size="icon"
               className={`h-9 w-9 ${isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"}`}
               onClick={handleLike}
             >
               <Heart className={`h-5 w-5 ${isLiked ? "fill-current" : ""}`} />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+*/}
+<ComingSoon className="flex-1">
+<Button aria-label="按讚"
+              variant="ghost"
+              size="icon"
+              className={`h-9 w-9 ${isLiked ? "text-red-500" : "text-muted-foreground hover:text-red-500"}`}
+
+            >
+              <Heart className={`h-5 w-5 ${isLiked ? "fill-current" : ""}`} />
+            </Button>
+</ComingSoon>
+            {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<Button
+              variant="ghost"
+              size="icon"
               className="h-9 w-9 text-muted-foreground hover:text-primary"
               onClick={() => setShowComments(!showComments)}
             >
               <MessageCircle className="h-5 w-5" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+*/}
+<ComingSoon className="flex-1">
+<Button aria-label="留言"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-muted-foreground hover:text-primary"
+
+            >
+              <MessageCircle className="h-5 w-5" />
+            </Button>
+</ComingSoon>
+            {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<Button
+              variant="ghost"
+              size="icon"
               className="h-9 w-9 text-muted-foreground hover:text-primary"
             >
               <Share2 className="h-5 w-5" />
             </Button>
+*/}
+<ComingSoon className="flex-1">
+<Button aria-label="分享貼文"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 text-muted-foreground hover:text-primary"
+            >
+              <Share2 className="h-5 w-5" />
+            </Button>
+</ComingSoon>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<Button
+            variant="ghost"
+            size="icon"
             className={`h-9 w-9 ${isSaved ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
             onClick={() => setIsSaved(!isSaved)}
           >
             <Bookmark className={`h-5 w-5 ${isSaved ? "fill-current" : ""}`} />
           </Button>
+*/}
+<ComingSoon className="flex-1">
+<Button aria-label="收藏貼文"
+            variant="ghost"
+            size="icon"
+            className={`h-9 w-9 ${isSaved ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+
+          >
+            <Bookmark className={`h-5 w-5 ${isSaved ? "fill-current" : ""}`} />
+          </Button>
+</ComingSoon>
         </div>
 
         <div className="space-y-1 w-full">
@@ -138,12 +202,24 @@ export function PostCard({ post }: PostCardProps) {
             <span className="text-foreground/90">{post.description}</span>
           </p>
           {post.comments > 0 && (
-            <button 
+            <>
+            {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
+<button
               className="text-sm text-muted-foreground hover:text-foreground"
               onClick={() => setShowComments(!showComments)}
             >
               查看全部 {post.comments} 則留言
             </button>
+*/}
+<ComingSoon className="flex-1">
+<button
+              className="text-sm text-muted-foreground hover:text-foreground"
+
+            >
+              查看全部 {post.comments} 則留言
+            </button>
+</ComingSoon>
+            </>
           )}
         </div>
 
@@ -155,9 +231,10 @@ export function PostCard({ post }: PostCardProps) {
                 placeholder="新增留言..."
                 className="flex-1 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
               />
-              <Button variant="ghost" size="sm" className="text-primary font-semibold">
-                發布
-              </Button>
+              {/* TEMP: 原本發布按鈕暫時以 ComingSoon 阻擋，恢復時移除包裝。 */}
+              <ComingSoon className="flex-1">
+                <Button variant="ghost" size="sm" className="text-primary font-semibold">發布</Button>
+              </ComingSoon>
             </div>
           </div>
         )}
