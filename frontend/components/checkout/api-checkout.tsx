@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import { api } from "@/lib/api";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, type User } from "@/lib/auth-context";
 import { createApiOrder, draftKey, getPaymentConfig, checkoutError, uuidPattern, type CartApiItem, type CheckoutDraft, type Contact, type TapPayConfig } from "@/lib/commerce/checkout-api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,15 +15,20 @@ import { methodReady, paymentLabels, paymentMethods, type PaymentMethod } from "
 
 export function ApiCheckout({ draftId }: { draftId: string }) {
   const { user, isLoading } = useAuth();
-  return isLoading ? <p>確認登入中…</p> : !user ? <div className="space-y-4"><p>請先登入，再回到購物車結帳。</p><Button asChild><Link href="/login">前往登入</Link></Button></div> : <Form key={`${user.id}:${draftId}`} owner={String(user.id)} draftId={draftId} />;
+  return isLoading ? <p>確認登入中…</p> : !user ? <div className="space-y-4"><p>請先登入，再回到購物車結帳。</p><Button asChild><Link href="/login">前往登入</Link></Button></div> : <Form key={`${user.id}:${draftId}`} owner={String(user.id)} draftId={draftId} profile={user} />;
 }
 
-function Form({ owner, draftId }: { owner: string; draftId: string }) {
+function Form({ owner, draftId, profile }: { owner: string; draftId: string; profile: User }) {
   const router = useRouter();
   const [draft, setDraft] = useState<CheckoutDraft | null>(null);
   const [config, setConfig] = useState<TapPayConfig | null>(null);
   const [method, setMethod] = useState<PaymentMethod>("card");
-  const [contact, setContact] = useState<Contact>({ name: "", email: "", phone: "", address: "" });
+  // Prefill once per member/draft; reloads and profile refreshes must not replace edits.
+  // A saved submitted request below takes precedence for idempotent order retries.
+  const [contact, setContact] = useState<Contact>(() => ({
+    name: profile.name ?? "", email: profile.email ?? "",
+    phone: (profile.phone ?? "").replace(/[\s()-]/g, ""), address: profile.address ?? "",
+  }));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [reload, setReload] = useState(0);

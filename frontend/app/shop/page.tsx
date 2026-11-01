@@ -30,7 +30,6 @@ import {
 } from "lucide-react";
 import { mockProducts } from "@/mocks/admin/products";
 import { mockProductCategories } from "@/mocks/admin/productCategories";
-import { getAuctionPrices } from "@/lib/products/status";
 import { normalizeShopProduct } from "@/lib/shop/shop";
 
 const shopProducts = mockProducts.map((product) => ({
@@ -42,29 +41,13 @@ const categoryNameMap = Object.fromEntries(
   mockProductCategories.map((category) => [category.id, category.name]),
 );
 
-const categoryIcons = {
-  "pc-1": Tent,
-  "pc-2": Sofa,
-  "pc-3": ChefHat,
-  "pc-4": Bed,
-  "pc-5": Car,
-} as const;
-
-const categories = [
-  {
-    id: "all",
-    name: "全部商品",
-    icon: Grid3X3,
-    count: mockProducts.length,
-  },
-  ...mockProductCategories.map((category) => ({
-    id: category.id,
-    name: category.name,
-    icon: categoryIcons[category.id as keyof typeof categoryIcons] ?? Grid3X3,
-    count: mockProducts.filter((product) => product.categoryId === category.id)
-      .length,
-  })),
-];
+import {
+  catalog,
+  catalogError,
+  type CatalogProduct,
+} from "@/lib/commerce/catalog-api";
+import { getAuctionPrices } from "@/lib/products/status";
+import { demoCatalog } from "@/lib/commerce/demo-catalog";
 
 // 商品類型：未來會作為參數帶入搜尋 API（selectedProductType）
 const productTypes = [
@@ -296,6 +279,7 @@ export default function ShopPage() {
                   }
                   return (
                     <ProductCard
+                      source="api"
                       key={product.id}
                       id={product.id}
                       name={product.name}

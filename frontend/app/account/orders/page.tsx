@@ -41,10 +41,12 @@ function OrderList() {
   }, [page, method, status, reload]);
   const disabled = loading || cooldown > 0;
   return <div className="space-y-5">
-    <Card className="flex flex-wrap items-end gap-4 bg-card/50 p-4">
-      <label className="space-y-2"><span className="block text-sm">付款狀態</span><select className="rounded-md border bg-background p-2" value={status} disabled={disabled} onChange={e => { setStatus(e.target.value); setPage(1); }}><option value="">全部狀態</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-      <label className="space-y-2"><span className="block text-sm">付款方式</span><select className="rounded-md border bg-background p-2" value={method} disabled={disabled} onChange={e => { setMethod(e.target.value); setPage(1); }}><option value="">全部方式</option>{Object.entries(methodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-      <Button variant="outline" disabled={disabled} onClick={() => setReload(n => n + 1)}>{cooldown > 0 ? `${cooldown} 秒後可重試` : "重新載入"}</Button>
+    <Card className="bg-card/50 p-4 sm:p-5">
+      <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+        <label className="min-w-0 space-y-2"><span className="block text-sm">付款狀態</span><select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={status} disabled={disabled} onChange={e => { setStatus(e.target.value); setPage(1); }}><option value="">全部狀態</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <label className="min-w-0 space-y-2"><span className="block text-sm">付款方式</span><select className="h-11 w-full rounded-md border bg-background px-3 text-sm" value={method} disabled={disabled} onChange={e => { setMethod(e.target.value); setPage(1); }}><option value="">全部方式</option>{Object.entries(methodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <Button className="h-11 w-full sm:w-auto" variant="outline" disabled={disabled} onClick={() => setReload(n => n + 1)}>{cooldown > 0 ? `${cooldown} 秒後可重試` : "重新載入"}</Button>
+      </div>
     </Card>
     <p className="text-sm text-muted-foreground">付款與出貨狀態分開記錄，目前尚未提供物流進度。訂單時間均為台灣時間。</p>
     {error && <OrderError message={error} />}

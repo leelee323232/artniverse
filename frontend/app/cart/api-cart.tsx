@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { draftKey, type CheckoutDraft } from "@/lib/commerce/checkout-api";
 import { api } from "@/lib/api";
-import { apiError } from "@/lib/products-api";
+import { catalogError as apiError } from "@/lib/commerce/catalog-api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Minus, Plus, Trash2 } from "lucide-react";
@@ -26,7 +26,7 @@ interface ApiCartItem {
 export function ApiCart() {
   const { user, isLoading } = useAuth();
   if (isLoading) return <p>載入購物車中…</p>;
-  return user ? <SignedInCart key={String(user.id)} owner={String(user.id)} /> : null;
+  return user ? <SignedInCart key={String(user.id)} owner={String(user.id)} /> : <p>請先<Link href="/login" className="underline">登入</Link>以查看購物車。</p>;
 }
 
 function SignedInCart({ owner }: { owner: string }) {
@@ -72,6 +72,7 @@ function SignedInCart({ owner }: { owner: string }) {
       const url = `/api/v1/cart/${encodeURIComponent(item.id)}`;
       if (quantity == null) await api.delete(url);
       else await api.patch(url, { quantity });
+      window.dispatchEvent(new Event("artniverse-cart-updated"));
       setLoading(true);
       setReload((value) => value + 1);
     } catch (err) {
@@ -82,11 +83,11 @@ function SignedInCart({ owner }: { owner: string }) {
     }
   }
 
-  if (!loading && !error && items.length === 0) return null;
+  if (!loading && !error && items.length === 0) return <Card className="space-y-4 p-6"><p>購物車是空的。</p><Link href="/shop" className="underline">繼續逛商店</Link></Card>;
   return (
     <section aria-label="資料庫購物車" className="mb-8">
       <Card className="border-border/50 bg-card/40 p-4 sm:p-6">
-        <h2 className="mb-4 text-lg font-bold">資料庫商品</h2>
+        <h2 className="mb-4 text-lg font-bold">已加入的商品</h2>
         {loading && <p role="status">載入購物車中…</p>}
         {error && <p role="alert" className="mb-4 text-destructive">
           {error} <Button variant="outline" disabled={loading || saving} onClick={() => setReload((value) => value + 1)}>重試</Button>
@@ -104,7 +105,7 @@ function SignedInCart({ owner }: { owner: string }) {
                 <div className="flex flex-wrap items-center gap-2">
                   <Button variant="outline" size="icon" aria-label={`減少${item.name}數量`} disabled={saving || loading || item.quantity <= 1} onClick={() => void mutate(item, item.quantity - 1)}><Minus className="h-4 w-4" /></Button>
                   <span className="min-w-8 text-center">{item.quantity}</span>
-                  <Button variant="outline" size="icon" aria-label={`增加${item.name}數量`} disabled={saving || loading || !item.isAvailable || item.quantity >= (item.stock ?? 0)} onClick={() => void mutate(item, item.quantity + 1)}><Plus className="h-4 w-4" /></Button>
+                  <Button variant="outline" size="icon" aria-label={`增加${item.name}數量`} disabled={saving || loading || unavailable(item) || item.quantity >= Math.min(item.stock ?? 99, 99)} onClick={() => void mutate(item, item.quantity + 1)}><Plus className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" className="ml-auto text-destructive" aria-label={`移除${item.name}`} disabled={saving || loading} onClick={() => void mutate(item)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </div>

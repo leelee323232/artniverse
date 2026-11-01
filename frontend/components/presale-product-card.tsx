@@ -80,6 +80,7 @@ export function PresaleProductCard({
       <div className="h-1 w-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500" />
 
       <Link href={{ pathname: "/product", query: { id } }}>
+        {id.startsWith("demo-") && <p className="px-4 py-2 text-xs text-amber-400">預售示範商品・不進行真實付款</p>}
         {/* 商品圖 */}
         <div className="relative aspect-square overflow-hidden bg-muted/30">
           <img
