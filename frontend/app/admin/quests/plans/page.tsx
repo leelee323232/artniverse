@@ -1,5 +1,7 @@
 "use client"
 
+import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
+
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
@@ -102,6 +104,10 @@ const initialSubscriptionPlans = [
 ]
 
 export default function AdminQuestsPage() {
+  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
+  // TEMP: 未完成功能先顯示共用提示；原始流程保留於下方註解，串接完成後再恢復。
+  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
+
   const [plans, setPlans] = useState(initialSubscriptionPlans)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<typeof initialSubscriptionPlans[0] | null>(null)
@@ -124,29 +130,37 @@ export default function AdminQuestsPage() {
 
   // 打開新增方案
   const handleOpenAdd = () => {
-    setSelectedPlan(null)
-    setFormData({
-      id: `plan_${Date.now().toString().slice(-4)}`,
-      name: "",
-      title: "",
-      subtitle: "",
-      price: "$",
-      period: "/月",
-      originalPrice: "",
-      popular: false,
-      creatorCount: "",
-      monthlyDesigns: "",
-      sortOrder: plans.length + 1,
-      features: ALL_FEATURES.map(f => ({ name: f, included: false }))
-    })
-    setIsModalOpen(true)
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // setSelectedPlan(null)
+    // setFormData({
+    //   id: `plan_${Date.now().toString().slice(-4)}`,
+    //   name: "",
+    //   title: "",
+    //   subtitle: "",
+    //   price: "$",
+    //   period: "/月",
+    //   originalPrice: "",
+    //   popular: false,
+    //   creatorCount: "",
+    //   monthlyDesigns: "",
+    //   sortOrder: plans.length + 1,
+    //   features: ALL_FEATURES.map(f => ({ name: f, included: false }))
+    // })
+    // setIsModalOpen(true)
   }
 
   // 打開編輯方案
   const handleOpenEdit = (plan: typeof initialSubscriptionPlans[0]) => {
-    setSelectedPlan(plan)
-    setFormData({ ...plan })
-    setIsModalOpen(true)
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // setSelectedPlan(plan)
+    // setFormData({ ...plan })
+    // setIsModalOpen(true)
   }
 
   // 處理單個 Checkbox 狀態切換
@@ -167,24 +181,34 @@ export default function AdminQuestsPage() {
 
   // 處理儲存
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!formData.id.trim() || !formData.name.trim() || !formData.title.trim()) return
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    e.preventDefault();
+    showFeatureUnavailable();
 
-    if (selectedPlan) {
-      setPlans(plans.map(p => p.id === selectedPlan.id ? { ...p, ...formData } : p))
-    } else {
-      setPlans([...plans, { ...formData }])
-    }
-    setIsModalOpen(false)
+    // 原始邏輯（暫時停用，請保留）：
+    // e.preventDefault()
+    // if (!formData.id.trim() || !formData.name.trim() || !formData.title.trim()) return
+    //
+    // if (selectedPlan) {
+    //   setPlans(plans.map(p => p.id === selectedPlan.id ? { ...p, ...formData } : p))
+    // } else {
+    //   setPlans([...plans, { ...formData }])
+    // }
+    // setIsModalOpen(false)
   }
 
   const handleDelete = (id: string) => {
-    if (confirm("確定要刪除這個訂閱合作方案嗎？")) {
-      setPlans(plans.filter(p => p.id !== id))
-    }
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // if (confirm("確定要刪除這個訂閱合作方案嗎？")) {
+    //   setPlans(plans.filter(p => p.id !== id))
+    // }
   }
 
-  return (
+  return (<>
+      <FeatureUnavailableDialog open={featureUnavailableOpen} onOpenChange={setFeatureUnavailableOpen} />
     <div className="space-y-6">
       {/* 頂部列 */}
       <AdminPageHeader
@@ -464,5 +488,5 @@ export default function AdminQuestsPage() {
       </Dialog>
 
     </div>
-  )
+    </>)
 }

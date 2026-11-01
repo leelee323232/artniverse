@@ -1,5 +1,7 @@
 "use client";
 
+import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
+
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
@@ -20,6 +22,10 @@ const STATUS_TABS: { value: CommissionRequestStatus | "all"; label: string }[] =
   ];
 
 export default function AdminCommissionRequestsPage() {
+  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
+  // TEMP: 未完成功能先顯示共用提示；原始流程保留於下方註解，串接完成後再恢復。
+  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
+
   // 委託需求清單狀態
   const [commissionRequests, setCommissionRequests] = useState<
     CommissionRequest[]
@@ -36,26 +42,35 @@ export default function AdminCommissionRequestsPage() {
       : commissionRequests.filter((r) => r.status === activeTab);
 
   const handleApprove = (id: string) => {
-    setCommissionRequests((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? { ...r, status: "in-progress" as CommissionRequestStatus }
-          : r,
-      ),
-    );
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // setCommissionRequests((prev) =>
+    //   prev.map((r) =>
+    //     r.id === id
+    //       ? { ...r, status: "in-progress" as CommissionRequestStatus }
+    //       : r,
+    //   ),
+    // );
   };
 
   const handleReject = (id: string) => {
-    setCommissionRequests((prev) =>
-      prev.map((r) =>
-        r.id === id
-          ? { ...r, status: "completed" as CommissionRequestStatus }
-          : r,
-      ),
-    );
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // setCommissionRequests((prev) =>
+    //   prev.map((r) =>
+    //     r.id === id
+    //       ? { ...r, status: "completed" as CommissionRequestStatus }
+    //       : r,
+    //   ),
+    // );
   };
 
-  return (
+  return (<>
+      <FeatureUnavailableDialog open={featureUnavailableOpen} onOpenChange={setFeatureUnavailableOpen} />
     <div className="space-y-6">
       {/* 委託需求清單 */}
       <div className="space-y-6">
@@ -117,5 +132,5 @@ export default function AdminCommissionRequestsPage() {
         />
       )}
     </div>
-  );
+    </>);
 }

@@ -11,6 +11,7 @@ import {
   type AdminTableColumn,
 } from "@/components/admin/AdminTable";
 import { AdminModal } from "@/components/admin/AdminModal";
+import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminRowActions } from "@/components/admin/AdminRowActions";
 import { StatusToggle } from "@/components/admin/StatusToggle";
@@ -30,6 +31,9 @@ export default function ProductCategoriesPage() {
   const crud = useAdminCrud<ProductCategory>("pc", mockProductCategories);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
+  // TEMP: 原始流程就地註解保留，串接完成後再恢復。
+  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
 
   useEffect(() => {
     if (!crud.isModalOpen) return;
@@ -55,18 +59,26 @@ export default function ProductCategoriesPage() {
   };
 
   const handleSubmit = () => {
-    if (!validate()) return;
-    crud.submit({
-      name: form.name.trim(),
-      sortOrder: Number(form.sortOrder),
-      isActive: form.isActive,
-    });
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // if (!validate()) return;
+    // crud.submit({
+    //   name: form.name.trim(),
+    //   sortOrder: Number(form.sortOrder),
+    //   isActive: form.isActive,
+    // });
   };
 
   const handleDelete = (item: ProductCategory) => {
-    if (window.confirm(`確定要刪除「${item.name}」嗎？`)) {
-      crud.remove(item.id);
-    }
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // if (window.confirm(`確定要刪除「${item.name}」嗎？`)) {
+    //   crud.remove(item.id);
+    // }
   };
 
   const columns: AdminTableColumn<ProductCategory>[] = [
@@ -87,7 +99,7 @@ export default function ProductCategoriesPage() {
       render: (i) => (
         <StatusToggle
           active={i.isActive}
-          onToggle={() => crud.toggleActive(i)}
+          onToggle={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => crud.toggleActive(i) */ showFeatureUnavailable}
         />
       ),
     },
@@ -103,11 +115,15 @@ export default function ProductCategoriesPage() {
       headClassName: "text-right",
       render: (i) => (
         <AdminRowActions
-          onEdit={() => crud.openEdit(i)}
+          onEdit={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => crud.openEdit(i) */ showFeatureUnavailable}
           onDelete={() => handleDelete(i)}
           sortable={{
-            onMoveUp: () => crud.moveUp(i.id),
-            onMoveDown: () => crud.moveDown(i.id),
+            // TEMP: 原本 onMoveUp: () => crud.moveUp(i.id)，恢復時取消下行註解並移除提示綁定。
+            // onMoveUp: () => crud.moveUp(i.id),
+            onMoveUp: showFeatureUnavailable,
+            // TEMP: 原本 onMoveDown: () => crud.moveDown(i.id)，恢復時取消下行註解並移除提示綁定。
+            // onMoveDown: () => crud.moveDown(i.id),
+            onMoveDown: showFeatureUnavailable,
             isFirst: i.sortOrder === 1,
             isLast: i.sortOrder === crud.items.length,
           }}
@@ -122,7 +138,7 @@ export default function ProductCategoriesPage() {
         title="商品類別管理"
         description="管理前台商品分類，可調整排序與啟用狀態。"
         action={
-          <Button onClick={crud.openCreate} className="gap-2">
+          <Button onClick={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 crud.openCreate */ showFeatureUnavailable} className="gap-2">
             <Plus className="h-4 w-4" />
             新增類別
           </Button>
@@ -134,6 +150,11 @@ export default function ProductCategoriesPage() {
         items={crud.items}
         loading={crud.loading}
         error={crud.error}
+      />
+
+      <FeatureUnavailableDialog
+        open={featureUnavailableOpen}
+        onOpenChange={setFeatureUnavailableOpen}
       />
 
       <AdminModal

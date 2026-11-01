@@ -18,6 +18,7 @@ import {
   type AdminTableColumn,
 } from "@/components/admin/AdminTable";
 import { AdminModal } from "@/components/admin/AdminModal";
+import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
 import { AdminField } from "@/components/admin/AdminField";
 import { AdminRowActions } from "@/components/admin/AdminRowActions";
 import { StatusToggle } from "@/components/admin/StatusToggle";
@@ -66,6 +67,9 @@ export default function CreatorsPage() {
   const crud = useAdminCrud<Creator>("c", getInitialCreators());
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
+  // TEMP: 未完成功能先顯示共用提示；原始流程保留於下方註解，串接完成後再恢復。
+  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -135,19 +139,20 @@ export default function CreatorsPage() {
     } as any);
   };
 
-  const handleDelete = (item: Creator) => {
-    if (window.confirm(`確定要刪除「${item.name}」嗎？`)) {
-      crud.remove(item.id);
-    }
-  };
+  // TEMP: 以下原始處理函式暫時註解保留，入口目前改為 showFeatureUnavailable。
+  // 恢復時取消函式註解，並將對應入口切回旁邊記錄的原始 handler。
+  // const handleDelete = (item: Creator) => {
+  //   if (window.confirm(`確定要刪除「${item.name}」嗎？`)) {
+  //     crud.remove(item.id);
+  //   }
+  // };
 
-  // 修正狀態切換
-  const handleToggleActive = (item: Creator) => {
-    crud.submit({
-      ...item,
-      isActive: !item.isActive,
-    } as any);
-  };
+  // const handleToggleActive = (item: Creator) => {
+  //   crud.submit({
+  //     ...item,
+  //     isActive: !item.isActive,
+  //   } as any);
+  // };
 
   const columns: AdminTableColumn<Creator>[] = [
     {
@@ -196,7 +201,7 @@ export default function CreatorsPage() {
       render: (i) => (
         <StatusToggle
           active={i.isActive}
-          onToggle={() => handleToggleActive(i)}
+          onToggle={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => handleToggleActive(i) */ showFeatureUnavailable}
         />
       ),
     },
@@ -206,8 +211,8 @@ export default function CreatorsPage() {
       headClassName: "text-right",
       render: (i) => (
         <AdminRowActions
-          onEdit={() => crud.openEdit(i)}
-          onDelete={() => handleDelete(i)}
+          onEdit={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => crud.openEdit(i) */ showFeatureUnavailable}
+          onDelete={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 () => handleDelete(i) */ showFeatureUnavailable}
         />
       ),
     },
@@ -219,7 +224,7 @@ export default function CreatorsPage() {
         title="創作者管理"
         description="管理平台創作者資料。"
         action={
-          <Button onClick={crud.openCreate} className="gap-2">
+          <Button onClick={/* TEMP: 暫時以阻擋視窗代替；恢復時改回 crud.openCreate */ showFeatureUnavailable} className="gap-2">
             <Plus className="h-4 w-4" />
             新增創作者
           </Button>
@@ -241,6 +246,11 @@ export default function CreatorsPage() {
         items={filteredItems}
         loading={crud.loading}
         error={crud.error}
+      />
+
+      <FeatureUnavailableDialog
+        open={featureUnavailableOpen}
+        onOpenChange={setFeatureUnavailableOpen}
       />
 
       <AdminModal

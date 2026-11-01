@@ -1,5 +1,7 @@
 "use client";
 
+import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
+
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import React, { useState } from "react";
 import { Eye, Check, X, CalendarIcon } from "lucide-react";
@@ -142,6 +144,10 @@ const initialPromoCodes: PromoCode[] = [
 ];
 
 export default function PromoCodesPage() {
+  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
+  // TEMP: 未完成功能先顯示共用提示；原始流程保留於下方註解，串接完成後再恢復。
+  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
+
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>(initialPromoCodes);
   const [selectedPromo, setSelectedPromo] = useState<PromoCode | null>(null);
   const [confirmType, setConfirmType] = useState<"save" | "delete" | null>(
@@ -189,32 +195,40 @@ export default function PromoCodesPage() {
 
   // 開啟表單視窗（新增）
   const handleOpenCreate = () => {
-    setCode("");
-    setType("percentage");
-    setMinSubtotal(0);
-    setValue(0);
-    setStartTime("");
-    setEndTime("");
-    setMaxUsesInput("");
-    setTarget("all_products");
-    setCategoryId("");
-    setIsEditing(false);
-    setSelectedPromo({} as PromoCode);
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // setCode("");
+    // setType("percentage");
+    // setMinSubtotal(0);
+    // setValue(0);
+    // setStartTime("");
+    // setEndTime("");
+    // setMaxUsesInput("");
+    // setTarget("all_products");
+    // setCategoryId("");
+    // setIsEditing(false);
+    // setSelectedPromo({} as PromoCode);
   };
 
   // 開啟表單視窗（編輯）
   const handleOpenEdit = (promo: PromoCode) => {
-    setCode(promo.code);
-    setType(promo.type);
-    setMinSubtotal(promo.minSubtotal);
-    setValue(promo.value);
-    setStartTime(promo.startTime);
-    setEndTime(promo.endTime);
-    setMaxUsesInput(promo.maxUses === null ? "" : promo.maxUses.toString());
-    setTarget(promo.target);
-    setCategoryId(promo.categoryId ?? "");
-    setIsEditing(true);
-    setSelectedPromo(promo);
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // setCode(promo.code);
+    // setType(promo.type);
+    // setMinSubtotal(promo.minSubtotal);
+    // setValue(promo.value);
+    // setStartTime(promo.startTime);
+    // setEndTime(promo.endTime);
+    // setMaxUsesInput(promo.maxUses === null ? "" : promo.maxUses.toString());
+    // setTarget(promo.target);
+    // setCategoryId(promo.categoryId ?? "");
+    // setIsEditing(true);
+    // setSelectedPromo(promo);
   };
 
   // 防呆
@@ -228,56 +242,61 @@ export default function PromoCodesPage() {
   };
 
   const handleDataAction = () => {
-    const parsedMaxUses =
-      maxUsesInput.trim() === "" ? null : parseInt(maxUsesInput);
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
 
-    if (confirmType === "save") {
-      if (isEditing && selectedPromo?.id) {
-        setPromoCodes((prev) =>
-          prev.map((item) =>
-            item.id === selectedPromo.id
-              ? {
-                  ...item,
-                  code: code.toUpperCase(),
-                  type,
-                  minSubtotal,
-                  value,
-                  startTime,
-                  endTime,
-                  maxUses: parsedMaxUses,
-                  target,
-                  categoryId: target === "single_category" ? categoryId : undefined,
-                }
-              : item,
-          ),
-        );
-      } else {
-        const newPromo: PromoCode = {
-          id: Date.now().toString(),
-          code: code.toUpperCase(),
-          type,
-          minSubtotal,
-          value,
-          startTime,
-          endTime,
-          maxUses: parsedMaxUses,
-          currentUses: 0,
-          target,
-          categoryId: target === "single_category" ? categoryId : undefined,
-        };
-        setPromoCodes((prev) => [newPromo, ...prev]);
-      }
-    } else if (confirmType === "delete" && selectedPromo?.id) {
-      setPromoCodes((prev) =>
-        prev.filter((item) => item.id !== selectedPromo.id),
-      );
-    }
-
-    setConfirmType(null);
-    setSelectedPromo(null);
+    // 原始邏輯（暫時停用，請保留）：
+    // const parsedMaxUses =
+    //   maxUsesInput.trim() === "" ? null : parseInt(maxUsesInput);
+    //
+    // if (confirmType === "save") {
+    //   if (isEditing && selectedPromo?.id) {
+    //     setPromoCodes((prev) =>
+    //       prev.map((item) =>
+    //         item.id === selectedPromo.id
+    //           ? {
+    //               ...item,
+    //               code: code.toUpperCase(),
+    //               type,
+    //               minSubtotal,
+    //               value,
+    //               startTime,
+    //               endTime,
+    //               maxUses: parsedMaxUses,
+    //               target,
+    //               categoryId: target === "single_category" ? categoryId : undefined,
+    //             }
+    //           : item,
+    //       ),
+    //     );
+    //   } else {
+    //     const newPromo: PromoCode = {
+    //       id: Date.now().toString(),
+    //       code: code.toUpperCase(),
+    //       type,
+    //       minSubtotal,
+    //       value,
+    //       startTime,
+    //       endTime,
+    //       maxUses: parsedMaxUses,
+    //       currentUses: 0,
+    //       target,
+    //       categoryId: target === "single_category" ? categoryId : undefined,
+    //     };
+    //     setPromoCodes((prev) => [newPromo, ...prev]);
+    //   }
+    // } else if (confirmType === "delete" && selectedPromo?.id) {
+    //   setPromoCodes((prev) =>
+    //     prev.filter((item) => item.id !== selectedPromo.id),
+    //   );
+    // }
+    //
+    // setConfirmType(null);
+    // setSelectedPromo(null);
   };
 
-  return (
+  return (<>
+      <FeatureUnavailableDialog open={featureUnavailableOpen} onOpenChange={setFeatureUnavailableOpen} />
     <div>
       <AdminPageHeader
         title="優惠碼管理系統"
@@ -334,6 +353,7 @@ export default function PromoCodesPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleOpenEdit(item)}
+                      aria-label="編輯優惠碼"
                       className="text-muted-foreground hover:text-foreground"
                     >
                       <Eye className="h-4 w-4" />
@@ -342,9 +362,12 @@ export default function PromoCodesPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => {
-                        setSelectedPromo(item);
-                        setConfirmType("delete");
+                        // TEMP: 暫時以阻擋視窗代替；恢復時取消下方兩行註解並移除提示呼叫。
+                        showFeatureUnavailable();
+                        // setSelectedPromo(item);
+                        // setConfirmType("delete");
                       }}
+                      aria-label="刪除優惠碼"
                       className="text-destructive hover:text-destructive/80"
                     >
                       <X className="h-4 w-4" />
@@ -644,5 +667,5 @@ export default function PromoCodesPage() {
         </div>
       )}
     </div>
-  );
+    </>);
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
+
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,10 @@ import { PostCard, type Post } from "@/components/posts/PostCard";
 import { Plus, Image, Trash2, MessageSquare } from "lucide-react";
 
 export default function AdminPostsPage() {
+  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
+  // TEMP: 未完成功能先顯示共用提示；原始流程保留於下方註解，串接完成後再恢復。
+  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [newPostContent, setNewPostContent] = useState("");
@@ -34,42 +40,51 @@ export default function AdminPostsPage() {
 
   // 發佈貼文
   const handleCreatePost = () => {
-    if (!newPostContent.trim()) return;
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
 
-    const newPost: Post = {
-      id: `POST-${Date.now()}`,
-      authorName: "管理員",
-      authorAvatar: "",
-      isVerified: true,
-      content: newPostContent,
-      images: newPostImages.map((file) => URL.createObjectURL(file)),
-      likes: 0,
-      isLiked: false,
-      comments: [],
-      createdAt: new Date().toISOString().replace("T", " ").substring(0, 16),
-    };
-
-    setPosts((prev) => [newPost, ...prev]);
-
-    // 清空表單
-    setNewPostContent("");
-    setNewPostImages([]);
-
-    // 關閉 Dialog
-    setIsPostModalOpen(false);
+    // 原始邏輯（暫時停用，請保留）：
+    // if (!newPostContent.trim()) return;
+    //
+    // const newPost: Post = {
+    //   id: `POST-${Date.now()}`,
+    //   authorName: "管理員",
+    //   authorAvatar: "",
+    //   isVerified: true,
+    //   content: newPostContent,
+    //   images: newPostImages.map((file) => URL.createObjectURL(file)),
+    //   likes: 0,
+    //   isLiked: false,
+    //   comments: [],
+    //   createdAt: new Date().toISOString().replace("T", " ").substring(0, 16),
+    // };
+    //
+    // setPosts((prev) => [newPost, ...prev]);
+    //
+    // // 清空表單
+    // setNewPostContent("");
+    // setNewPostImages([]);
+    //
+    // // 關閉 Dialog
+    // setIsPostModalOpen(false);
   };
 
   // 刪除貼文
   const handleDelete = (postId: string) => {
-    setPosts((prev) => prev.filter((post) => post.id !== postId));
+    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
+    showFeatureUnavailable();
+
+    // 原始邏輯（暫時停用，請保留）：
+    // setPosts((prev) => prev.filter((post) => post.id !== postId));
   };
 
-  return (
+  return (<>
+      <FeatureUnavailableDialog open={featureUnavailableOpen} onOpenChange={setFeatureUnavailableOpen} />
     <div>
       <AdminPageHeader
         title="貼文牆"
         description="發佈創作動態、新品花絮，與追蹤粉絲進行零距離留言互動。"
-        action={<Dialog open={isPostModalOpen} onOpenChange={setIsPostModalOpen}>
+        action={<Dialog open={isPostModalOpen} onOpenChange={/* TEMP: 暫時以阻擋視窗代替；原本 onOpenChange={setIsPostModalOpen}，恢復時換回。 */ (open) => { if (open) showFeatureUnavailable(); else setIsPostModalOpen(false); }}>
           <DialogTrigger asChild>
             <Button className="gap-1.5 bg-gradient-to-r from-primary to-secondary shadow-lg shadow-primary/20">
               <Plus className="h-4 w-4" />
@@ -307,5 +322,5 @@ export default function AdminPostsPage() {
         </div>
       )}
     </div>
-  );
+    </>);
 }
