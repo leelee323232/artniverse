@@ -28,6 +28,7 @@ class CartController extends Controller
                 'creatorId' => (string) ($product?->creator_id ?? $row->creator_id),
                 'stock' => (int) ($product?->stock ?? 0),
                 'isAvailable' => $product && (bool) ($product->is_active ?? true)
+                    && $product->deleted_at === null
                     && ($product->product_type ?? 'general') === 'general' && $product->stock > 0,
             ];
         })->values()])->header('Cache-Control', 'private, no-store');

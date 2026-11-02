@@ -28,7 +28,7 @@ class ProductController extends Controller
     public function index(): JsonResponse
     {
         return response()->json([
-            'data' => Product::all(),
+            'data' => Product::where('is_active', true)->whereNull('deleted_at')->get(),
         ]);
     }
 
@@ -67,6 +67,7 @@ class ProductController extends Controller
     // Get By ID
     public function show(Product $product): JsonResponse
     {
+        abort_unless($product->is_active && $product->deleted_at === null, 404);
         return response()->json([
             'data' => $product,
         ]);

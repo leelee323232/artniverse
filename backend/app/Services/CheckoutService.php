@@ -69,6 +69,7 @@ class CheckoutService
     public function assertPurchasable(Product $product, int $quantity): void
     {
         $attributes = $product->getAttributes();
+        abort_if($product->deleted_at !== null, 422, '商品已封存。');
         abort_if(isset($attributes['is_active']) && !$product->is_active, 422, '商品已下架。');
         abort_if(($attributes['product_type'] ?? 'general') !== 'general', 422, '本階段僅支援一般商品；競標與預售尚未串接。');
         abort_if((int) $product->stock < $quantity, 422, '商品庫存不足。');
