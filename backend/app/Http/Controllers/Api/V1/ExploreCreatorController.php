@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Services\PublicProductData;
+use App\Services\PublicCreatorQuery;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -77,8 +78,7 @@ class ExploreCreatorController extends Controller
             ? CarbonImmutable::parse($row->created_at, config('app.timezone'))->timezone('Asia/Taipei')->format('Y年n月')
             : null;
         $data['productCount'] = $this->creatorProducts($creator)->count();
-        // These capabilities are not implemented; do not infer availability from demo content.
-        $data['capabilities'] = ['posts' => false, 'superSubscription' => false, 'tips' => false, 'commissions' => false, 'follow' => false];
+        $data['capabilities'] = ['posts' => false, 'superSubscription' => false, 'tips' => false, 'commissions' => false, 'follow' => true];
         return $this->json(['data' => $data]);
     }
 
@@ -117,16 +117,16 @@ class ExploreCreatorController extends Controller
     private function visible(): Builder
     {
         // Legacy standalone creators remain public. Linked members must retain creator status.
-        return DB::table('creators')->where('is_active', true)->where(function (Builder $query): void {
-            $query->whereNull('user_id')->orWhereExists(function (Builder $users): void {
-                $users->selectRaw('1')->from('users')->whereColumn('users.id', 'creators.user_id')->where('users.is_creator', true);
-            });
-        });
+        return PublicCreatorQuery::query();
     }
 
     private function columns(): array
     {
-        return ['id', 'name', 'planet_name', 'description', 'tags', 'followers', 'rating', 'total_reviews', 'color', 'avatar_url', 'created_at'];
+        // The relation is authoritative, including after user deletion cascades.
+        // Keep the old aggregate column untouched; do not pretend legacy numbers are real follows.
+        return ['id', 'name', 'planet_name', 'description', 'tags',
+            DB::raw('(SELECT COUNT(*) FROM creator_follows WHERE creator_follows.creator_id = creators.id) AS followers'),
+            'rating', 'total_reviews', 'color', 'avatar_url', 'created_at'];
     }
 
     private function tagList(mixed $value): array
