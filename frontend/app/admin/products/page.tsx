@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, FileText, Flame, ImagePlus, Plus, Upload, X } from "lucide-react";
+import { Flame, ImagePlus, Plus, Upload, X } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import Link from "next/link";
+import { useGeneralProducts, type ManagedProduct } from "@/lib/admin/useGeneralProducts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -67,6 +70,7 @@ const PRESALE_BADGE_CLASS = {
 interface FormState extends ProductOptions {
   name: string;
   categoryId: string;
+  creatorId: string;
   price: string;
   stock: string;
   image: string;
@@ -82,6 +86,7 @@ const emptyForm: FormState = {
   ...emptyOptions(),
   name: "",
   categoryId: "",
+  creatorId: "",
   price: "",
   stock: "",
   image: "",
@@ -94,16 +99,29 @@ const emptyForm: FormState = {
 };
 
 export default function ProductsPage() {
-  const crud = useAdminCrud<Product>("p", mockProducts);
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <p role="status">確認登入中…</p>;
+  if (!user) return <p>請先<Link href="/login/" className="underline">登入管理員帳號</Link>。</p>;
+  return <ProductsContent key={user.id} />;
+}
+
+function ProductsContent() {
+  const mockCrud = useAdminCrud<ManagedProduct>("p", mockProducts);
+  const general = useGeneralProducts();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [productTab, setProductTab] = useState<ProductType>("general");
+  const isGeneral = productTab === "general";
+  const crud = isGeneral ? { ...mockCrud, ...general } : mockCrud;
+  const categories = isGeneral ? general.settings.categories : mockProductCategories;
+  const locked = isGeneral && (general.saving || general.frozen);
 
   const categoryNameMap = useMemo(() => {
     const map: Record<string, string> = {};
     mockProductCategories.forEach((c) => (map[c.id] = c.name));
+    general.settings.categories.forEach(c => { map[c.id] = c.name; });
     return map;
-  }, []);
+  }, [general.settings.categories]);
 
   useEffect(() => {
     if (!crud.isModalOpen) return;
@@ -115,6 +133,7 @@ export default function ProductsPage() {
         colors: structuredClone(e.colors ?? []),
         name: e.name,
         categoryId: e.categoryId,
+        creatorId: e.creatorId ?? "",
         price: String(e.price),
         stock: String(e.stock),
         image: e.image,
@@ -122,7 +141,7 @@ export default function ProductsPage() {
         templateFile: e.templateFile ?? null,
         sortOrder: String(e.sortOrder),
         isActive: e.isActive,
-        isPopular: (e as any).isPopular ?? false,
+        isPopular: (e as ManagedProduct).isPopular ?? false,
         description: e.description ?? "",
       });
     } else {
@@ -142,12 +161,33 @@ export default function ProductsPage() {
     else if (!Number.isFinite(Number(form.stock))) next.stock = "庫存必須是數字";
     if (form.sortOrder === "" || Number.isNaN(Number(form.sortOrder)))
       next.sortOrder = "排序必須是數字";
+    if (isGeneral) {
+      if (!form.creatorId) next.creatorId = "請選擇創作者";
+      if (!Number.isInteger(Number(form.price)) || Number(form.price) < 1 || Number(form.price) > 199999) next.price = "價格須為 1 至 199999 的整數";
+      for (const key of ["stock", "sortOrder"] as const) {
+        if (!Number.isInteger(Number(form[key])) || Number(form[key]) < 0 || Number(form[key]) > 2147483647) next[key] = "請輸入有效的非負整數";
+      }
+      if (form.imageFile && (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(form.imageFile.type) || !form.imageFile.size || form.imageFile.size > 5 * 1024 * 1024)) next.image = "圖片需為 JPG、PNG、WebP 或 GIF，每張最多 5 MB";
+      if (form.name.trim().length > 255) next.name = "名稱最多 255 字";
+      if (form.description.length > 10000) next.description = "描述最多 10000 字";
+      for (const key of ["styles", "sizes", "colors"] as const) {
+        if (form[key].length > 50) next.options = "每組規格最多 50 筆";
+        for (const option of form[key]) if (option.label.trim().length > 100) next[option.id] = "規格名稱最多 100 字";
+      }
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
   const handleSubmit = () => {
-    if (!validate()) return;
+    if (!(isGeneral && general.frozen) && !validate()) return;
+    if (isGeneral) {
+      void general.save({ ...normalizeOptions(form), name: form.name.trim(), categoryId: form.categoryId,
+        creatorId: form.creatorId, price: Number(form.price), stock: Number(form.stock), sortOrder: Number(form.sortOrder),
+        isActive: form.isActive, isPopular: form.isPopular, description: form.description.trim(),
+      }, form.imageFile);
+      return;
+    }
     const imageUrl = form.imageFile
       ? URL.createObjectURL(form.imageFile)
       : form.image;
@@ -168,6 +208,7 @@ export default function ProductsPage() {
   };
 
   const handleDelete = (item: Product) => {
+    if (isGeneral) { void general.mutate(item, true); return; }
     if (window.confirm(`確定要刪除「${item.name}」嗎？`)) {
       crud.remove(item.id);
     }
@@ -185,7 +226,7 @@ export default function ProductsPage() {
           alt={i.name}
           className="h-12 w-12 rounded-md object-cover"
         />
-        {(i as any).isPopular && (
+        {(i as ManagedProduct).isPopular && (
           <span className="absolute -bottom-0.5 -right-0.5 bg-background border border-border/50 rounded-full p-0.5 shadow-sm flex items-center justify-center">
             <Flame className="h-3.5 w-3.5 text-orange-500 fill-orange-500/20" />
           </span>
@@ -196,23 +237,23 @@ export default function ProductsPage() {
   const nameColumn: AdminTableColumn<Product> = {
     key: "name",
     header: "商品名稱",
-    render: (i) => <span className="font-medium">{i.name}</span>,
+    render: (i) => <span className="font-medium">{i.name}{(i as ManagedProduct).isDemo && <small className="ml-2 text-muted-foreground">示範</small>}</span>,
   };
   const categoryColumn: AdminTableColumn<Product> = {
     key: "category",
     header: "類別",
     className: "text-muted-foreground",
-    render: (i) => categoryNameMap[i.categoryId] ?? "—",
+    render: (i) => (i as ManagedProduct).isDemo ? mockProductCategories.find(c => c.id === i.categoryId)?.name ?? "—" : (i as ManagedProduct).category ?? categoryNameMap[i.categoryId] ?? "—",
   };
   const actionsColumn: AdminTableColumn<Product> = {
     key: "actions",
     header: "操作",
     headClassName: "text-right",
-    render: (i) => (
-      <AdminRowActions
+    render: (i) => (i as ManagedProduct).isDemo ? <span className="text-xs text-muted-foreground">示範唯讀</span> : (
+      <fieldset disabled={isGeneral && (general.saving || !general.ready)}><AdminRowActions
         onEdit={() => crud.openEdit(i)}
         onDelete={() => handleDelete(i)}
-      />
+      /></fieldset>
     ),
   };
 
@@ -230,11 +271,11 @@ export default function ProductsPage() {
     {
       key: "status",
       header: "狀態",
-      render: (i) => (
-        <StatusToggle
+      render: (i) => (i as ManagedProduct).isDemo ? <span>{i.isActive ? "啟用（示範）" : "停用（示範）"}</span> : (
+        <fieldset disabled={general.saving || !general.ready}><StatusToggle
           active={i.isActive}
-          onToggle={() => crud.toggleActive(i)}
-        />
+          onToggle={() => void general.mutate(i, false)}
+        /></fieldset>
       ),
     },
     actionsColumn,
@@ -360,7 +401,7 @@ export default function ProductsPage() {
         title="商品管理"
         description="管理平台上架商品。"
         action={
-          <Button onClick={crud.openCreate} className="gap-2">
+          <Button onClick={crud.openCreate} disabled={isGeneral && (!general.ready || general.saving)} className="gap-2">
             <Plus className="h-4 w-4" />
             新增商品
           </Button>
@@ -374,7 +415,8 @@ export default function ProductsPage() {
             <button
               key={tab.id}
               type="button"
-              onClick={() => setProductTab(tab.id)}
+              disabled={general.saving || general.isModalOpen}
+              onClick={() => { general.cancelDetail(); setProductTab(tab.id); }}
               className={`-mb-px border-b-2 pb-2 text-sm font-medium transition-colors ${
                 active
                   ? "border-primary text-foreground"
@@ -387,25 +429,42 @@ export default function ProductsPage() {
         })}
       </div>
 
+      {isGeneral && <div className="mb-4 space-y-2">
+        <p className="text-sm text-muted-foreground">正式商品共 {general.total} 筆；示範商品僅供查看，不會寫入資料庫。</p>
+        <Button variant="outline" disabled={general.loading || general.saving} onClick={general.reload}>重新載入</Button>
+        {general.error && <p role="alert" className="text-destructive whitespace-pre-wrap">{general.error}</p>}
+      </div>}
       <AdminTable
         columns={columns}
         items={tabItems}
         loading={crud.loading}
-        error={crud.error}
+        error={isGeneral ? "" : crud.error}
         emptyText="目前沒有此類型商品"
       />
 
+      {isGeneral && <div className="my-4 flex items-center justify-end gap-3">
+        <Button variant="outline" disabled={general.loading || general.saving || general.page <= 1} onClick={() => general.setPage(p => p - 1)}>上一頁</Button>
+        <span>第 {general.page} / {general.lastPage} 頁</span>
+        <Button variant="outline" disabled={general.loading || general.saving || !general.ready || general.page >= general.lastPage} onClick={() => general.setPage(p => p + 1)}>下一頁</Button>
+      </div>}
       <AdminModal
         open={crud.isModalOpen}
         title={crud.editingItem ? "編輯商品" : "新增商品"}
         className="sm:max-w-[min(800px,calc(100%-2rem))]"
         onClose={crud.closeModal}
         onSubmit={handleSubmit}
+        submitting={isGeneral && (general.saving || general.needsRefresh)}
+        submitLabel={isGeneral && general.frozen ? "重試原送件" : "儲存"}
       >
+        {isGeneral && general.error && <p role="alert" className="text-destructive whitespace-pre-wrap">{general.error}</p>}
+        {isGeneral && general.needsRefresh && <Button type="button" variant="outline" onClick={() => general.editingItem ? void general.openEdit(general.editingItem) : general.closeModal()}>重新載入，捨棄本次修改</Button>}
+        {isGeneral && general.frozen && !general.needsRefresh && !general.saving && <p className="text-sm">已保留本次送件內容，請重試原送件，避免重複新增商品。</p>}
+        <fieldset disabled={locked} className="min-w-0 space-y-4">
         <div className="space-y-3">
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <span className="text-sm font-medium">是否啟用</span>
             <Switch
+              disabled={locked}
               checked={form.isActive}
               onCheckedChange={(v) => setForm({ ...form, isActive: v })}
             />
@@ -413,6 +472,7 @@ export default function ProductsPage() {
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <span className="text-sm font-medium">設為熱門商品</span>
             <Switch
+              disabled={locked}
               checked={form.isPopular}
               onCheckedChange={(v) => setForm({ ...form, isPopular: v })}
             />
@@ -434,6 +494,7 @@ export default function ProductsPage() {
 
         <AdminField label="類別" required error={errors.categoryId}>
           <Select
+            disabled={locked}
             value={form.categoryId}
             onValueChange={(v) => setForm({ ...form, categoryId: v })}
           >
@@ -441,8 +502,8 @@ export default function ProductsPage() {
               <SelectValue placeholder="請選擇類別" />
             </SelectTrigger>
             <SelectContent>
-              {mockProductCategories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id} disabled={isGeneral && !c.isActive && c.id !== crud.editingItem?.categoryId}>
                   {c.name}
                 </SelectItem>
               ))}
@@ -450,6 +511,14 @@ export default function ProductsPage() {
           </Select>
         </AdminField>
 
+        {isGeneral && <AdminField label="所屬創作者" required error={errors.creatorId}>
+          <Select value={form.creatorId} disabled={locked || !!crud.editingItem} onValueChange={creatorId => setForm({ ...form, creatorId })}>
+            <SelectTrigger><SelectValue placeholder="請選擇創作者" /></SelectTrigger>
+            <SelectContent>{general.settings.creators.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">建立後不可更換創作者。若選單為空，請先建立正式創作者及商品分類。</p>
+        </AdminField>}
+        {errors.options && <p role="alert" className="text-destructive">{errors.options}</p>}
         <div className="grid grid-cols-2 gap-3">
           <AdminField label="價格" htmlFor="price" required error={errors.price}>
             <Input
@@ -522,6 +591,7 @@ export default function ProductsPage() {
             className="h-24 w-full rounded-md border border-border p-2"
           />
         </AdminField>
+        </fieldset>
       </AdminModal>
     </div>
   );
@@ -539,7 +609,12 @@ function ImageUpload({
   onClear: () => void;
 }) {
   const ref = useRef<HTMLInputElement>(null);
-  const preview = file ? URL.createObjectURL(file) : value || null;
+  const [preview, setPreview] = useState<string | null>(value || null);
+  useEffect(() => {
+    const url = file ? URL.createObjectURL(file) : null;
+    setPreview(url || value || null);
+    return () => { if (url) URL.revokeObjectURL(url); };
+  }, [file, value]);
 
   return (
     <div className="flex items-center gap-3">
