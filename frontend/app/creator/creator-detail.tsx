@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Star, Share2 } from "lucide-react";
+import { CreatorFollowButton } from "@/components/creator-follow-button";
 import { Navigation } from "@/components/navigation";
 import { UniverseBackground } from "@/components/universe-background";
 import { ProductCard } from "@/components/product-card";
@@ -95,8 +96,9 @@ function CreatorLoader({ id }: { id: string }) {
                 {profile.joinedDate && <div className="text-sm text-muted-foreground">加入於 {profile.joinedDate}</div>}
               </div>
               <div className="flex flex-wrap gap-3">
-                <Share trigger={<Button variant="outline" size="lg"><Share2 className="mr-2 h-4 w-4" />分享創作者</Button>} />
-                <Button asChild variant="outline" size="lg"><Link href="/explore/">返回探索</Link></Button>
+                <CreatorFollowButton creatorId={profile.id} onCount={count => setProfile(current => current ? { ...current, followers: count } : current)} />
+                <Share title="分享創作者" subtitle="喜歡這位創作者的作品嗎？點擊下方按鈕分享給身邊的好友吧！"
+                  trigger={<Button variant="outline" size="lg" className="bg-transparent"><Share2 className="mr-2 h-4 w-4" />分享</Button>} />
               </div>
             </div>
           </div>
