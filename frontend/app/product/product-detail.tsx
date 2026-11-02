@@ -182,7 +182,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
               <div className="mb-2 flex items-center gap-2">
                 <Badge variant="outline">{product.category}</Badge>
                 <Link
-                  href={`/creator/${product.creatorId}`}
+                  href={product.id.startsWith("demo-") ? "/creator/1/" : "/creator/?id=" + encodeURIComponent(product.creatorId ?? "")}
                   className="text-sm text-muted-foreground hover:text-primary"
                 >
                   by {product.creatorName}
