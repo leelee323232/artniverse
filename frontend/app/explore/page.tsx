@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { UniverseBackground } from "@/components/universe-background";
 import { PlanetCard } from "@/components/planet-card";
@@ -15,8 +15,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, SlidersHorizontal } from "lucide-react";
+import { fetchExploreCreators, fetchCreatorTags, exploreError, type ExploreResult, type CreatorSort } from "@/lib/explore-api";
 
-const creators = [
+const demoCreators = [
   {
     id: "1",
     name: "夢幻星球",
@@ -107,7 +108,7 @@ const creators = [
   },
 ];
 
-const categories = [
+const demoCategories = [
   "全部",
   "療癒",
   "極簡",
@@ -124,18 +125,39 @@ export default function ExplorePage() {
   const [selectedCategory, setSelectedCategory] = useState("全部");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredCreators = creators.filter((creator) => {
-    const matchesCategory =
-      selectedCategory === "全部" || creator.tags.includes(selectedCategory);
-    const matchesSearch =
-      searchQuery === "" ||
-      creator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.creator.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.tags.some((tag) =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-    return matchesCategory && matchesSearch;
-  });
+  const [sort, setSort] = useState<CreatorSort>("rating");
+  const [page, setPage] = useState(1);
+  const [result, setResult] = useState<ExploreResult | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [tagError, setTagError] = useState("");
+  const [reload, setReload] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    setTagError("");
+    void fetchCreatorTags(controller.signal).then(values => {
+      if (!controller.signal.aborted) setTags(values);
+    }).catch(err => { if (!controller.signal.aborted) setTagError(exploreError(err)); });
+    return () => controller.abort();
+  }, [reload]);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setError(""); setResult(null);
+    const timer = setTimeout(() => {
+      void fetchExploreCreators({ search: searchQuery.trim(), tag: selectedCategory === "全部" ? undefined : selectedCategory, sort, page }, controller.signal)
+        .then(data => { if (!controller.signal.aborted) setResult(data); })
+        .catch(err => { if (!controller.signal.aborted) setError(exploreError(err)); })
+        .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    }, 300);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [searchQuery, selectedCategory, sort, page, reload]);
+  const categories = [...new Set(["全部", ...tags, ...demoCategories, ...demoCreators.flatMap(c => c.tags)])];
+  const query = searchQuery.trim().toLowerCase();
+  const filteredDemos = demoCreators.filter(c =>
+    (selectedCategory === "全部" || c.tags.includes(selectedCategory)) &&
+    [c.name, c.creator, c.description, ...c.tags].some(value => value.toLowerCase().includes(query))
+  ).sort((a, b) => sort === "rating" ? b.rating - a.rating : sort === "followers" ? b.followers - a.followers : 0);
 
   return (
     <div className="relative min-h-screen">
@@ -149,7 +171,7 @@ export default function ExplorePage() {
             探索創作者宇宙
           </h1>
           <p className="text-lg text-muted-foreground">
-            發現 {creators.length} 個獨特的創作星球
+            {result ? "發現 " + result.meta.totalCreators + " 個創作星球" : "發現獨特的創作星球"}
           </p>
         </div>
 
@@ -159,13 +181,14 @@ export default function ExplorePage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="搜尋創作者、風格、作品..."
+                placeholder="搜尋創作者、標籤、簡介..."
+                maxLength={100}
                 className="h-12 border-border/50 bg-card/50 pl-10 backdrop-blur-sm"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
               />
             </div>
-            <Select defaultValue="rating">
+            <Select value={sort} onValueChange={value => { setSort(value as CreatorSort); setPage(1); }}>
               <SelectTrigger className="w-40 border-border/50 bg-card/50 backdrop-blur-sm">
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
                 <SelectValue />
@@ -185,7 +208,11 @@ export default function ExplorePage() {
                 key={category}
                 variant={category === selectedCategory ? "default" : "outline"}
                 className="cursor-pointer px-4 py-2 text-sm transition-all hover:scale-105"
-                onClick={() => setSelectedCategory(category)}
+                role="button"
+                tabIndex={0}
+                aria-pressed={category === selectedCategory}
+                onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSelectedCategory(category); setPage(1); } }}
+                onClick={() => { setSelectedCategory(category); setPage(1); }}
               >
                 {category}
               </Badge>
@@ -193,35 +220,35 @@ export default function ExplorePage() {
           </div>
         </div>
 
-        {/* Results */}
-        <div className="mb-6 text-center text-sm text-muted-foreground">
-          找到 {filteredCreators.length} 個創作者
+        <div className="mb-6 text-center text-sm text-muted-foreground" aria-live="polite">
+          {loading ? "載入創作者中…" : result ? "找到 " + result.meta.total + " 個創作者" : "正式創作者資料尚未載入"}
+          <p className="mt-1">另保留示範卡片供瀏覽，示範數據不計入正式總數。</p>
         </div>
-
-        {/* Creators Grid */}
-        {filteredCreators.length > 0 ? (
+        {(error || tagError) && <div role="alert" className="mb-6 text-center">
+          <p className="text-destructive">{error || "標籤載入失敗：" + tagError}</p>
+          <Button variant="outline" className="mt-2" onClick={() => setReload(v => v + 1)}>重新載入</Button>
+        </div>}
+        {result && result.data.length > 0 && <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {result.data.map(creator => <PlanetCard key={"real-" + creator.id} {...creator} image={creator.image ?? ""} showImage href={null} />)}
+        </div>}
+        {!loading && page > 1 && (!result || result.data.length === 0) && <div className="my-4 text-center">
+          <Button variant="outline" onClick={() => setPage(1)}>返回第一頁</Button>
+        </div>}
+        {!loading && result?.meta.total === 0 && <div className="rounded-xl border border-border/50 bg-card/30 p-8 text-center">
+          <p>找不到符合條件的正式創作者</p>
+          <Button variant="outline" className="mt-4" onClick={() => { setSelectedCategory("全部"); setSearchQuery(""); setPage(1); }}>清除篩選</Button>
+        </div>}
+        {result && result.meta.last_page > 1 && <div className="my-6 flex justify-center items-center gap-4">
+          <Button variant="outline" disabled={loading || page <= 1} onClick={() => setPage(v => v - 1)}>上一頁</Button>
+          <span>第 {result.meta.current_page} / {result.meta.last_page} 頁</span>
+          <Button variant="outline" disabled={loading || page >= result.meta.last_page} onClick={() => setPage(v => v + 1)}>下一頁</Button>
+        </div>}
+        {page === 1 && filteredDemos.length > 0 && <section className="mt-8">
+          <p className="mb-4 text-sm text-muted-foreground">示範創作者（{filteredDemos.length} 筆）{sort === "newest" && "・示範資料無加入日期，維持原順序"}</p>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredCreators.map((creator) => (
-              <PlanetCard key={creator.id} {...creator} />
-            ))}
+            {filteredDemos.map(creator => <div key={"demo-" + creator.id}><Badge variant="outline" className="mb-2">示範</Badge><PlanetCard {...creator} /></div>)}
           </div>
-        ) : (
-          <div className="rounded-xl border border-border/50 bg-card/30 p-12 text-center backdrop-blur-sm">
-            <p className="text-lg text-muted-foreground">
-              找不到符合條件的創作者
-            </p>
-            <Button
-              variant="outline"
-              className="mt-4 bg-transparent"
-              onClick={() => {
-                setSelectedCategory("全部");
-                setSearchQuery("");
-              }}
-            >
-              清除篩選
-            </Button>
-          </div>
-        )}
+        </section>}
       </div>
     </div>
   );

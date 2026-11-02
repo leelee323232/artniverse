@@ -21,6 +21,9 @@ interface PlanetCardProps {
   color: string;
   isFavorited?: boolean;
   onToggleFavorite?: (id: string) => void;
+  href?: string | null;
+  showImage?: boolean;
+  reviewCount?: number;
 }
 
 export function PlanetCard({
@@ -35,7 +38,11 @@ export function PlanetCard({
   color,
   isFavorited,
   onToggleFavorite,
+  href = "/creator/1/",
+  showImage = false,
+  reviewCount,
 }: PlanetCardProps) {
+  const [failedImage, setFailedImage] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [internalLiked, setInternalLiked] = useState(false);
   const isControlled = onToggleFavorite !== undefined;
@@ -50,9 +57,7 @@ export function PlanetCard({
     }
   };
 
-  return (
-    // 先都導向 id 1 的創作者頁面
-    <Link href={`/creator/1`}>
+  const content = (
       <Card
         className="group relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20"
         onMouseEnter={() => setIsHovered(true)}
@@ -74,6 +79,10 @@ export function PlanetCard({
               }}
             />
           </div>
+          {showImage && image && failedImage !== image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={image} alt={name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" onError={() => setFailedImage(image)} />
+          )}
           <ComingSoon>
             <Button
               variant="ghost"
@@ -105,16 +114,16 @@ export function PlanetCard({
           </div>
 
           <div className="flex items-center justify-between border-t border-border/50 pt-3">
-            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            {rating > 0 && (reviewCount === undefined || reviewCount > 0) && <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
               <span>{rating}</span>
-            </div>
+            </div>}
             <div className="text-sm text-muted-foreground">
               {followers.toLocaleString()} 追蹤
             </div>
           </div>
         </div>
       </Card>
-    </Link>
   );
+  return href ? <Link href={href}>{content}</Link> : content;
 }
