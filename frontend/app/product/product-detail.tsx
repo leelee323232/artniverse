@@ -380,10 +380,10 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                   {Object.entries(product.specifications).map(([key, value]) => (
                     <div
                       key={key}
-                      className="flex justify-between border-b border-border/50 pb-3"
+                      className="flex min-w-0 justify-between gap-4 border-b border-border/50 pb-3"
                     >
-                      <span className="text-muted-foreground">{key}</span>
-                      <span className="font-medium text-foreground">{value}</span>
+                      <span className="shrink-0 text-muted-foreground">{key}</span>
+                      <span className="min-w-0 whitespace-pre-wrap break-words text-right font-medium text-foreground">{value}</span>
                     </div>
                   ))}
                 </div>
