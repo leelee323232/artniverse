@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ComingSoon } from "@/components/common/ComingSoon";
 import { useAuth } from "@/lib/auth-context";
 import {
   Package,
@@ -308,22 +309,26 @@ export default function OrdersPage() {
                       {/* Order Footer */}
                       <div className="flex items-center justify-between border-t border-border/50 px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-transparent"
-                          >
-                            <MessageCircle className="mr-2 h-4 w-4" />
-                            聯繫賣家
-                          </Button>
-                          {order.status === "delivered" && (
+                          <ComingSoon>
                             <Button
                               variant="outline"
                               size="sm"
                               className="bg-transparent"
                             >
-                              評價商品
+                              <MessageCircle className="mr-2 h-4 w-4" />
+                              聯繫賣家
                             </Button>
+                          </ComingSoon>
+                          {order.status === "delivered" && (
+                            <ComingSoon>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-transparent"
+                              >
+                                評價商品
+                              </Button>
+                            </ComingSoon>
                           )}
                         </div>
                         <div className="flex items-center gap-4">

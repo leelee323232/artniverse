@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { PostCard, type Post, type Comment } from "@/components/posts/PostCard";
+import { ComingSoon } from "@/components/common/ComingSoon";
 import {
   Dialog,
   DialogContent,
@@ -921,14 +922,15 @@ export default function CreatorPortalPage() {
                   商店資訊編輯
                 </h2>
                 {!isEditingProfile ? (
-                  <Button
-                    onClick={() => setIsEditingProfile(true)}
-                    variant="outline"
-                    className="bg-transparent"
-                  >
-                    <Edit className="mr-2 h-4 w-4" />
-                    編輯
-                  </Button>
+                  <ComingSoon>
+                    <Button
+                      variant="outline"
+                      className="bg-transparent"
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      編輯
+                    </Button>
+                  </ComingSoon>
                 ) : (
                   <div className="flex gap-2">
                     <Button
@@ -938,23 +940,12 @@ export default function CreatorPortalPage() {
                     >
                       取消
                     </Button>
-                    <Button
-                      onClick={handleSaveProfile}
-                      disabled={isSavingProfile}
-                      className="bg-gradient-to-r from-primary to-secondary"
-                    >
-                      {isSavingProfile ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          儲存中...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="mr-2 h-4 w-4" />
-                          儲存
-                        </>
-                      )}
-                    </Button>
+                    <ComingSoon>
+                      <Button className="bg-gradient-to-r from-primary to-secondary">
+                        <Save className="mr-2 h-4 w-4" />
+                        儲存
+                      </Button>
+                    </ComingSoon>
                   </div>
                 )}
               </div>
@@ -1040,22 +1031,15 @@ export default function CreatorPortalPage() {
                                 className="flex-1 bg-white/5"
                                 placeholder="https://..."
                               />
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  const newLinks = profileData.links.filter(
-                                    (_, i) => i !== index,
-                                  );
-                                  setProfileData({
-                                    ...profileData,
-                                    links: newLinks,
-                                  });
-                                }}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <ComingSoon>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </ComingSoon>
                             </>
                           ) : (
                             <a
@@ -1070,23 +1054,16 @@ export default function CreatorPortalPage() {
                         </div>
                       ))}
                       {isEditingProfile && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setProfileData({
-                              ...profileData,
-                              links: [
-                                ...profileData.links,
-                                { label: "", url: "" },
-                              ],
-                            });
-                          }}
-                          className="bg-transparent"
-                        >
-                          <Plus className="mr-2 h-4 w-4" />
-                          新增連結
-                        </Button>
+                        <ComingSoon>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="bg-transparent"
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            新增連結
+                          </Button>
+                        </ComingSoon>
                       )}
                     </div>
                   </div>
@@ -1120,10 +1097,9 @@ export default function CreatorPortalPage() {
                         : "未啟用，粉絲可以自由打賞支持你"}
                     </p>
                   </div>
-                  <Switch
-                    checked={subscriptionEnabled}
-                    onCheckedChange={setSubscriptionEnabled}
-                  />
+                  <ComingSoon>
+                    <Switch checked={subscriptionEnabled} />
+                  </ComingSoon>
                 </div>
 
                 {subscriptionEnabled && (
@@ -1254,13 +1230,12 @@ export default function CreatorPortalPage() {
                 )}
 
                 <div className="flex justify-end">
-                  <Button
-                    onClick={handleSaveProfile}
-                    className="bg-gradient-to-r from-primary to-secondary"
-                  >
-                    <Save className="mr-2 h-4 w-4" />
-                    儲存設定
-                  </Button>
+                  <ComingSoon>
+                    <Button className="bg-gradient-to-r from-primary to-secondary">
+                      <Save className="mr-2 h-4 w-4" />
+                      儲存設定
+                    </Button>
+                  </ComingSoon>
                 </div>
               </div>
             </Card>
@@ -1671,41 +1646,49 @@ export default function CreatorPortalPage() {
                                   </div>
                                 </div>
                                 <DialogFooter>
-                                  <Button className="w-full bg-gradient-to-r from-primary to-secondary">
-                                    <Send className="mr-2 h-4 w-4" />
-                                    送出報價
-                                  </Button>
+                                  <ComingSoon className="w-full">
+                                    <Button className="w-full bg-gradient-to-r from-primary to-secondary">
+                                      <Send className="mr-2 h-4 w-4" />
+                                      送出報價
+                                    </Button>
+                                  </ComingSoon>
                                 </DialogFooter>
                               </DialogContent>
                             </Dialog>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="bg-transparent text-destructive hover:text-destructive"
-                            >
-                              <XCircle className="mr-1 h-4 w-4" />
-                              拒絕
-                            </Button>
+                            <ComingSoon>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-transparent text-destructive hover:text-destructive"
+                              >
+                                <XCircle className="mr-1 h-4 w-4" />
+                                拒絕
+                              </Button>
+                            </ComingSoon>
                           </>
                         )}
                         {request.status === "quoted" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-transparent"
-                          >
-                            <MessageSquare className="mr-1 h-4 w-4" />
-                            聯繫客戶
-                          </Button>
+                          <ComingSoon>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-transparent"
+                            >
+                              <MessageSquare className="mr-1 h-4 w-4" />
+                              聯繫客戶
+                            </Button>
+                          </ComingSoon>
                         )}
                         {request.status === "paid" && (
-                          <Button
-                            size="sm"
-                            className="bg-gradient-to-r from-green-500 to-emerald-500 text-white"
-                          >
-                            <CheckCircle className="mr-1 h-4 w-4" />
-                            標記完成
-                          </Button>
+                          <ComingSoon>
+                            <Button
+                              size="sm"
+                              className="bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+                            >
+                              <CheckCircle className="mr-1 h-4 w-4" />
+                              標記完成
+                            </Button>
+                          </ComingSoon>
                         )}
                       </div>
                     </div>
@@ -1912,10 +1895,12 @@ export default function CreatorPortalPage() {
 
                         <DialogFooter>
                           {quest.status === "open" ? (
-                            <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white">
-                              <Swords className="mr-2 h-4 w-4" />
-                              申請接受委託
-                            </Button>
+                            <ComingSoon className="w-full">
+                              <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                                <Swords className="mr-2 h-4 w-4" />
+                                申請接受委託
+                              </Button>
+                            </ComingSoon>
                           ) : (
                             <Button disabled className="w-full">
                               <CheckCircle className="mr-2 h-4 w-4" />
@@ -2122,23 +2107,25 @@ export default function CreatorPortalPage() {
                     </div>
 
                     <DialogFooter>
-                      <Button
-                        onClick={handleSubmitEvents}
-                        disabled={isSubmittingEvents}
-                        className="bg-gradient-to-r from-primary to-secondary"
-                      >
-                        {isSubmittingEvents ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            送出中...
-                          </>
-                        ) : (
-                          <>
-                            <Send className="mr-2 h-4 w-4" />
-                            送出申請
-                          </>
-                        )}
-                      </Button>
+                      <ComingSoon>
+                        <Button
+                          onClick={handleSubmitEvents}
+                          disabled={isSubmittingEvents}
+                          className="bg-gradient-to-r from-primary to-secondary"
+                        >
+                          {isSubmittingEvents ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              送出中...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="mr-2 h-4 w-4" />
+                              送出申請
+                            </>
+                          )}
+                        </Button>
+                      </ComingSoon>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -2305,11 +2292,13 @@ export default function CreatorPortalPage() {
                         新貼文
                       </h2>
 
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 rounded-full text-white/70 hover:bg-white/10 hover:text-white"
-                      ></Button>
+                      <ComingSoon>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-full text-white/70 hover:bg-white/10 hover:text-white"
+                        ></Button>
+                      </ComingSoon>
                     </div>
 
                     <div className="space-y-1 max-h-[60vh] overflow-y-auto px-0 py-2">
@@ -2424,13 +2413,15 @@ export default function CreatorPortalPage() {
                     </div>
 
                     <DialogFooter className="justify-end px-5 pb-2">
-                      <Button
-                        onClick={handleCreatePost}
-                        disabled={!newPostContent.trim()}
-                        className="rounded-full bg-white px-6 text-black hover:bg-white/90"
-                      >
-                        發佈
-                      </Button>
+                      <ComingSoon>
+                        <Button
+                          onClick={handleCreatePost}
+                          disabled={!newPostContent.trim()}
+                          className="rounded-full bg-white px-6 text-black hover:bg-white/90"
+                        >
+                          發佈
+                        </Button>
+                      </ComingSoon>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>

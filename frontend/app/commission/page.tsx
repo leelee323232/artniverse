@@ -1,12 +1,24 @@
-"use client"
+"use client";
 
-import { Navigation } from "@/components/navigation"
-import { UniverseBackground } from "@/components/universe-background"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Sparkles, CheckCircle2, Palette, Video, ImageIcon, Flame, Check, Package, Factory, CreditCard } from "lucide-react"
-import Link from "next/link"
-import { useState } from "react"
+import { Navigation } from "@/components/navigation";
+import { UniverseBackground } from "@/components/universe-background";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Sparkles,
+  CheckCircle2,
+  Palette,
+  Video,
+  ImageIcon,
+  Flame,
+  Check,
+  Package,
+  Factory,
+  CreditCard,
+} from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { ComingSoon } from "@/components/common/ComingSoon";
 
 const subscriptionPlans = [
   {
@@ -165,7 +177,7 @@ const subscriptionPlans = [
       { name: "專屬創作者池（固定合作班底）", included: true },
     ],
   },
-]
+];
 
 const singleProjectTypes = [
   {
@@ -208,7 +220,7 @@ const singleProjectTypes = [
     priceRange: "NT$ 5,000 - 25,000",
     turnaround: "1-2 週",
   },
-]
+];
 
 const processSteps = [
   {
@@ -223,11 +235,7 @@ const processSteps = [
   {
     icon: Factory,
     title: "製造與供應鏈",
-    items: [
-      "工廠媒合與成本控管",
-      "小量試產 → 大量量產",
-      "品質控管與交期管理",
-    ],
+    items: ["工廠媒合與成本控管", "小量試產 → 大量量產", "品質控管與交期管理"],
   },
   {
     icon: CreditCard,
@@ -238,7 +246,7 @@ const processSteps = [
       "訂閱客戶享專屬製造折扣與優先排程",
     ],
   },
-]
+];
 
 const steps = [
   {
@@ -266,10 +274,10 @@ const steps = [
     title: "交付成果",
     description: "收到成品並確認滿意後完成委託",
   },
-]
+];
 
 export default function CommissionPage() {
-  const [expandedPlan, setExpandedPlan] = useState<string | null>(null)
+  const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
 
   return (
     <div className="relative min-h-screen">
@@ -283,7 +291,9 @@ export default function CommissionPage() {
             <Sparkles className="h-4 w-4" />
             專業客製化設計服務
           </div>
-          <h1 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">企業委託</h1>
+          <h1 className="mb-4 text-4xl font-bold text-foreground md:text-5xl">
+            企業委託
+          </h1>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
             與才華洋溢的創作者合作，打造專屬於你的獨特設計
           </p>
@@ -292,7 +302,9 @@ export default function CommissionPage() {
         {/* Why Long-term Cooperation Section */}
         <div className="mb-16">
           <div className="mb-10 text-center">
-            <h2 className="mb-3 text-3xl font-bold text-foreground">為什麼要長期合作？</h2>
+            <h2 className="mb-3 text-3xl font-bold text-foreground">
+              為什麼要長期合作？
+            </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
               創作者內容需要「至少3個月」才能累積演算法權重
               <br />
@@ -306,7 +318,9 @@ export default function CommissionPage() {
               <Card
                 key={plan.id}
                 className={`relative flex flex-col border-border/50 bg-card/30 p-6 backdrop-blur-sm transition-all hover:shadow-xl ${
-                  plan.popular ? "border-primary ring-2 ring-primary/50" : "hover:border-primary/50"
+                  plan.popular
+                    ? "border-primary ring-2 ring-primary/50"
+                    : "hover:border-primary/50"
                 }`}
               >
                 {plan.popular && (
@@ -319,62 +333,98 @@ export default function CommissionPage() {
                 )}
                 <div className="mb-2">
                   <p className="text-sm text-muted-foreground">{plan.name}</p>
-                  <h3 className="text-lg font-bold text-foreground">{plan.title}</h3>
+                  <h3 className="text-lg font-bold text-foreground">
+                    {plan.title}
+                  </h3>
                 </div>
-                <p className="mb-4 text-xs text-muted-foreground">{plan.subtitle}</p>
+                <p className="mb-4 text-xs text-muted-foreground">
+                  {plan.subtitle}
+                </p>
                 <div className="mb-4">
                   <div className="flex items-baseline">
-                    <span className="text-3xl font-bold text-primary">{plan.price}</span>
+                    <span className="text-3xl font-bold text-primary">
+                      {plan.price}
+                    </span>
                     <span className="text-muted-foreground">{plan.period}</span>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{plan.originalPrice}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {plan.originalPrice}
+                  </p>
                 </div>
 
                 {/* Key Metrics */}
                 <div className="mb-4 space-y-2 border-t border-border/50 pt-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">創作者合作數</span>
-                    <span className="font-semibold text-foreground">{plan.creatorCount}</span>
+                    <span className="font-semibold text-foreground">
+                      {plan.creatorCount}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">每月設計交付</span>
-                    <span className="font-semibold text-foreground">{plan.monthlyDesigns}</span>
+                    <span className="font-semibold text-foreground">
+                      {plan.monthlyDesigns}
+                    </span>
                   </div>
                 </div>
 
                 {/* Core Features Preview */}
                 <ul className="mb-4 flex-1 space-y-2">
-                  {plan.features.filter(f => f.included).slice(0, 5).map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2 text-sm">
-                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
-                      <span className="text-muted-foreground">{feature.name}</span>
-                    </li>
-                  ))}
-                  {plan.features.filter(f => f.included).length > 5 && (
+                  {plan.features
+                    .filter((f) => f.included)
+                    .slice(0, 5)
+                    .map((feature, index) => (
+                      <li
+                        key={index}
+                        className="flex items-start gap-2 text-sm"
+                      >
+                        <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                        <span className="text-muted-foreground">
+                          {feature.name}
+                        </span>
+                      </li>
+                    ))}
+                  {plan.features.filter((f) => f.included).length > 5 && (
                     <li className="text-sm text-primary">
-                      +{plan.features.filter(f => f.included).length - 5} 項更多服務
+                      +{plan.features.filter((f) => f.included).length - 5}{" "}
+                      項更多服務
                     </li>
                   )}
                 </ul>
 
                 {/* Expand/Collapse Details */}
                 <button
-                  onClick={() => setExpandedPlan(expandedPlan === plan.id ? null : plan.id)}
+                  onClick={() =>
+                    setExpandedPlan(expandedPlan === plan.id ? null : plan.id)
+                  }
                   className="mb-4 text-sm text-primary hover:underline"
                 >
-                  {expandedPlan === plan.id ? "收起詳細比較" : "查看完整方案內容"}
+                  {expandedPlan === plan.id
+                    ? "收起詳細比較"
+                    : "查看完整方案內容"}
                 </button>
 
                 {expandedPlan === plan.id && (
                   <div className="mb-4 max-h-64 space-y-1 overflow-y-auto border-t border-border/50 pt-4">
                     {plan.features.map((feature, index) => (
-                      <div key={index} className="flex items-center gap-2 text-xs">
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 text-xs"
+                      >
                         {feature.included ? (
                           <Check className="h-3 w-3 flex-shrink-0 text-primary" />
                         ) : (
-                          <span className="h-3 w-3 flex-shrink-0 text-center text-muted-foreground/50">—</span>
+                          <span className="h-3 w-3 flex-shrink-0 text-center text-muted-foreground/50">
+                            —
+                          </span>
                         )}
-                        <span className={feature.included ? "text-foreground" : "text-muted-foreground/50"}>
+                        <span
+                          className={
+                            feature.included
+                              ? "text-foreground"
+                              : "text-muted-foreground/50"
+                          }
+                        >
                           {feature.name}
                         </span>
                       </div>
@@ -382,13 +432,18 @@ export default function CommissionPage() {
                   </div>
                 )}
 
-                <Link href={`/commission/subscribe/${plan.id}`} className="mt-auto">
-                  <Button
-                    className={`w-full ${plan.popular ? "bg-gradient-to-r from-primary to-secondary" : ""}`}
-                    variant={plan.popular ? "default" : "outline"}
-                  >
-                    立即訂閱
-                  </Button>
+                <Link
+                  href={`/commission/subscribe/${plan.id}`}
+                  className="mt-auto"
+                >
+                  <ComingSoon className="flex-1">
+                    <Button
+                      className={`w-full ${plan.popular ? "bg-gradient-to-r from-primary to-secondary" : ""}`}
+                      variant={plan.popular ? "default" : "outline"}
+                    >
+                      立即訂閱
+                    </Button>
+                  </ComingSoon>
                 </Link>
               </Card>
             ))}
@@ -397,10 +452,12 @@ export default function CommissionPage() {
 
         {/* Single Project Types */}
         <div className="mb-16">
-          <h2 className="mb-8 text-center text-2xl font-bold text-foreground">單次專案</h2>
+          <h2 className="mb-8 text-center text-2xl font-bold text-foreground">
+            單次專案
+          </h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
             {singleProjectTypes.map((type) => {
-              const Icon = type.icon
+              const Icon = type.icon;
               return (
                 <Card
                   key={type.id}
@@ -409,20 +466,28 @@ export default function CommissionPage() {
                   <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/20">
                     <Icon className="h-6 w-6 text-primary" />
                   </div>
-                  <h3 className="mb-2 text-lg font-bold text-foreground">{type.title}</h3>
-                  <p className="mb-4 text-sm text-muted-foreground">{type.description}</p>
+                  <h3 className="mb-2 text-lg font-bold text-foreground">
+                    {type.title}
+                  </h3>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    {type.description}
+                  </p>
                   <div className="space-y-2 border-t border-border/50 pt-4">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">價格範圍</span>
-                      <span className="font-bold text-foreground">{type.priceRange}</span>
+                      <span className="font-bold text-foreground">
+                        {type.priceRange}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">完成時間</span>
-                      <span className="font-bold text-foreground">{type.turnaround}</span>
+                      <span className="font-bold text-foreground">
+                        {type.turnaround}
+                      </span>
                     </div>
                   </div>
                 </Card>
-              )
+              );
             })}
           </div>
         </div>
@@ -430,14 +495,16 @@ export default function CommissionPage() {
         {/* Content x Product Section */}
         <div className="mb-16">
           <div className="mb-10 text-center">
-            <h2 className="mb-3 text-3xl font-bold text-foreground">內容 × 商品，一條龍變現</h2>
+            <h2 className="mb-3 text-3xl font-bold text-foreground">
+              內容 × 商品，一條龍變現
+            </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
               完成創作者合作後，可延伸為品牌禮品或銷售商品，由我們協助生產落地
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
             {processSteps.map((step, index) => {
-              const Icon = step.icon
+              const Icon = step.icon;
               return (
                 <Card
                   key={index}
@@ -447,18 +514,23 @@ export default function CommissionPage() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
                       <Icon className="h-5 w-5 text-primary" />
                     </div>
-                    <h3 className="text-lg font-bold text-foreground">{step.title}</h3>
+                    <h3 className="text-lg font-bold text-foreground">
+                      {step.title}
+                    </h3>
                   </div>
                   <ul className="space-y-3">
                     {step.items.map((item, itemIndex) => (
-                      <li key={itemIndex} className="flex items-start gap-2 text-sm">
+                      <li
+                        key={itemIndex}
+                        className="flex items-start gap-2 text-sm"
+                      >
                         <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                         <span className="text-muted-foreground">{item}</span>
                       </li>
                     ))}
                   </ul>
                 </Card>
-              )
+              );
             })}
           </div>
         </div>
@@ -466,7 +538,9 @@ export default function CommissionPage() {
         {/* Why Choose ARTNIVERSE Section */}
         <div className="mb-16">
           <div className="mx-auto max-w-3xl rounded-lg border border-primary/30 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-10 text-center backdrop-blur-sm">
-            <h2 className="mb-3 text-3xl font-bold text-foreground">為什麼選擇 ARTNIVERSE？</h2>
+            <h2 className="mb-3 text-3xl font-bold text-foreground">
+              為什麼選擇 ARTNIVERSE？
+            </h2>
             <p className="text-lg text-muted-foreground">
               省下創作者溝通、合約、管理成本
               <br />
@@ -477,11 +551,16 @@ export default function CommissionPage() {
 
         {/* How It Works */}
         <div className="mb-16">
-          <h2 className="mb-8 text-center text-2xl font-bold text-foreground">委託流程</h2>
+          <h2 className="mb-8 text-center text-2xl font-bold text-foreground">
+            委託流程
+          </h2>
           <div className="mx-auto max-w-4xl">
             <div className="space-y-6">
               {steps.map((step, index) => (
-                <Card key={step.number} className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
+                <Card
+                  key={step.number}
+                  className="border-border/50 bg-card/30 p-6 backdrop-blur-sm"
+                >
                   <div className="flex gap-6">
                     <div className="flex-shrink-0">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary text-lg font-bold text-primary-foreground">
@@ -489,8 +568,12 @@ export default function CommissionPage() {
                       </div>
                     </div>
                     <div className="flex-1">
-                      <h3 className="mb-2 text-lg font-bold text-foreground">{step.title}</h3>
-                      <p className="text-muted-foreground">{step.description}</p>
+                      <h3 className="mb-2 text-lg font-bold text-foreground">
+                        {step.title}
+                      </h3>
+                      <p className="text-muted-foreground">
+                        {step.description}
+                      </p>
                     </div>
                   </div>
                   {index < steps.length - 1 && (
@@ -505,11 +588,18 @@ export default function CommissionPage() {
         {/* CTA Section */}
         <div className="mx-auto max-w-2xl text-center">
           <Card className="border-primary/30 bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 p-12 backdrop-blur-sm">
-            <h2 className="mb-4 text-2xl font-bold text-foreground">準備好開始你的專案了嗎？</h2>
-            <p className="mb-8 text-muted-foreground">填寫委託表單，讓我們為你找到最適合的創作者</p>
+            <h2 className="mb-4 text-2xl font-bold text-foreground">
+              準備好開始你的專案了嗎？
+            </h2>
+            <p className="mb-8 text-muted-foreground">
+              填寫委託表單，讓我們為你找到最適合的創作者
+            </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/commission/request">
-                <Button size="lg" className="bg-gradient-to-r from-primary to-secondary">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-primary to-secondary"
+                >
                   <Sparkles className="mr-2 h-4 w-4" />
                   免費取得專屬提案
                 </Button>
@@ -524,5 +614,5 @@ export default function CommissionPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

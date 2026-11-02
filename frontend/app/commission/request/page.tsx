@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Upload, X, ArrowLeft, Calendar, Search, FileText } from "lucide-react"
+import { ComingSoon } from "@/components/common/ComingSoon"
 import type { ApplicantCondition } from "@/types/commission-request"
 import { mockCreators } from "@/mocks/admin/creators"
 import Link from "next/link"
@@ -404,9 +405,11 @@ export default function CommissionRequestPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-3 border-t border-border/50 pt-6">
-                <Button type="submit" className="flex-1 bg-gradient-to-r from-primary to-secondary">
-                  提交委託需求
-                </Button>
+                <ComingSoon className="flex-1">
+                  <Button type="button" className="w-full bg-gradient-to-r from-primary to-secondary">
+                    提交委託需求
+                  </Button>
+                </ComingSoon>
                 <Link href="/commission" className="flex-1">
                   <Button type="button" variant="outline" className="w-full bg-transparent">
                     取消

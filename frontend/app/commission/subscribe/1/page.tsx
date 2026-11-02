@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Sparkles, Check, ArrowLeft, Building2, Mail, Phone, FileText } from "lucide-react"
+import { ComingSoon } from "@/components/common/ComingSoon"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 
@@ -272,14 +273,16 @@ export default function SubscribePage() {
                 </div>
 
                 {/* Submit Button */}
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full bg-gradient-to-r from-primary to-secondary"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  送出訂閱申請
-                </Button>
+                <ComingSoon className="w-full">
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="w-full bg-gradient-to-r from-primary to-secondary"
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    送出訂閱申請
+                  </Button>
+                </ComingSoon>
               </form>
             </Card>
           </div>

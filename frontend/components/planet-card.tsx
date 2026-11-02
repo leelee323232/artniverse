@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ComingSoon } from "@/components/common/ComingSoon";
 
 interface PlanetCardProps {
   id: string;
@@ -73,17 +74,16 @@ export function PlanetCard({
               }}
             />
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-2 top-2 z-10 bg-background/50 backdrop-blur-sm hover:bg-background/80"
-            onClick={handleToggleFavorite}
-            title={isLiked ? "取消收藏" : "加入收藏"}
-          >
-            <Heart
-              className={`h-4 w-4 ${isLiked ? "fill-red-500 text-red-500" : "text-foreground"}`}
-            />
-          </Button>
+          <ComingSoon>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-2 top-2 z-10 bg-background/50 backdrop-blur-sm hover:bg-background/80"
+              title="加入收藏"
+            >
+              <Heart className="h-4 w-4 text-foreground" />
+            </Button>
+          </ComingSoon>
         </div>
 
         <div className="space-y-3 p-4">
