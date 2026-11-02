@@ -26,7 +26,10 @@ Migration：`2026_11_02_010000_add_creator_explore_fields.php`。
 
 - `GET /api/v1/creators`：search、tag、sort=rating|followers|newest、page、per_page（預設20，上限100）。搜尋品牌名稱、星球名稱、簡介及標籤，不搜尋商品／作品內容。
 - `GET /api/v1/creators/tags`：目前公開創作者實際使用的標籤。選擇「全部」時不傳 tag。
-- `GET /api/v1/creators/{id}`：同一份公開卡片資料，不含商品或創作者完整個人頁資料。
+- `GET /api/v1/creators/{id}`：公開創作者介紹，含原卡片欄位及 totalReviews、joinedDate、productCount、capabilities。productCount 僅計算已上架、未封存的一般商品。
+- `GET /api/v1/creators/{id}/products`：該創作者的一般商品列表，支援 page、per_page（預設20，上限100）、sort=default|newest|price_asc|price_desc。商品含原商品 API 的規格資料，meta 回傳分頁資訊。無商品回空列表；創作者不存在或非公開回404。
+- 創作者個人頁依 creators.id 查詢，不使用 users.id 或固定 ID 1。貼文、訂閱、打賞、委託與追蹤操作尚未實作，capabilities 對應值均為 false。
+- 本次個人頁擴充沿用既有資料表，不需新增 migration；商品序列化共用 PublicProductData，維持商店與創作者商品格式一致。
 - 列表回傳 data 與 meta；meta.total 是篩選結果總數，meta.totalCreators 是公開創作者總數。排序同值以 ID 降序穩定分頁。
 - 可未登入讀取，限流每分鐘60次。無結果回空陣列；下架或不存在的單筆回404；參數不符回422。
 

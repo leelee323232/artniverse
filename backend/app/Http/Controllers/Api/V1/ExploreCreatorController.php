@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
+use App\Services\PublicProductData;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -67,7 +70,48 @@ class ExploreCreatorController extends Controller
     {
         $row = $this->visible()->where('id', $creator)->first($this->columns());
         abort_unless($row, 404, '找不到公開創作者。');
-        return $this->json(['data' => $this->card($row)]);
+        $data = $this->card($row);
+        // Public profile only: never expose member contact information or application documents.
+        $data['totalReviews'] = $data['reviewCount'];
+        $data['joinedDate'] = $row->created_at
+            ? CarbonImmutable::parse($row->created_at, config('app.timezone'))->timezone('Asia/Taipei')->format('Y年n月')
+            : null;
+        $data['productCount'] = $this->creatorProducts($creator)->count();
+        // These capabilities are not implemented; do not infer availability from demo content.
+        $data['capabilities'] = ['posts' => false, 'superSubscription' => false, 'tips' => false, 'commissions' => false, 'follow' => false];
+        return $this->json(['data' => $data]);
+    }
+
+    public function products(Request $request, string $creator, PublicProductData $serializer): JsonResponse
+    {
+        // Check visibility even if this creator currently has no products.
+        abort_unless($this->visible()->where('id', $creator)->exists(), 404, '找不到公開創作者。');
+        $input = $request->validate([
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'sort' => ['sometimes', Rule::in(['default', 'newest', 'price_asc', 'price_desc'])],
+        ]);
+        $query = $this->creatorProducts($creator);
+        match ($input['sort'] ?? 'default') {
+            'newest' => $query->orderByDesc('created_at'),
+            'price_asc' => $query->orderBy('price'),
+            'price_desc' => $query->orderByDesc('price'),
+            default => $query->orderBy('sort_order'),
+        };
+        $page = $query->orderByDesc('id')->paginate($input['per_page'] ?? 20);
+        return $this->json([
+            'data' => $page->getCollection()->map(fn (Product $product) => $serializer->serialize($product))->values(),
+            'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
+                'per_page' => $page->perPage(), 'total' => $page->total()],
+        ]);
+    }
+
+    private function creatorProducts(string $creator): \Illuminate\Database\Eloquent\Builder
+    {
+        // Match by creator ID, not brand text or user ID. This phase serves general products only.
+        // Sold-out products may still be displayed; checkout enforces stock availability.
+        return Product::where('creator_id', $creator)->where('product_type', 'general')
+            ->where('is_active', true)->whereNull('deleted_at');
     }
 
     private function visible(): Builder
