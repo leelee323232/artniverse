@@ -1,6 +1,6 @@
 import axios from "axios";
 import { api } from "@/lib/api";
-import type { Product } from "@/types/admin";
+import type { Product, ProductOption } from "@/types/admin";
 
 export type CatalogReview = { id: number; userName: string; avatar: string; rating: number; date: string; content: string; images: string[]; helpful: number; verified: boolean; isDemo?: boolean };
 export type CatalogProduct = Product & { images: string[]; category: string; originalPrice: number; features: string[]; specifications: Record<string, string>; creatorName: string; reviews: CatalogReview[]; rating: number | null; reviewCount: number; sold: number | null; isDemo: boolean };
@@ -12,11 +12,47 @@ function decoded(value: unknown): unknown {
 const object = (value: unknown): Row => { const data = decoded(value); return data && typeof data === "object" && !Array.isArray(data) ? data as Row : {}; };
 const number = (value: unknown, fallback = 0) => Number.isFinite(Number(value)) && value != null ? Number(value) : fallback;
 const strings = (value: unknown): string[] => { const data = decoded(value); return Array.isArray(data) ? data.filter((v): v is string => typeof v === "string") : typeof data === "string" && data ? [data] : []; };
+
+function specificationText(value: unknown, depth = 0): string {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value === "boolean") return value ? "是" : "否";
+  if (!value || typeof value !== "object" || depth > 10) return "";
+  return Object.entries(value).map(([key, item]) => {
+    const text = specificationText(item, depth + 1);
+    return text ? (Array.isArray(value) ? text : `${key}：${text}`) : "";
+  }).filter(Boolean).join("、");
+}
+
+function productOptions(value: unknown): (ProductOption & { hex: string })[] {
+  const options = decoded(value);
+  if (!Array.isArray(options)) return [];
+  return options.flatMap(value => {
+    const option = object(value);
+    const label = typeof option.label === "string" ? option.label.trim() : "";
+    if (!label) return [];
+    // Missing legacy IDs use a display-only key; these options are not sent to the cart.
+    const id = typeof option.id === "string" || typeof option.id === "number" ? String(option.id) : label;
+    const hex = typeof option.hex === "string" && /^#[0-9a-f]{6}$/i.test(option.hex) ? option.hex.toUpperCase() : "";
+    return [{ id, label, hex }];
+  });
+}
+
 export function normalizeCatalog(row: Row): CatalogProduct {
   const meta = object(row.catalog_meta);
   const pick = (camel: string, snake: string) => row[camel] ?? row[snake] ?? meta[camel];
   const kind = pick("productType", "product_type");
   const images = strings(row.images ?? row.image);
+  const styles = productOptions(row.styles).map(({ id, label }) => ({ id, label }));
+  const sizes = productOptions(row.sizes).map(({ id, label }) => ({ id, label }));
+  const colors = productOptions(row.colors);
+  const specifications = Object.fromEntries(Object.entries(object(row.specifications))
+    .map(([key, value]) => [key, specificationText(value)] as const).filter(([, value]) => value !== ""));
+  // Match the public API summary, including older deployments returning JSON strings.
+  // Replace same-name summaries, rather than showing the options twice.
+  for (const [title, options] of [["款式", styles], ["尺寸", sizes], ["顏色", colors]] as const) {
+    if (options.length) specifications[title] = [...new Set(options.map(option => option.label))].join("、");
+  }
   const reviews = Array.isArray(row.reviews) ? row.reviews as CatalogReview[] : Array.isArray(meta.demoReviews) ? meta.demoReviews as CatalogReview[] : [];
   const date = (camel: string, snake: string) => { const v = pick(camel, snake); return typeof v === "string" ? v : null; };
   return {
@@ -27,7 +63,7 @@ export function normalizeCatalog(row: Row): CatalogProduct {
     productType: kind === "auction" || kind === "presale" ? kind : "general",
     creatorId: String(row.creatorId ?? row.creator_id ?? ""), creatorName: String(row.creatorName ?? row.creator_name ?? "創作者"),
     description: String(row.description ?? ""), originalPrice: number(row.originalPrice ?? row.original_price, number(row.price)),
-    features: strings(row.features), specifications: Object.fromEntries(Object.entries(object(row.specifications)).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
+    features: strings(row.features), specifications, styles, sizes, colors,
     reviews, rating: reviews.length ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : null, reviewCount: reviews.length,
     sold: number(row.sold), isDemo: meta.isDemo === true,
     auctionStartPrice: number(pick("auctionStartPrice", "auction_start_price"), number(row.price)), currentBid: number(pick("currentBid", "current_bid"), number(row.price)), auctionMinIncrement: number(pick("auctionMinIncrement", "auction_min_increment"), 100),
