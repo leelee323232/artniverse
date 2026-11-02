@@ -229,7 +229,7 @@ export default function ExplorePage() {
           <Button variant="outline" className="mt-2" onClick={() => setReload(v => v + 1)}>重新載入</Button>
         </div>}
         {result && result.data.length > 0 && <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {result.data.map(creator => <PlanetCard key={"real-" + creator.id} {...creator} image={creator.image ?? ""} showImage href={null} />)}
+          {result.data.map(creator => <PlanetCard key={"real-" + creator.id} {...creator} image={creator.image ?? ""} showImage href={"/creator/?id=" + encodeURIComponent(creator.id)} />)}
         </div>}
         {!loading && page > 1 && (!result || result.data.length === 0) && <div className="my-4 text-center">
           <Button variant="outline" onClick={() => setPage(1)}>返回第一頁</Button>
