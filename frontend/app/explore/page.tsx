@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, SlidersHorizontal } from "lucide-react";
-import { fetchExploreCreators, fetchCreatorTags, exploreError, type ExploreResult, type CreatorSort } from "@/lib/explore-api";
+import { fetchExploreCreators, exploreError, type ExploreResult, type CreatorSort } from "@/lib/explore-api";
 
 const demoCreators = [
   {
@@ -108,7 +108,7 @@ const demoCreators = [
   },
 ];
 
-const demoCategories = [
+const categories = [
   "全部",
   "療癒",
   "極簡",
@@ -128,19 +128,9 @@ export default function ExplorePage() {
   const [sort, setSort] = useState<CreatorSort>("rating");
   const [page, setPage] = useState(1);
   const [result, setResult] = useState<ExploreResult | null>(null);
-  const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [tagError, setTagError] = useState("");
   const [reload, setReload] = useState(0);
-  useEffect(() => {
-    const controller = new AbortController();
-    setTagError("");
-    void fetchCreatorTags(controller.signal).then(values => {
-      if (!controller.signal.aborted) setTags(values);
-    }).catch(err => { if (!controller.signal.aborted) setTagError(exploreError(err)); });
-    return () => controller.abort();
-  }, [reload]);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setError(""); setResult(null);
@@ -152,7 +142,6 @@ export default function ExplorePage() {
     }, 300);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [searchQuery, selectedCategory, sort, page, reload]);
-  const categories = [...new Set(["全部", ...tags, ...demoCategories, ...demoCreators.flatMap(c => c.tags)])];
   const query = searchQuery.trim().toLowerCase();
   const filteredDemos = demoCreators.filter(c =>
     (selectedCategory === "全部" || c.tags.includes(selectedCategory)) &&
@@ -224,8 +213,8 @@ export default function ExplorePage() {
           {loading ? "載入創作者中…" : result ? "找到 " + result.meta.total + " 個創作者" : "正式創作者資料尚未載入"}
           <p className="mt-1">另保留示範卡片供瀏覽，示範數據不計入正式總數。</p>
         </div>
-        {(error || tagError) && <div role="alert" className="mb-6 text-center">
-          <p className="text-destructive">{error || "標籤載入失敗：" + tagError}</p>
+        {error && <div role="alert" className="mb-6 text-center">
+          <p className="text-destructive">{error}</p>
           <Button variant="outline" className="mt-2" onClick={() => setReload(v => v + 1)}>重新載入</Button>
         </div>}
         {result && result.data.length > 0 && <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
