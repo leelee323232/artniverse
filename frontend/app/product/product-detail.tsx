@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { ProductOptionsSelector, type ProductOptionSelection } from "@/components/products/ProductOptionsSelector"
 import { ComingSoon } from "@/components/common/ComingSoon"
 import { useRouter, useSearchParams } from "next/navigation"
 import { catalog, catalogProduct, addCatalogItem, catalogError, type CatalogProduct } from "@/lib/commerce/catalog-api"
@@ -75,6 +76,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
   const unavailable = saving ? "加入中…" : !product.isActive ? "商品已下架" : product.productType !== "general" ? "預售／競標付款尚未開放" : product.stock < 1 ? "商品已售完" : null
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
+  const [selection, setSelection] = useState<ProductOptionSelection>({})
   const [isLiked, setIsLiked] = useState(false)
   const carouselRef = useRef<HTMLDivElement>(null)
 
@@ -257,6 +259,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                   <p className="text-sm">目前僅供展示預售資料，尚未開放購物車與付款。</p>
                 </section>}
                 {unavailable && <p role="status" className="text-sm text-amber-500">{unavailable}</p>}
+                <ProductOptionsSelector product={product} selection={selection} onChange={setSelection} disabled={saving} />
                 {/* Quantity */}
                 <div className="flex items-center gap-4">
                   <span className="font-medium text-foreground">數量</span>
