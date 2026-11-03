@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { UniverseBackground } from "@/components/universe-background";
 import { PlanetCard } from "@/components/planet-card";
+import { FollowedCreatorsList } from "@/components/followed-creators";
 import { ProductCard } from "@/components/product-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -111,16 +112,25 @@ const mockFavoriteProducts: FavoriteProduct[] = [
 ];
 
 export default function FavoritesPage() {
-  const { user } = useAuth();
-  const [creators, setCreators] =
-    useState<FavoriteCreator[]>(mockFavoriteCreators);
+  const { user, isLoading } = useAuth();
+  if (isLoading || !user) return <div className="relative min-h-screen">
+    <UniverseBackground /><Navigation />
+    <div className="container mx-auto flex min-h-screen items-center justify-center px-4 pt-16">
+      <Card className="border-border/50 bg-card/30 p-8 backdrop-blur-md text-center">
+        <p className="mb-4 text-foreground">{isLoading ? "確認登入中…" : "請先登入以查看收藏名單"}</p>
+        {!isLoading && <Button asChild className="bg-gradient-to-r from-primary to-secondary"><Link href="/login/">前往登入</Link></Button>}
+      </Card>
+    </div>
+  </div>;
+  return <MemberFavoritesPage key={user.id} />;
+}
+
+function MemberFavoritesPage() {
+  const creators = mockFavoriteCreators;
+  const [totalFollowing, setTotalFollowing] = useState<number | null>(null);
   const [products, setProducts] =
     useState<FavoriteProduct[]>(mockFavoriteProducts);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const removeCreator = (id: string) => {
-    setCreators((prev) => prev.filter((c) => c.id !== id));
-  };
 
   const removeProduct = (id: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== id));
@@ -153,25 +163,6 @@ export default function FavoritesPage() {
     [products, query],
   );
 
-  if (!user) {
-    return (
-      <div className="relative min-h-screen">
-        <UniverseBackground />
-        <Navigation />
-        <div className="container mx-auto flex min-h-screen items-center justify-center px-4 pt-16">
-          <Card className="border-border/50 bg-card/30 p-8 backdrop-blur-md text-center">
-            <p className="mb-4 text-foreground">請先登入以查看收藏名單</p>
-            <Link href="/login">
-              <Button className="bg-gradient-to-r from-primary to-secondary">
-                前往登入
-              </Button>
-            </Link>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="relative min-h-screen">
       <UniverseBackground />
@@ -191,7 +182,7 @@ export default function FavoritesPage() {
                   <Users className="h-4 w-4" />
                   創作者
                   <span className="ml-1 text-xs text-muted-foreground">
-                    {creators.length}
+                    {totalFollowing ?? "—"}
                   </span>
                 </TabsTrigger>
                 <TabsTrigger value="products" className="gap-2">
@@ -208,6 +199,7 @@ export default function FavoritesPage() {
                 <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="搜尋收藏..."
+                  maxLength={100}
                   className="h-11 border-border/50 bg-card/50 pl-10 backdrop-blur-sm"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -217,26 +209,18 @@ export default function FavoritesPage() {
 
             {/* Creators Tab */}
             <TabsContent value="creators">
-              {creators.length === 0 ? (
-                <EmptyState
-                  message="您尚未收藏任何創作者"
-                  actionHref="/explore"
-                  actionLabel="探索創作者"
-                />
-              ) : filteredCreators.length === 0 ? (
-                <NoResults onClear={() => setSearchQuery("")} />
-              ) : (
+              <FollowedCreatorsList key={query} search={searchQuery.trim()} onTotal={setTotalFollowing} />
+              {filteredCreators.length > 0 && <section className="mt-8">
+                <p className="mb-4 text-sm text-muted-foreground">示範創作者（不計入追蹤數量、不寫入資料庫）</p>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {filteredCreators.map((creator) => (
                     <PlanetCard
                       key={creator.id}
                       {...creator}
-                      isFavorited
-                      onToggleFavorite={removeCreator}
                     />
                   ))}
                 </div>
-              )}
+              </section>}
             </TabsContent>
 
             {/* Products Tab */}

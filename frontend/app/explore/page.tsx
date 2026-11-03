@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { UniverseBackground } from "@/components/universe-background";
 import { PlanetCard } from "@/components/planet-card";
+import { CreatorFollowGrid } from "@/components/creator-follow-grid";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -217,9 +218,7 @@ export default function ExplorePage() {
           <p className="text-destructive">{error}</p>
           <Button variant="outline" className="mt-2" onClick={() => setReload(v => v + 1)}>重新載入</Button>
         </div>}
-        {result && result.data.length > 0 && <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {result.data.map(creator => <PlanetCard key={"real-" + creator.id} {...creator} image={creator.image ?? ""} showImage href={"/creator/?id=" + encodeURIComponent(creator.id)} />)}
-        </div>}
+        {result && result.data.length > 0 && <CreatorFollowGrid creators={result.data} />}
         {!loading && page > 1 && (!result || result.data.length === 0) && <div className="my-4 text-center">
           <Button variant="outline" onClick={() => setPage(1)}>返回第一頁</Button>
         </div>}

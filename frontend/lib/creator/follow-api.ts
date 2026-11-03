@@ -1,5 +1,25 @@
 import axios from "axios";
 import { api } from "@/lib/api";
+import type { ExploreCreator } from "@/lib/explore-api";
+
+export type FollowedCreators = {
+  data: (ExploreCreator & { isFollowing: true })[];
+  meta: { current_page: number; last_page: number; per_page: number; total: number; totalFollowing: number };
+};
+
+export async function fetchFollowedCreators(search: string, page: number, signal: AbortSignal) {
+  return (await api.get<FollowedCreators>("/api/v1/me/followed-creators", {
+    params: { search, page, per_page: 20 }, signal, timeout: 15000,
+  })).data;
+}
+
+export async function fetchCreatorFollowStatuses(ids: string[], signal: AbortSignal) {
+  const params = new URLSearchParams();
+  ids.forEach(id => params.append("creator_ids[]", id));
+  return (await api.get<{ data: CreatorFollow[] }>("/api/v1/creators/follow-statuses", {
+    params, signal, timeout: 15000,
+  })).data.data;
+}
 
 export type CreatorFollow = {
   creatorId: string;
