@@ -8,6 +8,9 @@ import { brandPosts } from "@/lib/posts/brand-posts";
 import { fetchPosts, postError, type PostPage } from "@/lib/posts/api";
 import { Button } from "@/components/ui/button";
 
+// Keep one display-only example separate from API posts and pagination totals.
+const demoPost = brandPosts[0];
+
 export function FeedContent() {
   const [result, setResult] = useState<PostPage | null>(null);
   const [page, setPage] = useState(1);
@@ -82,9 +85,9 @@ export function FeedContent() {
         <span>第 {result.meta.current_page} / {result.meta.last_page} 頁</span>
         <Button variant="outline" disabled={isLoading || page >= result.meta.last_page} onClick={() => setPage(value => value + 1)}>下一頁</Button>
       </div>}
-      {page === 1 && <section className="mt-6 space-y-4">
-        <p className="text-sm text-muted-foreground">品牌展示貼文</p>
-        {brandPosts.map(post => <PostCard key={"display-" + post.id} post={post} />)}
+      {page === 1 && demoPost && <section className="mt-6 space-y-4">
+        <p className="text-sm text-muted-foreground">展示用假資料（僅供版面展示，不計入正式貼文）</p>
+        <PostCard key={"display-" + demoPost.id} post={demoPost} />
       </section>}
     </main>
   );
