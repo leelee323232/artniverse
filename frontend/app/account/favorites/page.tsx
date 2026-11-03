@@ -6,6 +6,7 @@ import { UniverseBackground } from "@/components/universe-background";
 import { PlanetCard } from "@/components/planet-card";
 import { FollowedCreatorsList } from "@/components/followed-creators";
 import { ProductCard } from "@/components/product-card";
+import { FavoriteProductsList } from "@/components/favorite-products";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -128,6 +129,7 @@ export default function FavoritesPage() {
 function MemberFavoritesPage() {
   const creators = mockFavoriteCreators;
   const [totalFollowing, setTotalFollowing] = useState<number | null>(null);
+  const [totalFavorites, setTotalFavorites] = useState<number | null>(null);
   const [products, setProducts] =
     useState<FavoriteProduct[]>(mockFavoriteProducts);
   const [searchQuery, setSearchQuery] = useState("");
@@ -189,7 +191,7 @@ function MemberFavoritesPage() {
                   <Package className="h-4 w-4" />
                   商品
                   <span className="ml-1 text-xs text-muted-foreground">
-                    {products.length}
+                    {totalFavorites ?? "—"}
                   </span>
                 </TabsTrigger>
               </TabsList>
@@ -225,9 +227,12 @@ function MemberFavoritesPage() {
 
             {/* Products Tab */}
             <TabsContent value="products">
+              <FavoriteProductsList key={query} search={searchQuery.trim()} onTotal={setTotalFavorites} />
+              <section className="mt-8">
+              <p className="mb-4 text-sm text-muted-foreground">示範商品（不計入收藏數量、不寫入資料庫）</p>
               {products.length === 0 ? (
                 <EmptyState
-                  message="您尚未收藏任何商品"
+                  message="目前沒有示範收藏商品"
                   actionHref="/shop"
                   actionLabel="逛逛商品"
                 />
@@ -245,6 +250,7 @@ function MemberFavoritesPage() {
                   ))}
                 </div>
               )}
+              </section>
             </TabsContent>
           </Tabs>
         </div>
