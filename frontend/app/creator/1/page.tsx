@@ -117,6 +117,7 @@ const products = [
 const initialPosts: Post[] = [
   {
     id: "POST-001",
+    authorId: creatorData.id,
     authorName: creatorData.name,
     authorAvatar: "",
     isVerified: true,
@@ -137,6 +138,7 @@ const initialPosts: Post[] = [
   },
   {
     id: "POST-002",
+    authorId: creatorData.id,
     authorName: creatorData.name,
     authorAvatar: "",
     isVerified: true,
