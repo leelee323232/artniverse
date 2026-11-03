@@ -403,7 +403,8 @@ export default function CreatorPortalPage() {
       const saved = localStorage.getItem("creator_posts_data");
       if (saved) {
         try {
-          return JSON.parse(saved);
+          const savedPosts: Post[] = JSON.parse(saved);
+          return savedPosts.map((post) => ({ ...post, authorId: post.authorId || user?.id || "" }));
         } catch (e) {
           return [];
         }
@@ -413,12 +414,13 @@ export default function CreatorPortalPage() {
     return [
       {
         id: "POST-001",
+        authorId: user?.id || "",
         authorName:
           user?.creatorProfile?.brandName || user?.name || "星空創作者",
         authorAvatar: "",
         isVerified: true,
         content:
-          "好高興今天把「貼文牆」功能做出來了！✨\n完美的 Threads 串文排版，還能動態增加最多 10 張圖片網址！\n大家如果覺得排版不錯，歡迎在下面留言分享看法喔！🚀",
+          "好高興今天把「貼文牆」功能做出來了！✨\n完美的 Threads 串文排版，還能加入多張圖片！\n大家如果覺得排版不錯，歡迎在下面留言分享看法喔！🚀",
         images: ["/cute-notebook-with-stars.jpg", "/dreamy-postcards.jpg"],
         likes: 88,
         isLiked: false,
@@ -579,13 +581,19 @@ export default function CreatorPortalPage() {
   const [newPostContent, setNewPostContent] = useState("");
   const [newPostImages, setNewPostImages] = useState<File[]>([]);
 
+  const [postImagePreviews, setPostImagePreviews] = useState<string[]>([]);
+  useEffect(() => {
+    const urls = newPostImages.map((file) => URL.createObjectURL(file));
+    setPostImagePreviews(urls);
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, [newPostImages]);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
-    const files = Array.from(e.target.files);
-
-    // 最多 10 張
-    setNewPostImages(files.slice(0, 10));
+    const files = Array.from(e.target.files).filter((file) => file.type.startsWith("image/"));
+    setNewPostImages((prev) => [...prev, ...files]);
+    e.target.value = "";
   };
 
   const handleRemoveImage = (index: number) => {
@@ -600,6 +608,7 @@ export default function CreatorPortalPage() {
 
     const newPost: Post = {
       id: `POST-${Date.now()}`,
+      authorId: user?.id || "",
       authorName: user?.creatorProfile?.brandName || user?.name || "未知創作者",
       authorAvatar: "",
       isVerified: true,
@@ -2341,7 +2350,7 @@ export default function CreatorPortalPage() {
 
                           <div className="mt-3 flex items-center gap-3">
                             <span className="text-xs text-white/35">
-                              {newPostImages.length}/10 張圖片
+                              已選擇 {newPostImages.length} 張圖片
                             </span>
 
                             <span
@@ -2357,7 +2366,7 @@ export default function CreatorPortalPage() {
                         </div>
                       </div>
 
-                      {/* 圖片連結清單 */}
+                      {/* 圖片上傳 */}
                       <div className="space-y-1 px-5">
                         <Input
                           id="image-upload"
@@ -2377,20 +2386,21 @@ export default function CreatorPortalPage() {
 
                         {/* 圖片預覽 */}
                         {newPostImages.length > 0 && (
-                          <div className="grid grid-cols-2 gap-2 overflow-hidden rounded-xl">
+                          <div className="grid grid-cols-2 gap-2 overflow-hidden">
                             {newPostImages.map((file, index) => (
                               <div
                                 key={index}
-                                className="relative aspect-square overflow-hidden rounded-xl"
+                                className="relative aspect-square overflow-hidden"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                  src={URL.createObjectURL(file)}
+                                  src={postImagePreviews[index]}
                                   alt={`預覽 ${index + 1}`}
                                   className="h-full w-full object-cover"
                                 />
 
                                 <Button
+                                  aria-label={`移除第 ${index + 1} 張圖片`}
                                   type="button"
                                   size="icon"
                                   variant="destructive"

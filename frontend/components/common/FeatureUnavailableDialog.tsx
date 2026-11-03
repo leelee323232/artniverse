@@ -34,7 +34,7 @@ export function FeatureUnavailableDialog({
           </div>
           <DialogHeader className="items-center gap-3 text-center sm:text-center">
             <DialogTitle className="text-xl leading-relaxed font-semibold">
-              功能未完成，敬請期待
+              功能即將推出，敬請期待
             </DialogTitle>
             <DialogDescription className="text-center leading-7">
               我們正在準備這項功能，完成後將正式開放。
