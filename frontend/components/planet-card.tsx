@@ -21,6 +21,7 @@ interface PlanetCardProps {
   color: string;
   isFavorited?: boolean;
   onToggleFavorite?: (id: string) => void;
+  favoriteDisabled?: boolean;
   href?: string | null;
   showImage?: boolean;
   reviewCount?: number;
@@ -38,30 +39,24 @@ export function PlanetCard({
   color,
   isFavorited,
   onToggleFavorite,
+  favoriteDisabled = false,
   href = "/creator/1/",
   showImage = false,
   reviewCount,
 }: PlanetCardProps) {
   const [failedImage, setFailedImage] = useState<string | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
-  const [internalLiked, setInternalLiked] = useState(false);
   const isControlled = onToggleFavorite !== undefined;
-  const isLiked = isControlled ? !!isFavorited : internalLiked;
+  const isLiked = !!isFavorited;
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (isControlled) {
-      onToggleFavorite(id);
-    } else {
-      setInternalLiked((prev) => !prev);
-    }
+    e.stopPropagation();
+    if (!favoriteDisabled) onToggleFavorite?.(id);
   };
 
   const content = (
       <Card
         className="group relative overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/20"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
         <div className="relative aspect-square overflow-hidden">
           <div
@@ -83,7 +78,15 @@ export function PlanetCard({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={image} alt={name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" onError={() => setFailedImage(image)} />
           )}
-          <ComingSoon>
+          {isControlled ? <Button
+            variant="ghost" size="icon" type="button"
+            className="absolute right-2 top-2 z-10 bg-background/50 backdrop-blur-sm hover:bg-background/80"
+            title={isLiked ? "取消追蹤" : "追蹤創作者"}
+            aria-label={isLiked ? "取消追蹤" : "追蹤創作者"}
+            aria-pressed={isLiked} disabled={favoriteDisabled} onClick={handleToggleFavorite}
+          >
+            <Heart className={"h-4 w-4 " + (isLiked ? "fill-current text-pink-500" : "text-foreground")} />
+          </Button> : <ComingSoon>
             <Button
               variant="ghost"
               size="icon"
@@ -92,7 +95,7 @@ export function PlanetCard({
             >
               <Heart className="h-4 w-4 text-foreground" />
             </Button>
-          </ComingSoon>
+          </ComingSoon>}
         </div>
 
         <div className="space-y-3 p-4">
