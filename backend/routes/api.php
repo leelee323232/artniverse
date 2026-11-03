@@ -49,6 +49,7 @@ Route::prefix('v1')->group(function (): void {
 
     require __DIR__.'/product.php';
     require __DIR__.'/admin-products.php';
+    require __DIR__.'/admin-posts.php';
     require __DIR__.'/creator-applications.php';
     require __DIR__.'/explore-creators.php';
 
