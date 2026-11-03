@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ComingSoon } from "@/components/common/ComingSoon";
 import { PostImages } from "@/components/posts/PostImages";
+import { CollapsiblePostContent } from "@/components/posts/CollapsiblePostContent";
 import { AuthorLink } from "@/components/posts/AuthorLink";
 import {
   Heart,
@@ -45,8 +46,8 @@ export function PostCard({ post }: PostCardProps) {
   //   }
 
   return (
-    <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader className="flex flex-row items-center gap-3 p-4">
+    <Card className="gap-0 py-0 border-border/50 shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="flex flex-row items-center gap-3 px-4 py-2">
         <AuthorLink
           authorId={post.authorId}
           label={`查看 ${post.authorName} 的個人主頁`}
@@ -67,7 +68,8 @@ export function PostCard({ post }: PostCardProps) {
           </AuthorLink>
           <p className="text-sm text-muted-foreground">{post.createdAt}</p>
         </div>
-        <DropdownMenu>
+        {/* 使用非模態選單，避免開啟時鎖住頁面捲動並補償捲軸寬度。 */}
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button
               aria-label="貼文選單"
@@ -206,17 +208,14 @@ export function PostCard({ post }: PostCardProps) {
 
         <div className="space-y-1 w-full">
           <p className="font-semibold text-sm">{likes.toLocaleString()} 個讚</p>
-          <p className="text-sm">
+          <CollapsiblePostContent content={post.content}>
             <AuthorLink
               authorId={post.authorId}
               className="font-semibold hover:text-primary"
             >
               {post.authorName}
             </AuthorLink>{" "}
-            <span className="whitespace-pre-wrap text-foreground/90">
-              {post.content}
-            </span>
-          </p>
+          </CollapsiblePostContent>
           {post.comments.length > 0 && (
             <>
               {/* TEMP: 暫時使用 ComingSoon 阻擋；恢復時移除阻擋版本，取消下方原始 JSX 註解。
