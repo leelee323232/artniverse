@@ -4,30 +4,34 @@ import { useState, useEffect } from "react";
 import { PostCard } from "@/components/feed/post-card";
 import { Loader2 } from "lucide-react";
 
-import type { Post } from "@/lib/posts/types";
 import { brandPosts } from "@/lib/posts/brand-posts";
+import { fetchPosts, postError, type PostPage } from "@/lib/posts/api";
+import { Button } from "@/components/ui/button";
 
 export function FeedContent() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [result, setResult] = useState<PostPage | null>(null);
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState("");
+  const [reload, setReload] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"following" | "discover">(
-    "following",
+    "discover",
   );
 
   useEffect(() => {
-    const loadPosts = async () => {
-      setIsLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setPosts(brandPosts);
-      setIsLoading(false);
-    };
-    loadPosts();
-  }, []);
+    const controller = new AbortController();
+    setIsLoading(true); setError(""); setResult(null);
+    void fetchPosts(page, false, controller.signal).then(data => {
+      if (controller.signal.aborted) return;
+      if (page > data.meta.last_page) { setPage(Math.max(1, data.meta.last_page)); return; }
+      setResult(data);
+    }).catch(err => { if (!controller.signal.aborted) setError(postError(err)); })
+      .finally(() => { if (!controller.signal.aborted) setIsLoading(false); });
+    return () => controller.abort();
+  }, [page, reload]);
 
   const handleTabChange = (tab: "following" | "discover") => {
     setActiveTab(tab);
-    // 展示階段兩個分頁使用同一組品牌資料，避免混入其他假貼文或重複追加。
-    setPosts(brandPosts);
   };
 
   return (
@@ -60,17 +64,28 @@ export function FeedContent() {
       </div>
 
       {/* Posts Feed */}
+      {activeTab === "following" && <p className="mb-4 text-sm text-muted-foreground">目前顯示公開動態，追蹤篩選尚未開放。</p>}
+      {error && <div role="alert" className="mb-4 space-y-2"><p className="text-destructive">{error}</p><Button variant="outline" onClick={() => setReload(value => value + 1)}>重新載入貼文</Button></div>}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
         </div>
       ) : (
         <div className="space-y-4">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+          {result?.data.map((post) => (
+            <PostCard key={"api-" + post.id} post={post} />
           ))}
         </div>
       )}
+      {result && result.meta.last_page > 1 && <div className="my-6 flex items-center justify-center gap-4">
+        <Button variant="outline" disabled={isLoading || page <= 1} onClick={() => setPage(value => value - 1)}>上一頁</Button>
+        <span>第 {result.meta.current_page} / {result.meta.last_page} 頁</span>
+        <Button variant="outline" disabled={isLoading || page >= result.meta.last_page} onClick={() => setPage(value => value + 1)}>下一頁</Button>
+      </div>}
+      {page === 1 && <section className="mt-6 space-y-4">
+        <p className="text-sm text-muted-foreground">品牌展示貼文</p>
+        {brandPosts.map(post => <PostCard key={"display-" + post.id} post={post} />)}
+      </section>}
     </main>
   );
 }

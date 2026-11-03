@@ -64,7 +64,7 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
       <div className="flex gap-3">
         {/* 左側：頭像與 Threads 線條裝飾 */}
         <div className="flex flex-col items-center">
-          <AuthorLink authorId={post.authorId} label={`查看 ${post.authorName} 的個人主頁`}>
+          <AuthorLink authorId={post.authorId} authorType={post.authorType} label={`查看 ${post.authorName} 的個人主頁`}>
           <Avatar className="h-10 w-10 border border-primary/20 ring-2 ring-background">
             <AvatarImage src={post.authorAvatar} alt={post.authorName} />
             <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-sm font-bold text-white">
@@ -81,7 +81,7 @@ export function PostCard({ post, onLike, onAddComment }: PostCardProps) {
           {/* 頂部：姓名與時間 */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5">
-              <AuthorLink authorId={post.authorId} className="font-semibold text-foreground hover:underline">
+              <AuthorLink authorId={post.authorId} authorType={post.authorType} className="font-semibold text-foreground hover:underline">
                 {post.authorName}
               </AuthorLink>
               {post.isVerified && (
