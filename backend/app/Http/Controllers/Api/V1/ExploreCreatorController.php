@@ -15,6 +15,40 @@ use Illuminate\Validation\Rule;
 
 class ExploreCreatorController extends Controller
 {
+    public function followed(Request $request): JsonResponse
+    {
+        $input = $request->validate([
+            'search' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
+        $userId = $request->user()->getAuthIdentifier();
+        // Reuse public visibility and card fields; never expose application/member details.
+        $relationship = DB::table('creator_follows')->where('user_id', $userId)
+            ->whereColumn('creator_follows.creator_id', 'creators.id');
+        $query = $this->visible()->whereExists((clone $relationship)->selectRaw('1'));
+        $totalFollowing = (clone $query)->count();
+        $search = trim($input['search'] ?? '');
+        if ($search !== '') {
+            $pattern = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], mb_strtolower($search)).'%';
+            $query->where(function (Builder $q) use ($pattern): void {
+                $q->whereRaw("LOWER(name) LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereRaw("LOWER(planet_name) LIKE ? ESCAPE '!'", [$pattern])
+                    ->orWhereRaw("LOWER(CAST(tags AS CHAR)) LIKE ? ESCAPE '!'", [$pattern]);
+            });
+        }
+        // Unique member/creator pairs make this a single-row subquery. Newest follows first.
+        $page = $query->orderByDesc((clone $relationship)->select('created_at'))
+            ->orderByDesc('id')->paginate($input['per_page'] ?? 20, $this->columns());
+        return response()->json([
+            'data' => $page->getCollection()->map(fn ($creator) => array_merge($this->card($creator), [
+                'isFollowing' => true,
+            ]))->values(),
+            'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
+                'per_page' => $page->perPage(), 'total' => $page->total(), 'totalFollowing' => $totalFollowing],
+        ])->header('Cache-Control', 'private, no-store');
+    }
+
     public function index(Request $request): JsonResponse
     {
         $input = $request->validate([

@@ -4,6 +4,11 @@ use App\Http\Controllers\Api\V1\ExploreCreatorController;
 use App\Http\Controllers\Api\V1\CreatorFollowController;
 use Illuminate\Support\Facades\Route;
 
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function (): void {
+    Route::get('/me/followed-creators', [ExploreCreatorController::class, 'followed']);
+    Route::get('/creators/follow-statuses', [CreatorFollowController::class, 'statuses']);
+});
+
 Route::prefix('creators')->middleware('throttle:60,1')->controller(ExploreCreatorController::class)->group(function (): void {
     Route::get('/', 'index');
     Route::get('/tags', 'tags');
