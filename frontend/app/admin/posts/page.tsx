@@ -1,11 +1,12 @@
 "use client";
 
-import { FeatureUnavailableDialog } from "@/components/common/FeatureUnavailableDialog";
+import Link from "next/link";
+import { useAdminPosts } from "@/lib/posts/use-admin-posts";
 
 import { useAuth } from "@/lib/auth-context";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -14,106 +15,52 @@ import {
   DialogContent,
   DialogFooter,
   DialogTrigger,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { PostCard, type Post } from "@/components/posts/PostCard";
+import { PostCard } from "@/components/posts/PostCard";
 import { Plus, Image, Trash2, MessageSquare } from "lucide-react";
 
 export default function AdminPostsPage() {
-  const { user } = useAuth();
-  const [featureUnavailableOpen, setFeatureUnavailableOpen] = useState(false);
-  // TEMP: 未完成功能先顯示共用提示；原始流程保留於下方註解，串接完成後再恢復。
-  const showFeatureUnavailable = () => setFeatureUnavailableOpen(true);
+  const { user, isLoading } = useAuth();
+  if (isLoading || !user) return <div className="space-y-3">
+    <p>{isLoading ? "確認登入中…" : "請先登入管理員帳號。"}</p>
+    {!isLoading && <Link href="/login/" className="underline">前往登入</Link>}
+  </div>;
+  return <MemberAdminPosts key={user.id} />;
+}
 
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
-  const [newPostContent, setNewPostContent] = useState("");
-  const [newPostImages, setNewPostImages] = useState<File[]>([]);
-
-  const publishedImageUrls = useRef<string[]>([]);
-  useEffect(() => () => {
-    publishedImageUrls.current.forEach((url) => URL.revokeObjectURL(url));
-  }, []);
+function MemberAdminPosts() {
+  const { result, page, setPage, loading, allowed, listError, error, notice, saving, pending, refresh,
+    isPostModalOpen, setIsPostModalOpen, newPostContent, setNewPostContent, newPostImages, setNewPostImages,
+    handleImageUpload, handleCreatePost, handleDelete } = useAdminPosts();
+  const posts = result?.data ?? [];
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   useEffect(() => {
-    const urls = newPostImages.map((file) => URL.createObjectURL(file));
+    const urls = newPostImages.map(file => URL.createObjectURL(file));
     setPreviewImages(urls);
-    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+    return () => urls.forEach(url => URL.revokeObjectURL(url));
   }, [newPostImages]);
-
-  // 選擇圖片
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-
-    const files = Array.from(e.target.files).filter((file) => file.type.startsWith("image/"));
-    setNewPostImages((prev) => [...prev, ...files]);
-    e.target.value = "";
-  };
-
-  // 發佈貼文
-  const handleCreatePost = () => {
-    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
-    // showFeatureUnavailable();
-    // 原始邏輯（暫時停用，請保留）：
-    if (!newPostContent.trim()) return;
-
-    const images = newPostImages.map((file) => URL.createObjectURL(file));
-    publishedImageUrls.current.push(...images);
-    const newPost: Post = {
-      id: `POST-${Date.now()}`,
-      authorId: user?.id || "",
-      authorName: "管理員",
-      authorAvatar: "",
-      isVerified: true,
-      content: newPostContent,
-      images,
-      likes: 0,
-      isLiked: false,
-      comments: [],
-      createdAt: new Date().toISOString().replace("T", " ").substring(0, 16),
-    };
-
-    setPosts((prev) => [newPost, ...prev]);
-
-    // 清空表單
-    setNewPostContent("");
-    setNewPostImages([]);
-
-    // 關閉 Dialog
-    setIsPostModalOpen(false);
-  };
-
-  // 刪除貼文
-  const handleDelete = (postId: string) => {
-    // TEMP: 趕上線期間暫時以阻擋視窗代替；恢復時移除提示呼叫，取消下方原始邏輯的註解。
-    showFeatureUnavailable();
-
-    // 原始邏輯（暫時停用，請保留）：
-    // setPosts((prev) => prev.filter((post) => post.id !== postId));
-  };
-
   return (
     <>
-      <FeatureUnavailableDialog
-        open={featureUnavailableOpen}
-        onOpenChange={setFeatureUnavailableOpen}
-      />
       <div>
         <AdminPageHeader
           title="貼文牆"
-          description="發佈創作動態、新品花絮，與追蹤粉絲進行零距離留言互動。"
+          description="發佈官方動態與新品花絮。"
           action={
             <Dialog
               open={isPostModalOpen}
               onOpenChange={setIsPostModalOpen}
             >
               <DialogTrigger asChild>
-                <Button className="gap-1.5 bg-gradient-to-r from-primary to-secondary shadow-lg shadow-primary/20">
+                <Button disabled={!allowed || saving} className="gap-1.5 bg-gradient-to-r from-primary to-secondary shadow-lg shadow-primary/20">
                   <Plus className="h-4 w-4" />
                   發佈新貼文
                 </Button>
               </DialogTrigger>
 
               <DialogContent
+                showCloseButton={!saving}
+                aria-describedby={undefined}
                 className="
               overflow-hidden
               rounded-2xl
@@ -130,6 +77,7 @@ export default function AdminPostsPage() {
                 <div className="flex h-14 items-center justify-between border-b border-white/10 px-5">
                   <Button
                     variant="ghost"
+                    disabled={saving}
                     onClick={() => setIsPostModalOpen(false)}
                     className="
                   h-auto
@@ -143,7 +91,7 @@ export default function AdminPostsPage() {
                   >
                     取消
                   </Button>
-                  <h2 className="text-base font-semibold">新貼文</h2>
+                  <DialogTitle className="text-base font-semibold">新貼文</DialogTitle>
                   <div className="w-8" />
                 </div>
 
@@ -177,6 +125,7 @@ export default function AdminPostsPage() {
                       </span>
 
                       <Textarea
+                        disabled={saving || !!pending}
                         placeholder="有什麼新鮮事？"
                         value={newPostContent}
                         onChange={(e) => setNewPostContent(e.target.value)}
@@ -200,7 +149,7 @@ export default function AdminPostsPage() {
                       {/* 字數 */}
                       <div className="mt-3 flex items-center gap-3">
                         <span className="text-xs text-white/35">
-                          已選擇 {newPostImages.length} 張圖片
+                          已選擇 {newPostImages.length}/10 張圖片，每張最多 5 MB
                         </span>
 
                         <span
@@ -220,7 +169,8 @@ export default function AdminPostsPage() {
                     <Input
                       id="image-upload"
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      disabled={saving || !!pending}
                       multiple
                       onChange={handleImageUpload}
                       className="hidden"
@@ -264,6 +214,7 @@ export default function AdminPostsPage() {
 
                             {/* 刪除圖片 */}
                             <Button
+                              disabled={saving || !!pending}
                               aria-label={`移除第 ${index + 1} 張圖片`}
                               type="button"
                               size="icon"
@@ -291,10 +242,12 @@ export default function AdminPostsPage() {
                   </div>
                 </div>
 
+                {error && <p role="alert" className="px-5 text-sm text-red-400">{error}</p>}
+                {pending && <p className="px-5 text-sm text-white/60">此篇發佈結果待確認，重試期間會保留相同內容與圖片。</p>}
                 <DialogFooter className="justify-end px-5 pb-3">
                   <Button
                     onClick={handleCreatePost}
-                    disabled={!newPostContent.trim()}
+                    disabled={!newPostContent.trim() || saving || !allowed}
                     className="
                   rounded-full
                   bg-white
@@ -303,7 +256,7 @@ export default function AdminPostsPage() {
                   hover:bg-white/90
                 "
                   >
-                    發佈
+                    {saving ? "處理中…" : pending ? "重試發佈" : "發佈"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -311,15 +264,19 @@ export default function AdminPostsPage() {
           }
         />
 
-        {posts.length > 0 ? (
+        {notice && <p role="status" className="mb-4">{notice}</p>}
+        {!isPostModalOpen && error && <p role="alert" className="mb-4 text-destructive">{error}</p>}
+        {listError && <div role="alert" className="mb-4 space-y-2"><p className="text-destructive">{listError}</p><Button variant="outline" disabled={saving} onClick={refresh}>重新載入</Button></div>}
+        {loading ? <p role="status">載入貼文中…</p> : posts.length > 0 ? (
           <div className="w-full space-y-6">
             {posts.map((post) => (
               <div key={post.id} className="relative w-full">
                 <PostCard post={post} />
+                <div className="mt-2 flex justify-end"><Button variant="outline" size="sm" disabled={saving || !allowed} onClick={() => void handleDelete(post)}><Trash2 className="mr-2 h-4 w-4" />刪除貼文</Button></div>
               </div>
             ))}
           </div>
-        ) : (
+        ) : !listError && (
           <div
             className="
             rounded-lg
@@ -345,6 +302,11 @@ export default function AdminPostsPage() {
             </p>
           </div>
         )}
+        {result && result.meta.last_page > 1 && <div className="mt-6 flex items-center justify-center gap-4">
+          <Button variant="outline" disabled={loading || saving || page <= 1} onClick={() => setPage(value => value - 1)}>上一頁</Button>
+          <span>第 {result.meta.current_page} / {result.meta.last_page} 頁</span>
+          <Button variant="outline" disabled={loading || saving || page >= result.meta.last_page} onClick={() => setPage(value => value + 1)}>下一頁</Button>
+        </div>}
       </div>
     </>
   );

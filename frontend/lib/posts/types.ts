@@ -7,6 +7,7 @@ export interface Comment {
 }
 
 export interface Post {
+  authorType?: "official" | "creator";
   id: string;
   authorId: string;
   authorName: string;

@@ -50,6 +50,7 @@ export function PostCard({ post }: PostCardProps) {
       <CardHeader className="flex flex-row items-center gap-3 px-4 py-2">
         <AuthorLink
           authorId={post.authorId}
+          authorType={post.authorType}
           label={`查看 ${post.authorName} 的個人主頁`}
         >
           <Avatar className="h-10 w-10 ring-2 ring-primary/10 hover:ring-primary/30 transition-all cursor-pointer">
@@ -62,6 +63,7 @@ export function PostCard({ post }: PostCardProps) {
         <div className="flex-1 min-w-0">
           <AuthorLink
             authorId={post.authorId}
+            authorType={post.authorType}
             className="font-semibold text-foreground hover:text-primary transition-colors"
           >
             {post.authorName}
@@ -211,6 +213,7 @@ export function PostCard({ post }: PostCardProps) {
           <CollapsiblePostContent content={post.content}>
             <AuthorLink
               authorId={post.authorId}
+              authorType={post.authorType}
               className="font-semibold hover:text-primary"
             >
               {post.authorName}
