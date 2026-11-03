@@ -41,7 +41,7 @@ export function ComingSoon({ children, className }: ComingSoonProps) {
       </TooltipTrigger>
       <TooltipContent side="top" className="flex items-center gap-1.5 px-3 py-2 text-xs">
         <Clock className="size-3 shrink-0" />
-        <span>尚未推出，敬請期待</span>
+        <span>功能即將推出，敬請期待</span>
       </TooltipContent>
     </Tooltip>
   );
