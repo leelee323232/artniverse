@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { ProductOptionsSelector, type ProductOptionSelection } from "@/components/products/ProductOptionsSelector"
 import { ComingSoon } from "@/components/common/ComingSoon"
+import { ProductFavoriteButton } from "@/components/product-favorite-button"
 import { useRouter, useSearchParams } from "next/navigation"
 import { catalog, catalogProduct, addCatalogItem, catalogError, type CatalogProduct } from "@/lib/commerce/catalog-api"
 import Link from "next/link"
@@ -77,7 +78,6 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [selection, setSelection] = useState<ProductOptionSelection>({})
-  const [isLiked, setIsLiked] = useState(false)
   const carouselRef = useRef<HTMLDivElement>(null)
 
   const relatedProducts = allProducts.filter(
@@ -146,7 +146,8 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                   % OFF
                 </Badge>
               )}
-              <ComingSoon>
+              {!product.id.startsWith("demo-") ? <ProductFavoriteButton productId={product.id} large
+                className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-md bg-background/50 backdrop-blur-sm hover:bg-background/80" /> : <ComingSoon>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -154,7 +155,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                 >
                   <Heart className="h-5 w-5 text-foreground" />
                 </Button>
-              </ComingSoon>
+              </ComingSoon>}
             </div>
 
             <div className="flex gap-3">
