@@ -21,6 +21,9 @@ interface ApiCartItem {
   creator: string;
   stock?: number;
   isAvailable?: boolean;
+  styles?: { label: string }[] | null;
+  colors?: { label: string }[] | null;
+  sizes?: { label: string }[] | null;
 }
 
 export function ApiCart() {
@@ -100,6 +103,16 @@ function SignedInCart({ owner }: { owner: string }) {
               <div className="min-w-0 flex-1 space-y-2">
                 <Link href={{ pathname: "/product", query: { id: item.productId, source: "api" } }} className="block break-words font-bold hover:underline">{item.name}</Link>
                 <p className="text-sm text-muted-foreground">{item.creator}</p>
+                {/* 有值才顯示規格文字，保留原本的購物車操作與送出格式。 */}
+                {([
+                  ["styles", "款式"], ["colors", "顏色"], ["sizes", "尺寸"],
+                ] as const).map(([key, label]) => {
+                  const values = item[key];
+                  const text = Array.isArray(values)
+                    ? values.map(option => typeof option?.label === "string" ? option.label.trim() : "").filter(Boolean).join("、")
+                    : "";
+                  return text ? <p key={key} className="break-words text-sm text-muted-foreground">{label}：{text}</p> : null;
+                })}
                 <p className="font-semibold text-primary">NT$ {item.price.toLocaleString("zh-TW")}</p>
                 {unavailable(item) && <p className="text-sm text-destructive">商品已下架或庫存不足，請調整購物車。</p>}
                 <div className="flex flex-wrap items-center gap-2">
