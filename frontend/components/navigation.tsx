@@ -217,7 +217,7 @@ export function Navigation() {
                 onClick={handleCreatorPortal}
               >
                 <Palette className="h-4 w-4" />
-                創作者入口
+                {user.is_creator ? "創作者入口" : "成為創作者"}
               </Button>
             </>
           ) : (
