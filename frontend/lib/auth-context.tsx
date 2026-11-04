@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import {
   createContext,
   useContext,
@@ -7,13 +8,19 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
+import { api } from "@/lib/api";
 
 export interface User {
   id: string;
   email: string;
   name: string;
   avatar: string;
+  phone?: string | null;
+  birthday?: string | null;
+  address?: string | null;
+  bio?: string | null;
   is_creator: boolean;
+  is_admin: boolean;
   creatorProfile?: {
     brandName: string;
     bio: string;
@@ -26,12 +33,17 @@ export interface User {
   };
 }
 
-interface ApiUser {
+export interface ApiUser {
   id: number | string;
   email: string;
   name: string;
   avatar?: string | null;
+  phone?: string | null;
+  birthday?: string | null;
+  address?: string | null;
+  bio?: string | null;
   is_creator?: boolean;
+  is_admin?: boolean | 0 | 1 | "0" | "1";
   creator_profile?: User["creatorProfile"];
 }
 
@@ -58,7 +70,16 @@ function normalizeUser(apiUser: ApiUser): User {
     email: apiUser.email,
     name: apiUser.name,
     avatar: apiUser.avatar ?? "",
-    isCreator: apiUser.is_creator ?? false,
+    is_creator: apiUser.is_creator ?? false,
+    // Missing permissions default to false; do not treat the string "0" as truthy.
+    is_admin:
+      apiUser.is_admin === true ||
+      apiUser.is_admin === 1 ||
+      apiUser.is_admin === "1",
+    phone: apiUser.phone ?? null,
+    birthday: apiUser.birthday ?? null,
+    address: apiUser.address ?? null,
+    bio: apiUser.bio ?? null,
     creatorProfile: apiUser.creator_profile,
   };
 }
@@ -206,7 +227,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: `${provider}user@example.com`,
       name: `${provider === "google" ? "Google" : provider === "facebook" ? "Facebook" : "Apple"} 使用者`,
       avatar: "",
-      isCreator: false,
+      is_creator: false,
+      is_admin: false,
     };
 
     setUser(mockUser);
@@ -245,7 +267,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      * 重新整理後會以後端 /me 資料為準。
      */
     setUser((currentUser) => {
-      if (!currentUser || !currentUser.isCreator) {
+      if (!currentUser || !currentUser.is_creator) {
         return currentUser;
       }
 
