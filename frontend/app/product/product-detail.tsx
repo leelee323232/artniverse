@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import {
   Star,
-  Heart,
+
   ShoppingCart,
   Minus,
   Plus,
@@ -31,8 +31,8 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Share } from "@/components/share/share"
-import { demoCatalog } from "@/lib/commerce/demo-catalog"
-import { AuctionPanel } from "./auction-panel"
+
+
 
 export default function ProductDetailPage() {
   const params = useSearchParams();
@@ -49,19 +49,11 @@ function ProductLoader({ id }: { id: string }) {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setError(""); setProduct(null);
-    if (id.startsWith("demo-")) {
-      const demos = demoCatalog();
-      setProduct(demos.find(p => p.id === id) ?? null);
-      setAllProducts(demos);
-      if (!demos.some(p => p.id === id)) setError("找不到示範商品，請返回商店。");
-      setLoading(false);
-      return () => controller.abort();
-    }
     if (!/^\d+$/.test(id)) { setError("商品 ID 無效，請從商店重新選擇。"); setLoading(false); return () => controller.abort(); }
     void catalogProduct(id, controller.signal).then(data => { if (!controller.signal.aborted) setProduct(data); })
       .catch(e => { if (!controller.signal.aborted) setError(catalogError(e)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    void catalog(controller.signal).then(data => { if (!controller.signal.aborted) setAllProducts([...data.filter(p => p.productType === "general"), ...demoCatalog()]); }).catch(() => {});
+    void catalog(controller.signal).then(data => { if (!controller.signal.aborted) setAllProducts(data.filter(p => p.productType === "general")); }).catch(() => {});
     return () => controller.abort();
   }, [id, reload]);
   if (!loading && product) return <ProductDetail product={product} allProducts={allProducts} />;
@@ -159,16 +151,8 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                   % OFF
                 </Badge>
               )}
-              {!product.id.startsWith("demo-") ? <ProductFavoriteButton productId={product.id} large
-                className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-md bg-background/50 backdrop-blur-sm hover:bg-background/80" /> : <ComingSoon>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-4 top-4 bg-background/50 backdrop-blur-sm hover:bg-background/80"
-                >
-                  <Heart className="h-5 w-5 text-foreground" />
-                </Button>
-              </ComingSoon>}
+              <ProductFavoriteButton productId={product.id} large
+                className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-md bg-background/50 backdrop-blur-sm hover:bg-background/80" />
             </div>
 
             <div className="flex gap-3">
@@ -198,7 +182,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
               <div className="mb-2 flex items-center gap-2">
                 <Badge variant="outline">{product.category}</Badge>
                 <Link
-                  href={product.id.startsWith("demo-") ? "/creator/1/" : "/creator/?id=" + encodeURIComponent(product.creatorId ?? "")}
+                  href={"/creator/?id=" + encodeURIComponent(product.creatorId ?? "")}
                   className="text-sm text-muted-foreground hover:text-primary"
                 >
                   by {product.creatorName}
@@ -263,7 +247,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
             </div>}
 
             {product.productType === "auction" ? (
-              product.id.startsWith("demo-") ? <AuctionPanel product={product} /> : <p className="rounded-lg border p-4">競標付款尚未開放。</p>
+              <p className="rounded-lg border p-4">競標付款尚未開放。</p>
             ) : (
               <>
                 {product.productType === "presale" && <section className="space-y-2 rounded-lg border border-violet-500/30 bg-violet-500/5 p-4" aria-label="預售購買須知">
@@ -408,7 +392,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
             </TabsContent>
 
             <TabsContent value="reviews" className="mt-6">
-              {product.isDemo && <p className="mb-4 rounded-lg bg-amber-500/10 p-3">以下為匯入的示範評論，並非真實買家評價。</p>}
+
               {product.rating === null ? (
                 <Card className="border-border/50 bg-card/30 p-8 text-center">
                   <p className="font-medium">尚無評價</p>

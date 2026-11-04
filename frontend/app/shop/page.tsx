@@ -59,7 +59,7 @@ const productTypes = [
 
 export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedProductType, setSelectedProductType] = useState("all");
+  const [selectedProductType, setSelectedProductType] = useState("general");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [webProducts, setWebProducts] = useState<CatalogProduct[]>([]);
@@ -71,10 +71,30 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+    setWebProducts([]);
+    void catalog(controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) setWebProducts(data);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(catalogError(e));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [reload]);
   const products = [
     ...webProducts.filter((p) => p.productType === "general"),
     ...demoProducts,
   ];
+  const categoryNameMap = Object.fromEntries(
+    products.map((p) => [p.categoryId, p.category]),
+  );
   const categories = [
     { id: "all", name: "全部商品", icon: Grid3X3, count: products.length },
     ...Object.entries(categoryNameMap).map(([id, name]) => ({
@@ -84,7 +104,8 @@ export default function ShopPage() {
       count: products.filter((p) => p.categoryId === id).length,
     })),
   ];
-  const filteredProducts = shopProducts.filter((product) => {
+
+  const filteredProducts = products.filter((product) => {
     const categoryName = categoryNameMap[product.categoryId] ?? "";
     const matchesCategory =
       selectedCategory === "all" || product.categoryId === selectedCategory;
@@ -223,9 +244,8 @@ export default function ShopPage() {
             )}
           </p>
         </div>
-        {/* 商品列表；商品類型側欄暫時隱藏。 */}
-        <div className="grid grid-cols-1 gap-6">
-          {/* 暫時隱藏：商品類型選單，恢復時取消此段註解並還原側欄排版。
+        {/* 商品類型側欄 */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
           <aside className="lg:col-span-1">
             <div className="sticky top-44 rounded-xl border border-border bg-card/50 p-4 backdrop-blur-sm">
               <div className="mb-3 flex items-center gap-2">
@@ -247,6 +267,8 @@ export default function ShopPage() {
                           : "bg-card/50 hover:bg-card"
                       }`}
                       onClick={() => setSelectedProductType(type.id)}
+                      disabled={type.id !== "general"}
+                      title={type.id !== "general" ? "尚未開放" : undefined}
                     >
                       {type.name}
                     </Button>
@@ -255,7 +277,6 @@ export default function ShopPage() {
               </div>
             </div>
           </aside>
-          */}
           {/* Products */}
           <div className="lg:col-span-4">
             {loading && <p role="status">載入資料庫商品中…</p>}
@@ -326,7 +347,7 @@ export default function ShopPage() {
                   );
                 })}
               </div>
-            ) : (
+            ) : !loading && !error ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted/50">
                   <Search className="h-10 w-10 text-muted-foreground" />
@@ -338,7 +359,7 @@ export default function ShopPage() {
                   嘗試調整搜尋條件或瀏覽其他分類
                 </p>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

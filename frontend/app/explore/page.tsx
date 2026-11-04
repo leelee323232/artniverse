@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { UniverseBackground } from "@/components/universe-background";
-import { PlanetCard } from "@/components/planet-card";
+
 import { CreatorFollowGrid } from "@/components/creator-follow-grid";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,97 +17,6 @@ import {
 } from "@/components/ui/select";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { fetchExploreCreators, exploreError, type ExploreResult, type CreatorSort } from "@/lib/explore-api";
-
-const demoCreators = [
-  {
-    id: "1",
-    name: "夢幻星球",
-    creator: "小夢創作室",
-    description: "專注於療癒系插畫與周邊商品設計，帶給你溫暖的視覺體驗",
-    tags: ["療癒", "可愛", "插畫"],
-    followers: 12500,
-    rating: 4.9,
-    image: "/placeholder.svg?height=300&width=300",
-    color: "#a78bfa",
-  },
-  {
-    id: "2",
-    name: "極簡宇宙",
-    creator: "Minimal Studio",
-    description: "簡約而不簡單，用最少的元素傳達最深的意境",
-    tags: ["極簡", "現代", "設計"],
-    followers: 8900,
-    rating: 4.8,
-    image: "/placeholder.svg?height=300&width=300",
-    color: "#60a5fa",
-  },
-  {
-    id: "3",
-    name: "自然之心",
-    creator: "綠野工作室",
-    description: "從大自然汲取靈感，創造與環境共生的藝術作品",
-    tags: ["自然", "環保", "手作"],
-    followers: 15200,
-    rating: 5.0,
-    image: "/placeholder.svg?height=300&width=300",
-    color: "#34d399",
-  },
-  {
-    id: "4",
-    name: "賽博星域",
-    creator: "Cyber Arts",
-    description: "結合科技與藝術，探索未來主義的視覺可能",
-    tags: ["科技", "未來", "實驗"],
-    followers: 10800,
-    rating: 4.7,
-    image: "/placeholder.svg?height=300&width=300",
-    color: "#f472b6",
-  },
-  {
-    id: "5",
-    name: "復古星球",
-    creator: "Retro Wave",
-    description: "重溫經典美學，用復古風格訴說當代故事",
-    tags: ["復古", "美式", "潮流"],
-    followers: 9600,
-    rating: 4.8,
-    image: "/placeholder.svg?height=300&width=300",
-    color: "#fb923c",
-  },
-  {
-    id: "6",
-    name: "夢境實驗室",
-    creator: "Dream Lab",
-    description: "超現實主義的視覺探索，打破想像的邊界",
-    tags: ["夢幻", "超現實", "藝術"],
-    followers: 11400,
-    rating: 4.9,
-    image: "/placeholder.svg?height=300&width=300",
-    color: "#c084fc",
-  },
-  {
-    id: "7",
-    name: "水彩星雲",
-    creator: "Aqua Studio",
-    description: "用水彩的流動性捕捉宇宙的神秘與美麗",
-    tags: ["水彩", "藝術", "手繪"],
-    followers: 7800,
-    rating: 4.9,
-    image: "/placeholder.svg?height=300&width=300",
-    color: "#38bdf8",
-  },
-  {
-    id: "8",
-    name: "幾何星系",
-    creator: "Geo Design",
-    description: "用幾何圖形構建獨特的視覺語言",
-    tags: ["幾何", "抽象", "現代"],
-    followers: 9200,
-    rating: 4.6,
-    image: "/placeholder.svg?height=300&width=300",
-    color: "#fbbf24",
-  },
-];
 
 const categories = [
   "全部",
@@ -143,12 +52,6 @@ export default function ExplorePage() {
     }, 300);
     return () => { clearTimeout(timer); controller.abort(); };
   }, [searchQuery, selectedCategory, sort, page, reload]);
-  const query = searchQuery.trim().toLowerCase();
-  const filteredDemos = demoCreators.filter(c =>
-    (selectedCategory === "全部" || c.tags.includes(selectedCategory)) &&
-    [c.name, c.creator, c.description, ...c.tags].some(value => value.toLowerCase().includes(query))
-  ).sort((a, b) => sort === "rating" ? b.rating - a.rating : sort === "followers" ? b.followers - a.followers : 0);
-
   return (
     <div className="relative min-h-screen">
       <UniverseBackground />
@@ -212,7 +115,7 @@ export default function ExplorePage() {
 
         <div className="mb-6 text-center text-sm text-muted-foreground" aria-live="polite">
           {loading ? "載入創作者中…" : result ? "找到 " + result.meta.total + " 個創作者" : "正式創作者資料尚未載入"}
-          <p className="mt-1">另保留示範卡片供瀏覽，示範數據不計入正式總數。</p>
+
         </div>
         {error && <div role="alert" className="mb-6 text-center">
           <p className="text-destructive">{error}</p>
@@ -231,12 +134,7 @@ export default function ExplorePage() {
           <span>第 {result.meta.current_page} / {result.meta.last_page} 頁</span>
           <Button variant="outline" disabled={loading || page >= result.meta.last_page} onClick={() => setPage(v => v + 1)}>下一頁</Button>
         </div>}
-        {page === 1 && filteredDemos.length > 0 && <section className="mt-8">
-          <p className="mb-4 text-sm text-muted-foreground">示範創作者（{filteredDemos.length} 筆）{sort === "newest" && "・示範資料無加入日期，維持原順序"}</p>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filteredDemos.map(creator => <div key={"demo-" + creator.id}><Badge variant="outline" className="mb-2">示範</Badge><PlanetCard {...creator} /></div>)}
-          </div>
-        </section>}
+
       </div>
     </div>
   );

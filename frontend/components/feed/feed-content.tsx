@@ -4,12 +4,8 @@ import { useState, useEffect } from "react";
 import { PostCard } from "@/components/feed/post-card";
 import { Loader2 } from "lucide-react";
 
-import { brandPosts } from "@/lib/posts/brand-posts";
 import { fetchPosts, postError, type PostPage } from "@/lib/posts/api";
 import { Button } from "@/components/ui/button";
-
-// Keep one display-only example separate from API posts and pagination totals.
-const demoPost = brandPosts[0];
 
 export function FeedContent() {
   const [result, setResult] = useState<PostPage | null>(null);
@@ -85,10 +81,7 @@ export function FeedContent() {
         <span>第 {result.meta.current_page} / {result.meta.last_page} 頁</span>
         <Button variant="outline" disabled={isLoading || page >= result.meta.last_page} onClick={() => setPage(value => value + 1)}>下一頁</Button>
       </div>}
-      {page === 1 && demoPost && <section className="mt-6 space-y-4">
-        <p className="text-sm text-muted-foreground">展示用假資料（僅供版面展示，不計入正式貼文）</p>
-        <PostCard key={"display-" + demoPost.id} post={demoPost} />
-      </section>}
+      {!isLoading && !error && result?.data.length === 0 && <p className="py-8 text-center text-muted-foreground">目前尚無貼文</p>}
     </main>
   );
 }

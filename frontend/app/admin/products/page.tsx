@@ -430,7 +430,7 @@ function ProductsContent() {
       </div>
 
       {isGeneral && <div className="mb-4 space-y-2">
-        <p className="text-sm text-muted-foreground">正式商品共 {general.total} 筆；示範商品僅供查看，不會寫入資料庫。</p>
+        <p className="text-sm text-muted-foreground">商品共 {general.total} 筆</p>
         <Button variant="outline" disabled={general.loading || general.saving} onClick={general.reload}>重新載入</Button>
         {general.error && <p role="alert" className="text-destructive whitespace-pre-wrap">{general.error}</p>}
       </div>}

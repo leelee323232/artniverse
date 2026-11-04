@@ -53,7 +53,7 @@ export function normalizeCatalog(row: Row): CatalogProduct {
   for (const [title, options] of [["款式", styles], ["尺寸", sizes], ["顏色", colors]] as const) {
     if (options.length) specifications[title] = [...new Set(options.map(option => option.label))].join("、");
   }
-  const reviews = Array.isArray(row.reviews) ? row.reviews as CatalogReview[] : Array.isArray(meta.demoReviews) ? meta.demoReviews as CatalogReview[] : [];
+  const reviews = Array.isArray(row.reviews) ? (row.reviews as CatalogReview[]).filter(review => !review.isDemo) : [];
   const date = (camel: string, snake: string) => { const v = pick(camel, snake); return typeof v === "string" ? v : null; };
   return {
     id: String(row.id), name: String(row.name ?? ""), price: number(row.price), image: images[0] ?? "", images,
