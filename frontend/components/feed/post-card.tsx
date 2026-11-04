@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ComingSoon } from "@/components/common/ComingSoon";
 import { PostImages } from "@/components/posts/PostImages";
+import { PostLikeAction } from "@/components/feed/post-like";
 import { CollapsiblePostContent } from "@/components/posts/CollapsiblePostContent";
 import { AuthorLink } from "@/components/posts/AuthorLink";
 import {
@@ -31,19 +32,12 @@ import type { Post } from "@/lib/posts/types";
 
 interface PostCardProps {
   post: Post;
+  source?: "api" | "demo";
 }
 
-export function PostCard({ post }: PostCardProps) {
-  const [isLiked, setIsLiked] = useState(post.isLiked || false);
+export function PostCard({ post, source = "demo" }: PostCardProps) {
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
-  const [likes, setLikes] = useState(post.likes);
   const [showComments, setShowComments] = useState(false);
-
-  // TEMP: 原始互動邏輯暫時停用，改用 ComingSoon；恢復功能時取消下方註解。
-  // const handleLike = () => {
-  //     setIsLiked(!isLiked)
-  //     setLikes(isLiked ? likes - 1 : likes + 1)
-  //   }
 
   return (
     <Card className="gap-0 py-0 border-border/50 shadow-sm hover:shadow-md transition-shadow">
@@ -209,7 +203,7 @@ export function PostCard({ post }: PostCardProps) {
         }
 
         <div className="space-y-1 w-full">
-          <p className="font-semibold text-sm">{likes.toLocaleString()} 個讚</p>
+          <PostLikeAction postId={post.id} likes={post.likes} source={source} />
           <CollapsiblePostContent content={post.content}>
             <AuthorLink
               authorId={post.authorId}

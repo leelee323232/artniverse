@@ -76,7 +76,7 @@ export function FeedContent() {
       ) : (
         <div className="space-y-4">
           {result?.data.map((post) => (
-            <PostCard key={"api-" + post.id} post={post} />
+            <PostCard key={"api-" + post.id} post={post} source="api" />
           ))}
         </div>
       )}
