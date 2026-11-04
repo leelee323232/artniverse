@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { ProductCard } from "@/components/product-card";
 import { PresaleProductCard } from "@/components/presale-product-card";
@@ -62,7 +62,28 @@ export default function ShopPage() {
   const [selectedProductType, setSelectedProductType] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [webProducts, setWebProducts] = useState<CatalogProduct[]>([]);
+  const [demoProducts, setDemoProducts] = useState<CatalogProduct[]>([]);
+  useEffect(() => {
+    setDemoProducts(demoCatalog());
+  }, []);
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [reload, setReload] = useState(0);
+  const products = [
+    ...webProducts.filter((p) => p.productType === "general"),
+    ...demoProducts,
+  ];
+  const categories = [
+    { id: "all", name: "全部商品", icon: Grid3X3, count: products.length },
+    ...Object.entries(categoryNameMap).map(([id, name]) => ({
+      id,
+      name,
+      icon: Grid3X3,
+      count: products.filter((p) => p.categoryId === id).length,
+    })),
+  ];
   const filteredProducts = shopProducts.filter((product) => {
     const categoryName = categoryNameMap[product.categoryId] ?? "";
     const matchesCategory =
@@ -202,9 +223,9 @@ export default function ShopPage() {
             )}
           </p>
         </div>
-        {/* Products Grid + Product Type Sidebar */}
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-5">
-          {/* Product Type Sidebar */}
+        {/* 商品列表；商品類型側欄暫時隱藏。 */}
+        <div className="grid grid-cols-1 gap-6">
+          {/* 暫時隱藏：商品類型選單，恢復時取消此段註解並還原側欄排版。
           <aside className="lg:col-span-1">
             <div className="sticky top-44 rounded-xl border border-border bg-card/50 p-4 backdrop-blur-sm">
               <div className="mb-3 flex items-center gap-2">
@@ -234,8 +255,21 @@ export default function ShopPage() {
               </div>
             </div>
           </aside>
+          */}
           {/* Products */}
           <div className="lg:col-span-4">
+            {loading && <p role="status">載入資料庫商品中…</p>}
+            {error && (
+              <div role="alert" className="mb-4">
+                <p>{error}；以下仍可瀏覽預售與競標示範商品。</p>
+                <Button
+                  variant="outline"
+                  onClick={() => setReload((n) => n + 1)}
+                >
+                  重新載入
+                </Button>
+              </div>
+            )}
             {sortedProducts.length > 0 ? (
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
                 {sortedProducts.map((product) => {
