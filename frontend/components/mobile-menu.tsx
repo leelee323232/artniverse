@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Menu, Palette } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -21,25 +20,10 @@ const menuLinks = [
   { href: "/events", label: "活動" },
   { href: "/commission", label: "企業委託" },
   { href: "/about", label: "關於我們" },
-  { href: "/creator-portal", label: "創作者入口" },
 ];
 
 export function MobileMenu() {
-  const router = useRouter();
-  const { user } = useAuth();
-
-  const handleCreatorPortal = () => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-
-    if (user.is_creator) {
-      router.push("/creator-portal");
-    } else {
-      router.push("/creator-apply");
-    }
-  };
+  const { user, isLoading } = useAuth();
 
   return (
     <Sheet>
@@ -68,6 +52,14 @@ export function MobileMenu() {
               </Link>
             </SheetClose>
           ))}
+          {!isLoading && <SheetClose asChild>
+            <Link
+              href={!user ? "/login/" : user.is_creator ? "/creator-portal/" : "/creator-apply/"}
+              className="rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              {user?.is_creator ? "創作者入口" : "成為創作者"}
+            </Link>
+          </SheetClose>}
         </nav>
       </SheetContent>
     </Sheet>
