@@ -22,13 +22,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { useCreatorProducts } from "@/lib/creator/use-products";
 import { useAuth } from "@/lib/auth-context";
 import { TheCard } from "@/components/common/TheCard";
 import { BasicDatePicker } from "@/components/ui/date-picker";
@@ -69,7 +63,7 @@ import {
   Calendar,
   MapPin,
   CalendarPlus,
-  ListFilter,
+
 } from "lucide-react";
 import Link from "next/link";
 
@@ -77,7 +71,7 @@ import Link from "next/link";
 const stats = {
   totalSales: 45680,
   totalOrders: 234,
-  totalProducts: 12,
+
   totalFollowers: 12500,
   pendingOrders: 8,
   pendingCommissions: 3,
@@ -110,39 +104,6 @@ const recentOrders = [
     total: 750,
     status: "completed",
     date: "2024-01-13",
-  },
-];
-
-const products = [
-  {
-    id: "1",
-    name: "星空筆記本",
-    price: 380,
-    stock: 45,
-    sales: 156,
-    image: "/cute-notebook-with-stars.jpg",
-    status: "active",
-    category: "筆記本",
-  },
-  {
-    id: "2",
-    name: "療癒小熊貼紙組",
-    price: 120,
-    stock: 120,
-    sales: 342,
-    image: "/cute-bear-stickers.jpg",
-    status: "pending",
-    category: "貼紙",
-  },
-  {
-    id: "3",
-    name: "夢境明信片套組",
-    price: 250,
-    stock: 68,
-    sales: 89,
-    image: "/dreamy-postcards.jpg",
-    status: "inactive",
-    category: "明信片",
   },
 ];
 
@@ -327,7 +288,12 @@ function validateEventFormRow(row: EventFormRow) {
 
 export default function CreatorPortalPage() {
   const router = useRouter();
-  const { user, updateCreatorProfile } = useAuth();
+  const { user, isLoading: authLoading, updateCreatorProfile } = useAuth();
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) router.replace("/login/");
+    else if (!user.is_creator) router.replace("/creator-apply/");
+  }, [authLoading, user, router]);
 
   // Profile editing state
   const [profileData, setProfileData] = useState({
@@ -360,25 +326,7 @@ export default function CreatorPortalPage() {
   const [newBenefit, setNewBenefit] = useState("");
   const [quoteAmount, setQuoteAmount] = useState(0);
 
-  // Product status filter
-  const [productStatusFilter, setProductStatusFilter] = useState<
-    "all" | "active" | "pending" | "inactive"
-  >("all");
-
-  // Product category filter
-  const [productCategoryFilter, setProductCategoryFilter] = useState("全部");
-  const productCategories = [
-    "全部",
-    ...Array.from(new Set(products.map((p) => p.category))),
-  ];
-
-  const filteredProducts = products.filter((p) => {
-    const statusMatch =
-      productStatusFilter === "all" || p.status === productStatusFilter;
-    const categoryMatch =
-      productCategoryFilter === "全部" || p.category === productCategoryFilter;
-    return statusMatch && categoryMatch;
-  });
+  const creatorProducts = useCreatorProducts(user?.is_creator ? String(user.id) : null);
 
   // Commission request status filter ("all" | "pending" | "quoted" | "paid")
   const [commissionFilter, setCommissionFilter] = useState<
@@ -657,15 +605,7 @@ export default function CreatorPortalPage() {
   };
 
   // Check if user is a creator
-  if (!user) {
-    router.push("/login");
-    return null;
-  }
-
-  if (!user.is_creator) {
-    router.push("/creator-apply")
-    return null
-  }
+  if (authLoading || !user || !user.is_creator) return null;
 
   const handleSaveProfile = async () => {
     setIsSavingProfile(true);
@@ -866,7 +806,7 @@ export default function CreatorPortalPage() {
               <div>
                 <p className="text-sm text-muted-foreground">商品數量</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {stats.totalProducts}
+                  {creatorProducts.total ?? "—"}
                 </p>
               </div>
               <div className="rounded-full bg-accent/20 p-3">
@@ -1323,58 +1263,13 @@ export default function CreatorPortalPage() {
               </Link>
             </div>
 
-            {/* Status Sub-tabs + Category Filter */}
-            <div className="flex items-center justify-between">
-              <div className="flex gap-2">
-                {(
-                  [
-                    { value: "all", label: "全部" },
-                    { value: "pending", label: "待審核" },
-                    { value: "active", label: "已上架" },
-                    { value: "inactive", label: "已下架" },
-                  ] as const
-                ).map((tab) => (
-                  <button
-                    key={tab.value}
-                    onClick={() => setProductStatusFilter(tab.value)}
-                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                      productStatusFilter === tab.value
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-card/50 text-muted-foreground hover:bg-card hover:text-foreground"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={`gap-1.5 bg-transparent ${productCategoryFilter !== "全部" ? "border-primary text-primary" : ""}`}
-                  >
-                    <ListFilter className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuRadioGroup
-                    value={productCategoryFilter}
-                    onValueChange={setProductCategoryFilter}
-                  >
-                    {productCategories.map((cat) => (
-                      <DropdownMenuRadioItem key={cat} value={cat}>
-                        {cat}
-                      </DropdownMenuRadioItem>
-                    ))}
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
+            {creatorProducts.loading && <p role="status">載入商品中…</p>}
+            {creatorProducts.error && <div role="alert" className="space-y-2">
+              <p className="text-destructive">{creatorProducts.error}</p>
+              <Button variant="outline" onClick={creatorProducts.refresh}>重新載入</Button>
+            </div>}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredProducts.map((product) => (
+              {creatorProducts.products.map((product) => (
                 <TheCard
                   key={product.id}
                   className="group overflow-hidden pt-0"
@@ -1401,13 +1296,20 @@ export default function CreatorPortalPage() {
                   </div>
                 </TheCard>
               ))}
-              {filteredProducts.length === 0 && (
-                <div className="col-span-3 flex flex-col items-center justify-center py-16 text-muted-foreground">
+              {!creatorProducts.loading && !creatorProducts.error && creatorProducts.products.length === 0 && (
+                <div className="col-span-full flex flex-col items-center justify-center py-16 text-muted-foreground">
                   <Package className="mb-3 h-10 w-10 opacity-30" />
-                  <p className="text-sm">沒有符合條件的商品</p>
+                  <p className="text-sm">目前尚無商品</p>
                 </div>
               )}
             </div>
+            {!creatorProducts.loading && !creatorProducts.error && creatorProducts.lastPage > 1 && (
+              <div className="flex items-center justify-center gap-4">
+                <Button variant="outline" disabled={creatorProducts.page <= 1} onClick={() => creatorProducts.setPage(creatorProducts.page - 1)}>上一頁</Button>
+                <span>第 {creatorProducts.page} / {creatorProducts.lastPage} 頁</span>
+                <Button variant="outline" disabled={creatorProducts.page >= creatorProducts.lastPage} onClick={() => creatorProducts.setPage(creatorProducts.page + 1)}>下一頁</Button>
+              </div>
+            )}
           </TabsContent>
 
           {/* Commission Requests Tab */}
