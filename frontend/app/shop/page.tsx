@@ -224,9 +224,9 @@ export default function ShopPage() {
             )}
           </p>
         </div>
-        {/* Products Grid + Product Type Sidebar */}
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-5">
-          {/* Product Type Sidebar */}
+        {/* 商品列表；商品類型側欄暫時隱藏。 */}
+        <div className="grid grid-cols-1 gap-6">
+          {/* 暫時隱藏：商品類型選單，恢復時取消此段註解並還原側欄排版。
           <aside className="lg:col-span-1">
             <div className="sticky top-44 rounded-xl border border-border bg-card/50 p-4 backdrop-blur-sm">
               <div className="mb-3 flex items-center gap-2">
@@ -256,8 +256,9 @@ export default function ShopPage() {
               </div>
             </div>
           </aside>
+          */}
           {/* Products */}
-          <div className="lg:col-span-4">
+          <div className="min-w-0">
             {loading && <p role="status">載入資料庫商品中…</p>}
             {error && <div role="alert" className="mb-4"><p>{error}；以下仍可瀏覽預售與競標示範商品。</p><Button variant="outline" onClick={() => setReload(n => n + 1)}>重新載入</Button></div>}
             {sortedProducts.length > 0 ? (
