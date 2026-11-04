@@ -21,6 +21,7 @@ export interface User {
   address?: string | null
   bio?: string | null
   is_creator: boolean
+  is_admin: boolean
   creatorProfile?: {
     brandName: string
     bio: string
@@ -46,6 +47,7 @@ export interface ApiUser {
   address?: string | null
   bio?: string | null
   is_creator?: boolean
+  is_admin?: boolean | 0 | 1 | "0" | "1"
   creator_profile?: User["creatorProfile"]
 }
 
@@ -95,6 +97,8 @@ export function normalizeUser(apiUser: ApiUser): User {
     name: apiUser.name,
     avatar: apiUser.avatar ?? "",
     is_creator: apiUser.is_creator ?? false,
+    // Missing permissions default to false; do not treat the string "0" as truthy.
+    is_admin: apiUser.is_admin === true || apiUser.is_admin === 1 || apiUser.is_admin === "1",
     phone: apiUser.phone ?? null,
     birthday: apiUser.birthday ?? null,
     address: apiUser.address ?? null,

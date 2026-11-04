@@ -30,7 +30,7 @@ export function Navigation() {
   const router = useRouter();
   const { items, ready } = useCart();
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
 
   async function handleLogout() {
     try {
@@ -112,7 +112,7 @@ export function Navigation() {
               {ready && cartCount > 0 && <span className="ml-1 text-xs">{cartCount}</span>}
             </Button>
           </Link>
-          <Link href="/admin">
+          {!isLoading && user?.is_admin === true && <Link href="/admin">
             <Button
               variant="outline"
               size="sm"
@@ -121,7 +121,7 @@ export function Navigation() {
               <Shield className="h-4 w-4" />
               管理後台
             </Button>
-          </Link>
+          </Link>}
 
           {user ? (
             <>
