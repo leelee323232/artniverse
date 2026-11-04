@@ -78,6 +78,8 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [selection, setSelection] = useState<ProductOptionSelection>({})
+  const missingOption = ([['styles', '款式'], ['colors', '顏色'], ['sizes', '尺寸']] as const)
+    .find(([key]) => (product[key]?.length ?? 0) > 0 && !product[key]!.some(option => option.id === selection[key]?.id))
   const carouselRef = useRef<HTMLDivElement>(null)
 
   const relatedProducts = allProducts.filter(
@@ -90,8 +92,19 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
 
   const handleAddToCart = async () => {
     if (locked.current || unavailable) return false
+    if (missingOption) {
+      toast({ title: `請先選擇${missingOption[1]}`, variant: "destructive" })
+      return false
+    }
     locked.current = true; setSaving(true)
-    try { await addCatalogItem(product.id, quantity); toast({ title: "已加入購物車", description: product.name }); return true }
+    try {
+      await addCatalogItem(product.id, quantity, {
+        style_id: selection.styles?.id,
+        color_id: selection.colors?.id,
+        size_id: selection.sizes?.id,
+      })
+      toast({ title: "已加入購物車", description: product.name }); return true
+    }
     catch (e) { toast({ title: "無法加入購物車", description: catalogError(e), variant: "destructive" }); return false }
     finally { locked.current = false; setSaving(false) }
   }
