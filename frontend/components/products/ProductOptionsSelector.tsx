@@ -40,8 +40,7 @@ export function ProductOptionsSelector({ product, selection, onChange, disabled 
           </Select>
         </div>
       ))}
-      {/* 加入購物車 API 尚未定義規格欄位，不把 UI 選項冒充成已保存的購買規格。 */}
-      <p className="text-xs text-muted-foreground">規格選擇目前僅供預覽，加入購物車尚不會保存所選規格。</p>
+      <p className="text-xs text-muted-foreground">所選規格會隨請求送出，目前仍待後端支援儲存。</p>
     </div>
   );
 }

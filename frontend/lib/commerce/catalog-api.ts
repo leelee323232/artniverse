@@ -82,10 +82,16 @@ export async function catalogProduct(id: string, signal?: AbortSignal) {
   if (!product.isActive) throw new Error("商品已下架。");
   return product;
 }
-export async function addCatalogItem(id: string, quantity = 1) {
+export type CartOptionIds = { style_id?: string; color_id?: string; size_id?: string };
+export async function addCatalogItem(id: string, quantity = 1, options: CartOptionIds = {}) {
   if (!/^\d+$/.test(id) || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 99) throw new Error("商品或數量不正確。");
   await api.get("/sanctum/csrf-cookie", { timeout: 15000 });
-  await api.post("/api/v1/cart", { product_id: Number(id), quantity }, { timeout: 15000 });
+  await api.post("/api/v1/cart", {
+    product_id: Number(id), quantity,
+    ...(options.style_id ? { style_id: options.style_id } : {}),
+    ...(options.color_id ? { color_id: options.color_id } : {}),
+    ...(options.size_id ? { size_id: options.size_id } : {}),
+  }, { timeout: 15000 });
   window.dispatchEvent(new Event("artniverse-cart-updated"));
 }
 export function catalogError(error: unknown) {
