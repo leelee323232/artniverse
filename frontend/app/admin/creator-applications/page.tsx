@@ -12,51 +12,7 @@ import {
 import { Eye, Check, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const initialApplications: Application[] = [
-  {
-    id: "demo-2",
-    version: 1,
-    isDemo: true,
-    date: "2026-06-19",
-    status: "approved",
-    email: "mei@example.com",
-    realName: "中中",
-    brandName: "Meme Lab",
-    storePickup: "台北車站店",
-    phone: "0923456789",
-    birthday: "2004-12-25",
-    address: "台北市中正區北平西路3號",
-    bankCode: "013",
-    bankAccount: "987654321098",
-    selectedCategories: ["潮流", "公仔"],
-    creativePhilosophy: "幽默拯救世界，迷因就是力量。",
-    idFrontImage: "id_front.jpg",
-    idBackImage: "id_back.jpg",
-    agreeToContract: true,
-  },
-  {
-    id: "demo-3",
-    version: 1,
-    isDemo: true,
-    date: "2026-06-18",
-    status: "rejected",
-    rejectReason: "資料格式不正確",
-    email: "howard@example.com",
-    realName: "大大",
-    brandName: "Space Flight",
-    storePickup: "信義店",
-    phone: "0934567890",
-    birthday: "2003-04-01",
-    address: "台北市信義區信義路五段7號",
-    bankCode: "004",
-    bankAccount: "554433221100",
-    selectedCategories: ["科技", "模型"],
-    creativePhilosophy: "將宇宙的奧秘，實體化呈現在桌面上。",
-    idFrontImage: "front.jpg",
-    idBackImage: "back.jpg",
-    agreeToContract: true,
-  },
-];
+
 
 export default function CreatorApplicationsPage() {
   const { user, isLoading } = useAuth();
@@ -132,11 +88,7 @@ function CreatorApplications() {
     detailRequest.current?.abort();
     setSelectedApp(null); setConfirmType(null); setRejectInputReason("");
     setDetailError(""); setReviewError(""); setNeedsRefresh(false);
-    if (app.isDemo) {
-      setDetailLoading(false);
-      setSelectedApp(initialApplications.find(item => item.id === app.id) ?? null);
-      return;
-    }
+
     const controller = new AbortController();
     detailRequest.current = controller;
     setDetailLoading(true);
@@ -211,13 +163,13 @@ function CreatorApplications() {
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Button variant="outline" disabled={loading || saving} onClick={() => setReload(value => value + 1)}>重新載入</Button>
-        {!loading && !listError && <span className="text-sm text-muted-foreground">正式申請共 {total} 筆；示範資料僅供查看，不會寫入資料庫。</span>}
+        {!loading && !listError && <span className="text-sm text-muted-foreground">申請共 {total} 筆。</span>}
       </div>
       {loading && <p role="status" className="mb-4">載入申請列表中…</p>}
       {listError && <p role="alert" className="mb-4 text-destructive">{listError} <Link href="/login/" className="underline">前往登入</Link></p>}
       {detailLoading && <p role="status" className="mb-4">載入詳細資料中…</p>}
       {detailError && <p role="alert" className="mb-4 text-destructive">{detailError} 請再次點選申請重試。</p>}
-      {!loading && !listError && total === 0 && <p className="mb-4 text-muted-foreground">目前沒有正式申請，以下為保留的示範資料。</p>}
+      {!loading && !listError && total === 0 && <p className="mb-4 text-muted-foreground">目前沒有申請資料。</p>}
 
       {/* 列表表格：擴充顯示核心主要欄位 */}
       <div className="bg-background/80 backdrop-blur-lg rounded-xl border border-border/50 shadow-sm overflow-x-auto">
@@ -235,7 +187,7 @@ function CreatorApplications() {
             </tr>
           </thead>
           <tbody>
-            {(!loading && !listError ? [...applications, ...(page === 1 ? initialApplications : [])] : []).map((app) => (
+            {(!loading && !listError ? applications : []).map((app) => (
               <tr
                 key={app.id}
                 onClick={() => void openApplication(app)}

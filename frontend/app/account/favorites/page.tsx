@@ -1,116 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { UniverseBackground } from "@/components/universe-background";
-import { PlanetCard } from "@/components/planet-card";
+
 import { FollowedCreatorsList } from "@/components/followed-creators";
-import { ProductCard } from "@/components/product-card";
+
 import { FavoriteProductsList } from "@/components/favorite-products";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth-context";
-import { Heart, Users, Package, Search } from "lucide-react";
+import { Users, Package, Search } from "lucide-react";
 import Link from "next/link";
-
-interface FavoriteCreator {
-  id: string;
-  name: string;
-  creator: string;
-  description: string;
-  tags: string[];
-  followers: number;
-  rating: number;
-  image: string;
-  color: string;
-}
-
-interface FavoriteProduct {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-  stock: number;
-  creatorId: string;
-}
-
-const mockFavoriteCreators: FavoriteCreator[] = [
-  {
-    id: "1",
-    name: "夢幻星球",
-    creator: "小夢創作室",
-    description: "專注於療癒系插畫與周邊商品設計，帶給你溫暖的視覺體驗",
-    tags: ["療癒", "可愛", "插畫"],
-    followers: 12500,
-    rating: 4.9,
-    image: "/placeholder.svg?height=300&width=300",
-    color: "#a78bfa",
-  },
-  {
-    id: "3",
-    name: "自然之心",
-    creator: "綠野工作室",
-    description: "從大自然汲取靈感，創造與環境共生的藝術作品",
-    tags: ["自然", "環保", "手作"],
-    followers: 15200,
-    rating: 5.0,
-    image: "/placeholder.svg?height=300&width=300",
-    color: "#34d399",
-  },
-  {
-    id: "6",
-    name: "夢境實驗室",
-    creator: "Dream Lab",
-    description: "超現實主義的視覺探索，打破想像的邊界",
-    tags: ["夢幻", "超現實", "藝術"],
-    followers: 11400,
-    rating: 4.9,
-    image: "/placeholder.svg?height=300&width=300",
-    color: "#c084fc",
-  },
-];
-
-const mockFavoriteProducts: FavoriteProduct[] = [
-  {
-    id: "1",
-    name: "星空露營燈",
-    price: 1280,
-    image: "/cute-notebook-with-stars.jpg",
-    category: "戶外用品",
-    stock: 45,
-    creatorId: "1",
-  },
-  {
-    id: "2",
-    name: "月光明信片組",
-    price: 320,
-    image: "/placeholder.svg?height=300&width=300",
-    category: "文具",
-    stock: 8,
-    creatorId: "2",
-  },
-  {
-    id: "3",
-    name: "森林療癒海報",
-    price: 580,
-    image: "/placeholder.svg?height=300&width=300",
-    category: "掛畫",
-    stock: 20,
-    creatorId: "3",
-  },
-  {
-    id: "4",
-    name: "夢幻星球貼紙組",
-    price: 150,
-    image: "/placeholder.svg?height=300&width=300",
-    category: "貼紙",
-    stock: 5,
-    creatorId: "1",
-  },
-];
 
 export default function FavoritesPage() {
   const { user, isLoading } = useAuth();
@@ -127,44 +30,10 @@ export default function FavoritesPage() {
 }
 
 function MemberFavoritesPage() {
-  const creators = mockFavoriteCreators;
   const [totalFollowing, setTotalFollowing] = useState<number | null>(null);
   const [totalFavorites, setTotalFavorites] = useState<number | null>(null);
-  const [products, setProducts] =
-    useState<FavoriteProduct[]>(mockFavoriteProducts);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const removeProduct = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-  };
-
-  const query = searchQuery.trim().toLowerCase();
-
-  const filteredCreators = useMemo(
-    () =>
-      creators.filter((c) => {
-        if (!query) return true;
-        return (
-          c.name.toLowerCase().includes(query) ||
-          c.creator.toLowerCase().includes(query) ||
-          c.tags.some((tag) => tag.toLowerCase().includes(query))
-        );
-      }),
-    [creators, query],
-  );
-
-  const filteredProducts = useMemo(
-    () =>
-      products.filter((p) => {
-        if (!query) return true;
-        return (
-          p.name.toLowerCase().includes(query) ||
-          p.category.toLowerCase().includes(query)
-        );
-      }),
-    [products, query],
-  );
-
+  const query = searchQuery.trim();
   return (
     <div className="relative min-h-screen">
       <UniverseBackground />
@@ -212,82 +81,17 @@ function MemberFavoritesPage() {
             {/* Creators Tab */}
             <TabsContent value="creators">
               <FollowedCreatorsList key={query} search={searchQuery.trim()} onTotal={setTotalFollowing} />
-              {filteredCreators.length > 0 && <section className="mt-8">
-                <p className="mb-4 text-sm text-muted-foreground">示範創作者（不計入追蹤數量、不寫入資料庫）</p>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {filteredCreators.map((creator) => (
-                    <PlanetCard
-                      key={creator.id}
-                      {...creator}
-                    />
-                  ))}
-                </div>
-              </section>}
+
             </TabsContent>
 
             {/* Products Tab */}
             <TabsContent value="products">
               <FavoriteProductsList key={query} search={searchQuery.trim()} onTotal={setTotalFavorites} />
-              <section className="mt-8">
-              <p className="mb-4 text-sm text-muted-foreground">示範商品（不計入收藏數量、不寫入資料庫）</p>
-              {products.length === 0 ? (
-                <EmptyState
-                  message="目前沒有示範收藏商品"
-                  actionHref="/shop"
-                  actionLabel="逛逛商品"
-                />
-              ) : filteredProducts.length === 0 ? (
-                <NoResults onClear={() => setSearchQuery("")} />
-              ) : (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {filteredProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      {...product}
-                      isFavorited
-                      onToggleFavorite={removeProduct}
-                    />
-                  ))}
-                </div>
-              )}
-              </section>
+
             </TabsContent>
           </Tabs>
         </div>
       </div>
     </div>
-  );
-}
-
-function EmptyState({
-  message,
-  actionHref,
-  actionLabel,
-}: {
-  message: string;
-  actionHref: string;
-  actionLabel: string;
-}) {
-  return (
-    <Card className="border-border/50 bg-card/30 p-12 backdrop-blur-md text-center">
-      <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-      <p className="mb-4 text-muted-foreground">{message}</p>
-      <Link href={actionHref}>
-        <Button className="bg-gradient-to-r from-primary to-secondary">
-          {actionLabel}
-        </Button>
-      </Link>
-    </Card>
-  );
-}
-
-function NoResults({ onClear }: { onClear: () => void }) {
-  return (
-    <Card className="border-border/50 bg-card/30 p-12 backdrop-blur-md text-center">
-      <p className="mb-4 text-muted-foreground">找不到符合條件的收藏</p>
-      <Button variant="outline" className="bg-transparent" onClick={onClear}>
-        清除搜尋
-      </Button>
-    </Card>
   );
 }

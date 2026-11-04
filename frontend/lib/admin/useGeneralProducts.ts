@@ -3,14 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { api } from "@/lib/api";
-import { mockProducts } from "@/mocks/admin/products";
 import type { Product, ProductOptions } from "@/types/admin";
 
 export type ManagedProduct = Product & { version?: number; isPopular?: boolean; isDemo?: boolean; category?: string };
 export type ProductSettings = { categories: { id: string; name: string; isActive: boolean }[]; creators: { id: string; name: string }[] };
 type Payload = ProductOptions & { name: string; categoryId: string; creatorId: string; price: number; stock: number; sortOrder: number; isActive: boolean; isPopular: boolean; description: string };
 const endpoint = "/api/v1/admin/products";
-const demos: ManagedProduct[] = mockProducts.filter(p => p.productType === "general").map(p => ({ ...p, id: `demo-${p.id}`, isDemo: true }));
 function message(error: unknown) {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
@@ -26,7 +24,7 @@ function message(error: unknown) {
 }
 
 export function useGeneralProducts() {
-  const [items, setItems] = useState<ManagedProduct[]>(demos);
+  const [items, setItems] = useState<ManagedProduct[]>([]);
   const [settings, setSettings] = useState<ProductSettings>({ categories: [], creators: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,13 +46,13 @@ export function useGeneralProducts() {
   useEffect(() => { active.current = true; return () => { active.current = false; detailRequest.current?.abort(); }; }, []);
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true); setReady(false); setError(""); setItems(demos);
+    setLoading(true); setReady(false); setError(""); setItems([]);
     void Promise.all([
       api.get<{ data: ManagedProduct[]; meta: { last_page: number; total: number } }>(endpoint, { params: { page }, signal: controller.signal, timeout: 15000 }),
       api.get<{ data: ProductSettings }>(`${endpoint}/options`, { signal: controller.signal, timeout: 15000 }),
     ]).then(([list, options]) => {
       if (controller.signal.aborted) return;
-      setItems([...list.data.data, ...(page === 1 ? demos : [])]);
+      setItems(list.data.data);
       setLastPage(list.data.meta.last_page); setTotal(list.data.meta.total);
       setSettings(options.data.data); setReady(true);
     }).catch(err => { if (!controller.signal.aborted) setError(message(err)); })
@@ -70,8 +68,6 @@ export function useGeneralProducts() {
   };
   const openEdit = async (item: Product) => {
     if (busy.current || !ready) return;
-    const demo = demos.find(p => p.id === item.id);
-    if (demo) { setError("示範商品僅供查看，不會送入資料庫。"); return; }
     detailRequest.current?.abort();
     const controller = new AbortController(); detailRequest.current = controller;
     setError("");

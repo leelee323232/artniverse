@@ -31,7 +31,6 @@ import {
 
 import { catalog, catalogError, type CatalogProduct } from "@/lib/commerce/catalog-api";
 import { getAuctionPrices } from "@/lib/products/status";
-import { demoCatalog } from "@/lib/commerce/demo-catalog";
 
 // 商品類型：未來會作為參數帶入搜尋 API（selectedProductType）
 const productTypes = [
@@ -60,12 +59,10 @@ function getFirstImage(image: string): string {
 
 export default function ShopPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedProductType, setSelectedProductType] = useState("all");
+  const [selectedProductType, setSelectedProductType] = useState("general");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [webProducts, setWebProducts] = useState<CatalogProduct[]>([]);
-  const [demoProducts, setDemoProducts] = useState<CatalogProduct[]>([]);
-  useEffect(() => { setDemoProducts(demoCatalog()); }, []);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -78,7 +75,7 @@ export default function ShopPage() {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [reload]);
-  const products = [...webProducts.filter(p => p.productType === "general"), ...demoProducts];
+  const products = webProducts.filter(p => p.productType === "general");
   const categoryNameMap = Object.fromEntries(products.map(p => [p.categoryId, p.category]));
   const categories = [{ id: "all", name: "全部商品", icon: Grid3X3, count: products.length }, ...Object.entries(categoryNameMap).map(([id, name]) => ({ id, name, icon: Grid3X3, count: products.filter(p => p.categoryId === id).length }))];
 
@@ -224,9 +221,8 @@ export default function ShopPage() {
             )}
           </p>
         </div>
-        {/* 商品列表；商品類型側欄暫時隱藏。 */}
-        <div className="grid grid-cols-1 gap-6">
-          {/* 暫時隱藏：商品類型選單，恢復時取消此段註解並還原側欄排版。
+        {/* 商品類型側欄 */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
           <aside className="lg:col-span-1">
             <div className="sticky top-44 rounded-xl border border-border bg-card/50 p-4 backdrop-blur-sm">
               <div className="mb-3 flex items-center gap-2">
@@ -248,6 +244,8 @@ export default function ShopPage() {
                           : "bg-card/50 hover:bg-card"
                       }`}
                       onClick={() => setSelectedProductType(type.id)}
+                      disabled={type.id !== "general"}
+                      title={type.id !== "general" ? "尚未開放" : undefined}
                     >
                       {type.name}
                     </Button>
@@ -256,11 +254,10 @@ export default function ShopPage() {
               </div>
             </div>
           </aside>
-          */}
           {/* Products */}
-          <div className="min-w-0">
+          <div className="min-w-0 lg:col-span-3">
             {loading && <p role="status">載入資料庫商品中…</p>}
-            {error && <div role="alert" className="mb-4"><p>{error}；以下仍可瀏覽預售與競標示範商品。</p><Button variant="outline" onClick={() => setReload(n => n + 1)}>重新載入</Button></div>}
+            {error && <div role="alert" className="mb-4"><p>{error}</p><Button variant="outline" onClick={() => setReload(n => n + 1)}>重新載入</Button></div>}
             {sortedProducts.length > 0 ? (
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
                 {sortedProducts.map((product) => {
@@ -317,7 +314,7 @@ export default function ShopPage() {
                   );
                 })}
               </div>
-            ) : (
+            ) : !loading && !error ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted/50">
                   <Search className="h-10 w-10 text-muted-foreground" />
@@ -329,7 +326,7 @@ export default function ShopPage() {
                   嘗試調整搜尋條件或瀏覽其他分類
                 </p>
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
