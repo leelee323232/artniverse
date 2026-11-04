@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 
 class PublicPostData
 {
@@ -22,8 +23,11 @@ class PublicPostData
             'authorAvatar' => $avatar, 'isVerified' => ! $official,
             'content' => $post->content, 'images' => array_column($images, 'url'),
             'createdAt' => CarbonImmutable::parse($post->created_at, config('app.timezone'))->toIso8601String(),
-            'likes' => 0, 'isLiked' => false, 'isSaved' => false, 'comments' => [],
-            'capabilities' => ['delete' => false, 'edit' => false, 'like' => false, 'comment' => false, 'save' => false],
+            // Lists preload the count; single admin responses can count their one post here.
+            // Public responses remain member-independent. Read isLiked from the authenticated API.
+            'likes' => (int) ($post->likes_count ?? DB::table('post_likes')->where('post_id', $post->id)->count()),
+            'isLiked' => false, 'isSaved' => false, 'comments' => [],
+            'capabilities' => ['delete' => false, 'edit' => false, 'like' => true, 'comment' => false, 'save' => false],
         ];
     }
 }

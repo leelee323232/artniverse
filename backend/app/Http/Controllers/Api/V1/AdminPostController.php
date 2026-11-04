@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Services\PublicPostData;
+use App\Services\PublicPostQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,8 @@ class AdminPostController extends Controller
             'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
-        $page = DB::table('posts')->where('author_type', 'official')->whereNull('deleted_at')
+        $page = PublicPostQuery::withLikes(DB::table('posts')->select('posts.*'))
+            ->where('author_type', 'official')->whereNull('deleted_at')
             ->orderByDesc('created_at')->orderByDesc('id')->paginate($input['per_page'] ?? 20);
         return $this->json(['data' => $page->getCollection()->map(fn ($post) => $this->resource($post))->values(),
             'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
