@@ -15,8 +15,6 @@ export function LegalPage({ title, introduction, sections }: {
       <Card className="space-y-8 border-border/50 bg-card/80 p-6 backdrop-blur-md sm:p-10">
         <header className="space-y-3">
           <h1 className="text-3xl font-bold">{title}</h1>
-          <p className="text-sm text-muted-foreground">草稿更新日期：2026 年 11 月 5 日</p>
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">本內容為待確認草稿，正式發布前仍需由 ARTNIVERSE 確認實際營運及資料處理方式。</p>
           <p className="leading-7 text-muted-foreground">{introduction}</p>
         </header>
         {sections.map((section, index) => <section key={section.title} className="space-y-3">
