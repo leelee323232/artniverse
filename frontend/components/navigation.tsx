@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ComingSoon } from "@/components/common/ComingSoon";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -161,15 +162,13 @@ export function Navigation() {
                       個人資料
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href="/account/settings"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
+                  {/* 暫時阻擋：完成後恢復連結 /account/settings。 */}
+                  <ComingSoon className="block">
+                    <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onSelect={(event) => event.preventDefault()}>
                       <Settings className="h-4 w-4" />
                       設定
-                    </Link>
-                  </DropdownMenuItem>
+                    </DropdownMenuItem>
+                  </ComingSoon>
                   <DropdownMenuItem asChild>
                     <Link
                       href="/account/orders"
@@ -179,15 +178,13 @@ export function Navigation() {
                       我的訂單
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href="/account/auctions"
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
+                  {/* 暫時阻擋：完成後恢復連結 /account/auctions。 */}
+                  <ComingSoon className="block">
+                    <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onSelect={(event) => event.preventDefault()}>
                       <Gavel className="h-4 w-4" />
                       我的競標
-                    </Link>
-                  </DropdownMenuItem>
+                    </DropdownMenuItem>
+                  </ComingSoon>
                   <DropdownMenuItem asChild>
                     <Link
                       href="/account/favorites"
