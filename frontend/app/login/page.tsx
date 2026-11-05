@@ -13,6 +13,9 @@ import { useAuth } from "@/lib/auth-context";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { TheButton } from "@/components/common/TheButton";
 
+// Restore when social sign-in is ready to launch.
+const SHOW_SOCIAL_LOGIN = false;
+
 export default function LoginPage() {
   const router = useRouter();
   const { login, loginWithProvider, isLoading } = useAuth();
@@ -70,6 +73,7 @@ export default function LoginPage() {
           </div>
 
           {/* Social Login */}
+          {SHOW_SOCIAL_LOGIN && <>
           <div className="mb-6 space-y-3">
             <TheButton
               variant="outline-primary"
@@ -133,6 +137,8 @@ export default function LoginPage() {
               </span>
             </div>
           </div>
+
+          </>}
 
           {/* Email Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
