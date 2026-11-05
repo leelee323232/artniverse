@@ -54,6 +54,7 @@ Route::prefix('v1')->group(function (): void {
     require __DIR__.'/creator-applications.php';
     require __DIR__.'/creator-products.php';
     require __DIR__.'/explore-creators.php';
+    require __DIR__.'/home-recommendations.php';
 
     // Keep checkout routes inside this group so TapPay endpoints use /api/v1.
     // Deploy this file together with routes/checkout.php.
