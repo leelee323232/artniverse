@@ -150,7 +150,7 @@ class ExploreCreatorController extends Controller
 
     private function visible(): Builder
     {
-        // Legacy standalone creators remain public. Linked members must retain creator status.
+        // Share the member-backed visibility rule with recommendations, follows and posts.
         return PublicCreatorQuery::query();
     }
 
