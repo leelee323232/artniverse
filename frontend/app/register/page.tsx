@@ -110,12 +110,22 @@ export default function RegisterPage() {
   const handleProviderRegister = async (
     provider: "google" | "facebook" | "apple",
   ) => {
+    if (submitting.current || isLoading) return;
     setError("");
+    if (!agreeTerms) {
+      setError("請先閱讀並同意服務條款與隱私權政策");
+      return;
+    }
+    submitting.current = true;
+    setIsSubmitting(true);
     try {
       await loginWithProvider(provider);
       router.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "第三方註冊目前無法使用");
+    } finally {
+      submitting.current = false;
+      setIsSubmitting(false);
     }
   };
 
@@ -305,24 +315,27 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <label className="flex items-start gap-2 text-sm">
+            <div className="flex items-start gap-2 text-sm">
               <input
+                id="agreeTerms"
+                aria-labelledby="agreeTermsLabel"
                 type="checkbox"
                 className="mt-0.5 rounded border-border"
                 checked={agreeTerms}
+                disabled={isSubmitting || isLoading}
                 onChange={(e) => setAgreeTerms(e.target.checked)}
               />
-              <span className="text-muted-foreground">
-                我已閱讀並同意{" "}
-                <Link href="/terms" className="text-primary hover:underline">
+              <span id="agreeTermsLabel" className="text-muted-foreground">
+                <label htmlFor="agreeTerms">我已閱讀並同意</label>{" "}
+                <Link href="/terms/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" aria-label="服務條款（另開新分頁）">
                   服務條款
                 </Link>{" "}
                 與{" "}
-                <Link href="/privacy" className="text-primary hover:underline">
+                <Link href="/privacy/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" aria-label="隱私權政策（另開新分頁）">
                   隱私權政策
                 </Link>
               </span>
-            </label>
+            </div>
 
             <Button
               type="submit"
