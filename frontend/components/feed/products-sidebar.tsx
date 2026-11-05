@@ -1,109 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { fetchHomeRecommendations, type HomeRecommendations, type RecommendedCreator } from "@/lib/home-recommendations-api";
 import Image from "next/image";
 import Link from "next/link";
 import { Sparkles, Users } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TheButton } from "@/components/common/TheButton";
 import { useRouter } from "next/navigation";
 import { TheCard } from "@/components/common/TheCard";
 
-interface Creator {
-  id: string;
-  name: string;
-  creator: string;
-  specialty: string;
-  followers: string;
-  works: number;
-  badge: string;
-  color: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  image: string;
-  creator: string;
-  isNew?: boolean;
-  isSale?: boolean;
-}
-
-const featuredCreators: Creator[] = [
-  {
-    id: "1",
-    name: "夢幻星球",
-    creator: "小夢創作室",
-    specialty: "療癒插畫",
-    followers: "12.5K",
-    works: 86,
-    badge: "本週熱門",
-    color: "#a78bfa",
-  },
-  {
-    id: "2",
-    name: "極簡宇宙",
-    creator: "Minimal Studio",
-    specialty: "極簡設計",
-    followers: "8.9K",
-    works: 52,
-    badge: "新銳創作者",
-    color: "#60a5fa",
-  },
-  {
-    id: "3",
-    name: "自然之心",
-    creator: "綠野工作室",
-    specialty: "自然手作",
-    followers: "15.2K",
-    works: 41,
-    badge: "精選品牌",
-    color: "#34d399",
-  },
-  {
-    id: "4",
-    name: "賽博星域",
-    creator: "Cyber Arts",
-    specialty: "未來視覺",
-    followers: "10.8K",
-    works: 38,
-    badge: "人氣上升",
-    color: "#f472b6",
-  },
-];
-
-const recommendedProducts: Product[] = [
-  {
-    id: "6",
-    name: "手工皮革筆記本",
-    price: 890,
-    image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=300",
-    creator: "皮革工坊",
-    isNew: true,
-  },
-  {
-    id: "7",
-    name: "藍染方巾",
-    price: 350,
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300",
-    creator: "染織坊",
-  },
-  {
-    id: "8",
-    name: "金工耳環",
-    price: 1280,
-    originalPrice: 1500,
-    image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=300",
-    creator: "金工小姐",
-    isSale: true,
-  },
-];
-
-function CreatorCard({ creator }: { creator: Creator }) {
+function CreatorCard({ creator }: { creator: RecommendedCreator }) {
   return (
-    <Link href={`/creator/${creator.id}`} className="block group">
+    <Link href={`/creator/?id=${encodeURIComponent(creator.id)}`} className="block group">
       <div className="relative rounded-xl overflow-hidden bg-muted aspect-square mb-2">
         <div
           className="absolute inset-0 transition-transform duration-500 group-hover:scale-110"
@@ -126,14 +36,14 @@ function CreatorCard({ creator }: { creator: Creator }) {
           {creator.name}
         </p>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {creator.creator} · {creator.specialty}
+          {creator.creator}{creator.tags.length > 0 && ` · ${creator.tags.join("、")}`}
         </p>
         <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Users className="h-3 w-3" />
-            {creator.followers}
+            {creator.followers.toLocaleString("zh-TW")}
           </span>
-          <span>{creator.works} 件作品</span>
+          <span>{creator.productCount} 件商品</span>
         </div>
       </div>
     </Link>
@@ -146,6 +56,33 @@ export function ProductsSidebar({
   layout?: "vertical" | "horizontal";
 }) {
   const router = useRouter();
+  const [result, setResult] = useState<HomeRecommendations | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [reload, setReload] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+    setResult(null);
+    void fetchHomeRecommendations(controller.signal)
+      .then(data => { if (!controller.signal.aborted) setResult(data); })
+      .catch(() => { if (!controller.signal.aborted) setError("推薦資料載入失敗，請稍後重試。"); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [reload]);
+
+  const featuredCreators = result?.data.creators ?? [];
+  const recommendedProducts = result?.data.products ?? [];
+  const status = (count: number, emptyMessage: string) => loading
+    ? <p role="status" className="py-3 text-sm text-muted-foreground">載入中…</p>
+    : error
+      ? <div role="alert" className="space-y-2 py-3 text-sm text-muted-foreground">
+          <p>{error}</p>
+          <button type="button" className="text-primary hover:underline" onClick={() => setReload(value => value + 1)}>重新載入</button>
+        </div>
+      : count === 0 ? <p className="py-3 text-sm text-muted-foreground">{emptyMessage}</p> : null;
 
   if (layout === "horizontal") {
     return (
@@ -161,6 +98,7 @@ export function ProductsSidebar({
               查看全部
             </Link>
           </div>
+          {status(featuredCreators.length, "目前沒有可推薦的創作者")}
           <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {featuredCreators.map((creator) => (
               <div key={creator.id} className="w-32 shrink-0">
@@ -182,6 +120,7 @@ export function ProductsSidebar({
               探索更多
             </button>
           </div>
+          {status(recommendedProducts.length, "目前沒有可推薦的商品")}
           <div className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {recommendedProducts.map((product) => (
               <Link
@@ -191,7 +130,7 @@ export function ProductsSidebar({
               >
                 <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
                   <Image
-                    src={product.image}
+                    src={product.image || "/placeholder.svg"}
                     alt={product.name}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -215,7 +154,7 @@ export function ProductsSidebar({
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   <span className="text-sm font-bold">NT${product.price}</span>
-                  {product.originalPrice && (
+                  {product.isSale && product.originalPrice != null && (
                     <span className="text-xs text-muted-foreground line-through">
                       NT${product.originalPrice}
                     </span>
@@ -247,6 +186,7 @@ export function ProductsSidebar({
           </div>
         </CardHeader>
         <CardContent>
+          {status(featuredCreators.length, "目前沒有可推薦的創作者")}
           <div className="grid grid-cols-2 gap-3">
             {featuredCreators.map((creator) => (
               <CreatorCard key={creator.id} creator={creator} />
@@ -263,6 +203,7 @@ export function ProductsSidebar({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          {status(recommendedProducts.length, "目前沒有可推薦的商品")}
           {recommendedProducts.map((product) => (
             <Link
               key={product.id}
@@ -271,7 +212,7 @@ export function ProductsSidebar({
             >
               <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 bg-muted">
                 <Image
-                  src={product.image}
+                  src={product.image || "/placeholder.svg"}
                   alt={product.name}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -296,7 +237,7 @@ export function ProductsSidebar({
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="font-bold text-sm">NT${product.price}</span>
-                  {product.originalPrice && (
+                  {product.isSale && product.originalPrice != null && (
                     <span className="text-xs text-muted-foreground line-through">
                       NT${product.originalPrice}
                     </span>
