@@ -1,5 +1,7 @@
 "use client";
 
+import { ComingSoon } from "@/components/common/ComingSoon";
+
 import { Navigation } from "@/components/navigation";
 import { UniverseBackground } from "@/components/universe-background";
 import { Card } from "@/components/ui/card";
@@ -213,10 +215,12 @@ export default function WalletPage() {
                   <TabsTrigger value="income">收入</TabsTrigger>
                   <TabsTrigger value="withdrawal">提領</TabsTrigger>
                 </TabsList>
-                <Button variant="outline" size="sm">
-                  <Download className="mr-2 h-4 w-4" />
-                  匯出報表
-                </Button>
+                <ComingSoon>
+                  <Button variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    匯出報表
+                  </Button>
+                </ComingSoon>
               </div>
 
               <TabsContent value="all" className="space-y-3">
@@ -416,13 +420,15 @@ export default function WalletPage() {
                     管理付款方式
                   </Button>
                 </Link>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start bg-transparent"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  下載收益報表
-                </Button>
+                <ComingSoon className="block w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start bg-transparent"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    下載收益報表
+                  </Button>
+                </ComingSoon>
               </div>
             </Card>
           </div>

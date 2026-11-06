@@ -1494,7 +1494,8 @@ export default function CreatorPortalPage() {
                         {request.status === "pending" && (
                           <>
                             <Dialog>
-                              <DialogTrigger asChild>
+                              {/* 暫時使用 ComingSoon 阻擋；完成後恢復 DialogTrigger asChild。 */}
+                              <ComingSoon>
                                 <Button
                                   size="sm"
                                   className="bg-gradient-to-r from-primary to-secondary"
@@ -1502,7 +1503,7 @@ export default function CreatorPortalPage() {
                                   <CheckCircle className="mr-1 h-4 w-4" />
                                   接受並報價
                                 </Button>
-                              </DialogTrigger>
+                              </ComingSoon>
                               <DialogContent className="max-w-md border-primary/30 bg-background/95 backdrop-blur-md">
                                 <DialogHeader>
                                   <DialogTitle>報價給客戶</DialogTitle>
@@ -1888,12 +1889,13 @@ export default function CreatorPortalPage() {
                     if (!open) setEventFormErrors({});
                   }}
                 >
-                  <DialogTrigger asChild>
+                  {/* 暫時使用 ComingSoon 阻擋；完成後恢復 DialogTrigger asChild。 */}
+                  <ComingSoon>
                     <Button className="gap-1.5 bg-gradient-to-r from-primary to-secondary shadow-lg shadow-primary/20">
                       <Plus className="h-4 w-4" />
                       新增活動申請
                     </Button>
-                  </DialogTrigger>
+                  </ComingSoon>
 
                   <DialogContent className="max-h-[85vh] overflow-y-auto border-primary/30 bg-background/95 backdrop-blur-md sm:max-w-2xl">
                     <DialogHeader>
@@ -2192,13 +2194,15 @@ export default function CreatorPortalPage() {
                   <p className="mb-4 text-sm text-muted-foreground">
                     點擊「新增活動申請」填寫活動資訊並送出，即可在此追蹤審核狀態。
                   </p>
-                  <Button
-                    onClick={() => setIsEventModalOpen(true)}
-                    className="bg-gradient-to-r from-primary to-secondary"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    新增活動申請
-                  </Button>
+                  <ComingSoon>
+                    <Button
+                      // TEMP: 完成後恢復 onClick={() => setIsEventModalOpen(true)}
+                      className="bg-gradient-to-r from-primary to-secondary"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      新增活動申請
+                    </Button>
+                  </ComingSoon>
                 </div>
               )}
             </Card>
@@ -2365,7 +2369,7 @@ export default function CreatorPortalPage() {
                     <DialogFooter className="justify-end px-5 pb-2">
                       <ComingSoon>
                         <Button
-                          onClick={handleCreatePost}
+                          // TEMP: 發佈暫時以 ComingSoon 阻擋，完成後恢復 onClick={handleCreatePost}
                           disabled={!newPostContent.trim()}
                           className="rounded-full bg-white px-6 text-black hover:bg-white/90"
                         >
