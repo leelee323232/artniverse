@@ -771,12 +771,12 @@ export default function CreatorPortalPage() {
                 錢包
               </Button>
             </Link>
-            <Link href="/creator-portal/products/new">
+            <ComingSoon>
               <Button className="bg-gradient-to-r from-primary to-secondary">
                 <Plus className="mr-2 h-4 w-4" />
                 新增商品
               </Button>
-            </Link>
+            </ComingSoon>
           </div>
         </div>
 
@@ -1266,7 +1266,7 @@ export default function CreatorPortalPage() {
           <TabsContent value="products" className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-foreground">商品管理</h2>
-              <Link href="/creator-portal/products/new">
+              <ComingSoon>
                 <Button
                   size="sm"
                   className="bg-gradient-to-r from-primary to-secondary"
@@ -1274,7 +1274,7 @@ export default function CreatorPortalPage() {
                   <Plus className="mr-1 h-4 w-4" />
                   新增商品
                 </Button>
-              </Link>
+              </ComingSoon>
             </div>
 
             {creatorProducts.loading && <p role="status">載入商品中…</p>}
