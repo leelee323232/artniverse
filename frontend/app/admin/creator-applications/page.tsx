@@ -11,8 +11,6 @@ import {
   getCreatorDocument,
   creatorReviewError,
   type ApplicationSummary,
-  type ApplicationStatus,
-  type CreatorApplication as Application,
 } from "@/lib/admin-creator-applications-api";
 import { Eye, Check, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
