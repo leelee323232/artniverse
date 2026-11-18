@@ -47,6 +47,45 @@ export interface ApiUser {
   creator_profile?: User["creatorProfile"];
 }
 
+// Test accounts
+const TEST_ACCOUNTS: Record<string, { password: string; user: User }> = {
+  "member@test.com": {
+    password: "member123",
+    user: {
+      id: "user-001",
+      email: "member@test.com",
+      name: "測試會員",
+      avatar: "",
+      is_creator: false,
+      is_admin: false,
+    },
+  },
+  "creator@test.com": {
+    password: "creator123",
+    user: {
+      id: "user-002",
+      email: "creator@test.com",
+      name: "星空畫室",
+      avatar: "",
+      is_creator: true,
+      is_admin: false,
+      creatorProfile: {
+        brandName: "星空畫室",
+        bio: "專注於療癒系插畫創作，用溫暖的筆觸描繪生活中的小確幸。",
+        links: [
+          { label: "Instagram", url: "https://instagram.com/starryart" },
+          { label: "Facebook", url: "https://facebook.com/starryart" },
+        ],
+        superSubscription: {
+          enabled: true,
+          price: 99,
+          benefits: ["每月獨家桌布", "新品搶先看", "專屬折扣碼"],
+        },
+      },
+    },
+  },
+}
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -64,7 +103,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function normalizeUser(apiUser: ApiUser): User {
+export function normalizeUser(apiUser: ApiUser): User {
   return {
     id: String(apiUser.id),
     email: apiUser.email,
@@ -161,57 +200,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = async (
-    email: string,
-    password: string,
-  ): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true);
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true)
 
-    try {
-      await api.get("/sanctum/csrf-cookie");
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 800))
 
-      await api.post("/login", {
-        email,
-        password,
-      });
+    const account = TEST_ACCOUNTS[email.toLowerCase()]
 
-      const response = await api.get("/api/v1/me");
-      const authenticatedUser = response.data.data ?? response.data;
-
-      setUser(authenticatedUser);
-
-      return {
-        success: true,
-      };
-    } catch (error) {
-      setUser(null);
-
-      if (axios.isAxiosError(error)) {
-        const message =
-          error.response?.data?.errors?.email?.[0] ??
-          error.response?.data?.message ??
-          "電子信箱或密碼錯誤";
-
-        return {
-          success: false,
-          error: message,
-        };
-      }
-
-      return {
-        success: false,
-        error: "登入時發生未知錯誤",
-      };
-    } finally {
-      setIsLoading(false);
-      return { success: false, error: "密碼錯誤" };
+    if (!account) {
+      setIsLoading(false)
+      return { success: false, error: "找不到此帳號" }
     }
 
-    setUser(account.user);
-    localStorage.setItem("artniverse_user", JSON.stringify(account.user));
-    setIsLoading(false);
-    return { success: true };
-  };
+    if (account.password !== password) {
+      setIsLoading(false)
+      return { success: false, error: "密碼錯誤" }
+    }
+
+    setUser(account.user)
+    localStorage.setItem("artniverse_user", JSON.stringify(account.user))
+    setIsLoading(false)
+    return { success: true }
+  }
 
   const loginWithProvider = async (
     provider: "google" | "facebook" | "apple",
