@@ -33,9 +33,13 @@ export function Navigation() {
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const { user, logout, isLoading } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    router.push("/");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push("/");
+    } catch (error) {
+      console.error("登出失敗，請稍後再試", error);
+    }
   };
 
   const handleCreatorPortal = () => {

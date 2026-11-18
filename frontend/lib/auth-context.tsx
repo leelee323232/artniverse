@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { api } from "@/lib/api";
+import { getToken, setToken, clearToken } from "@/apis/client";
+import type { LoginResponse } from "@/apis/user";
 
 export interface User {
   id: string;
@@ -47,45 +49,6 @@ export interface ApiUser {
   creator_profile?: User["creatorProfile"];
 }
 
-// Test accounts
-const TEST_ACCOUNTS: Record<string, { password: string; user: User }> = {
-  "member@test.com": {
-    password: "member123",
-    user: {
-      id: "user-001",
-      email: "member@test.com",
-      name: "測試會員",
-      avatar: "",
-      is_creator: false,
-      is_admin: false,
-    },
-  },
-  "creator@test.com": {
-    password: "creator123",
-    user: {
-      id: "user-002",
-      email: "creator@test.com",
-      name: "星空畫室",
-      avatar: "",
-      is_creator: true,
-      is_admin: false,
-      creatorProfile: {
-        brandName: "星空畫室",
-        bio: "專注於療癒系插畫創作，用溫暖的筆觸描繪生活中的小確幸。",
-        links: [
-          { label: "Instagram", url: "https://instagram.com/starryart" },
-          { label: "Facebook", url: "https://facebook.com/starryart" },
-        ],
-        superSubscription: {
-          enabled: true,
-          price: 99,
-          benefits: ["每月獨家桌布", "新品搶先看", "專屬折扣碼"],
-        },
-      },
-    },
-  },
-}
-
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -96,7 +59,7 @@ interface AuthContextType {
   loginWithProvider: (
     provider: "google" | "facebook" | "apple",
   ) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => void;
   updateCreatorProfile: (updates: Partial<User["creatorProfile"]>) => void;
 }
@@ -121,10 +84,6 @@ export function normalizeUser(apiUser: ApiUser): User {
     bio: apiUser.bio ?? null,
     creatorProfile: apiUser.creator_profile,
   };
-}
-
-async function getCsrfCookie(): Promise<void> {
-  await api.get("/sanctum/csrf-cookie");
 }
 
 async function fetchCurrentUser(): Promise<User> {
@@ -170,6 +129,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   async function refreshUser(): Promise<User | null> {
+    if (!getToken()) {
+      setUser(null);
+      return null;
+    }
     try {
       const currentUser = await fetchCurrentUser();
 
@@ -178,6 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return currentUser;
     } catch (error) {
       setUser(null);
+      if (axios.isAxiosError(error) && error.response?.status === 401) clearToken();
 
       if (axios.isAxiosError(error) && error.response?.status !== 401) {
         console.error("Unable to restore authentication session");
@@ -188,69 +152,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Check for saved session
-    const savedUser = localStorage.getItem("artniverse_user");
-    if (savedUser) {
+    let active = true;
+
+    async function restoreSession() {
+      localStorage.removeItem("artniverse_user");
+      if (!getToken()) {
+        setIsLoading(false);
+        return;
+      }
       try {
-        setUser(JSON.parse(savedUser));
-      } catch {
-        localStorage.removeItem("artniverse_user");
+        const currentUser = await fetchCurrentUser();
+        if (active) setUser(currentUser);
+      } catch (error) {
+        if (active) {
+          if (axios.isAxiosError(error) && error.response?.status === 401) clearToken();
+          setUser(null);
+        }
+      } finally {
+        if (active) setIsLoading(false);
       }
     }
-    setIsLoading(false);
+
+    void restoreSession();
+    return () => { active = false; };
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true)
-
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    const account = TEST_ACCOUNTS[email.toLowerCase()]
-
-    if (!account) {
-      setIsLoading(false)
-      return { success: false, error: "找不到此帳號" }
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    try {
+      clearToken();
+      const response = await api.post<LoginResponse>("/api/v1/auth/token", {
+        email,
+        password,
+        device_name: "web",
+      }, { withCredentials: false, withXSRFToken: false });
+      const token = response.data.access_token;
+      if (typeof token !== "string" || !token.trim()) {
+        throw new Error("登入回應缺少 access_token");
+      }
+      setToken(token);
+      setUser(await fetchCurrentUser());
+      return { success: true };
+    } catch (error) {
+      clearToken();
+      setUser(null);
+      return { success: false, error: getLoginErrorMessage(error) };
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    if (account.password !== password) {
-      setIsLoading(false)
-      return { success: false, error: "密碼錯誤" }
+  async function logout(): Promise<void> {
+    setIsLoading(true);
+    try {
+      if (getToken()) await api.delete("/api/v1/auth/token");
+    } finally {
+      clearToken();
+      localStorage.removeItem("artniverse_user");
+      setUser(null);
+      setIsLoading(false);
     }
-
-    setUser(account.user)
-    localStorage.setItem("artniverse_user", JSON.stringify(account.user))
-    setIsLoading(false)
-    return { success: true }
   }
 
-  const loginWithProvider = async (
+  async function loginWithProvider(
     provider: "google" | "facebook" | "apple",
-  ) => {
-    setIsLoading(true);
-
-    // Simulate OAuth flow
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // For demo, create a mock user
-    const mockUser: User = {
-      id: `${provider}-user-${Date.now()}`,
-      email: `${provider}user@example.com`,
-      name: `${provider === "google" ? "Google" : provider === "facebook" ? "Facebook" : "Apple"} 使用者`,
-      avatar: "",
-      is_creator: false,
-      is_admin: false,
-    };
-
-    setUser(mockUser);
-    localStorage.setItem("artniverse_user", JSON.stringify(mockUser));
-    setIsLoading(false);
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("artniverse_user");
-  };
+  ): Promise<void> {
+    /*
+     * 目前後端尚未建立 Socialite OAuth 路由。
+     * 不可以像測試版本一樣建立假使用者。
+     */
+    throw new Error(
+      `${provider} 登入功能尚未串接後端`,
+    )
+  }
 
   function updateUser(updates: Partial<User>): void {
     /*
