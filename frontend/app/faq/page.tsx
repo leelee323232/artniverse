@@ -63,6 +63,28 @@ export default function FaqPage() {
             </AccordionItem>
           ))}
         </Accordion>
+
+        <section aria-labelledby="company-contact-heading" className="mt-8 rounded-xl border border-border/60 bg-card/50 p-5 backdrop-blur-sm sm:mt-12 sm:p-7">
+          <h2 id="company-contact-heading" className="text-lg font-semibold text-foreground">公司資訊與客服聯絡</h2>
+          <dl className="mt-5 grid gap-4 text-sm leading-7 sm:text-base">
+            <div className="grid gap-1 sm:grid-cols-[7rem_1fr] sm:gap-4">
+              <dt className="font-medium text-foreground">公司名稱</dt>
+              <dd className="min-w-0 break-words text-muted-foreground">藝術宇宙文創孵化有限公司</dd>
+            </div>
+            <div className="grid gap-1 sm:grid-cols-[7rem_1fr] sm:gap-4">
+              <dt className="font-medium text-foreground">統一編號</dt>
+              <dd className="text-muted-foreground">60670422</dd>
+            </div>
+            <div className="grid gap-1 sm:grid-cols-[7rem_1fr] sm:gap-4">
+              <dt className="font-medium text-foreground">客服電郵</dt>
+              <dd className="min-w-0"><a href="mailto:artniverse2022@gmail.com" className="break-all text-primary underline underline-offset-4">artniverse2022@gmail.com</a></dd>
+            </div>
+            <div className="grid gap-1 sm:grid-cols-[7rem_1fr] sm:gap-4">
+              <dt className="font-medium text-foreground">客服 LINE</dt>
+              <dd className="text-muted-foreground">@645xdkpk</dd>
+            </div>
+          </dl>
+        </section>
       </main>
     </div>
   );
