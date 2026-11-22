@@ -63,8 +63,14 @@ export function useNewProductForm() {
     name: string;
     size: number;
     url: string;
+    file: File;
   } | null>(null);
   const [templateFileUploadError, setTemplateFileUploadError] = useState("");
+
+  useEffect(() => {
+    const url = creatorTemplateFile?.url;
+    return () => { if (url) URL.revokeObjectURL(url); };
+  }, [creatorTemplateFile]);
 
   // Editor state
   const [editorZoom, setEditorZoom] = useState(100);
@@ -328,11 +334,13 @@ export function useNewProductForm() {
 
     const extension = file.name.split(".").pop()?.toLowerCase();
     if (!extension || !["png", "ai", "psd", "stl"].includes(extension)) {
-      setTemplateFileUploadError("請上傳去背檔、AI、PS 或 STL 格式的刀模檔");
+      setCreatorTemplateFile(null);
+      setTemplateFileUploadError("請上傳 PNG、AI、PSD 或 STL 格式的刀模檔");
       return;
     }
-    if (file.size > 20 * 1024 * 1024) {
-      setTemplateFileUploadError("刀模檔案不可超過 20MB");
+    if (file.size === 0 || file.size > 20 * 1024 * 1024) {
+      setCreatorTemplateFile(null);
+      setTemplateFileUploadError("刀模檔案不可為空或超過 20MB");
       return;
     }
 
@@ -340,6 +348,7 @@ export function useNewProductForm() {
       name: file.name,
       size: file.size,
       url: URL.createObjectURL(file),
+      file,
     });
     setTemplateFileUploadError("");
     if (templateFileInputRef.current) templateFileInputRef.current.value = "";
@@ -489,28 +498,11 @@ export function useNewProductForm() {
 
   // Submit application
   const handleSubmit = async () => {
-    const designFiles = designImages.map((image) => {
-      const zone = selectedProduct?.printZones.find(
-        (item) => item.id === image.zoneId,
-      );
-      const size = zone ? getEffectivePrintSize(image, zone) : null;
-
-      return {
-        zoneId: image.zoneId,
-        fileName: image.file.name,
-        fileType: image.file.type,
-        fileSize: image.file.size,
-        position: image.position,
-        rotation: image.rotation,
-        uploadedImageSize: size
-          ? { widthCm: size.width, heightCm: size.height }
-          : null,
-      };
-    });
+    if (!canSubmit || isSubmitting) return;
 
     const payload = {
       productType,
-      designSource: selectedProduct?.designSource ?? "image",
+      designSource: "templateFile",
       productName: productName.trim(),
       productDescription: productDescription.trim(),
       selectedProductId: selectedProduct?.id ?? null,
@@ -522,11 +514,11 @@ export function useNewProductForm() {
       saleEndAt: isTimedSale ? saleEndAt || null : null,
       isLimited,
       limitedQuantity: isLimited && limitedQuantity ? Number(limitedQuantity) : null,
-      designFiles,
       templateFile: creatorTemplateFile
         ? {
             fileName: creatorTemplateFile.name,
             fileSize: creatorTemplateFile.size,
+            file: creatorTemplateFile.file,
           }
         : null,
       productNote: productNote.trim() || null,
@@ -539,21 +531,16 @@ export function useNewProductForm() {
     setShowSuccessDialog(true);
   };
 
-  // Validation - check all zones have at least one image or no zones exceed size
-  const hasAnyDesigns = designImages.length > 0 || creatorTemplateFile;
-  const allDesignsValid = !designImages.some((img) => {
-    const zone = selectedProduct?.printZones.find((z) => z.id === img.zoneId);
-    if (!zone) return false;
-    const size = getEffectivePrintSize(img, zone);
-    return size.width > zone.width || size.height > zone.height;
-  });
-
+  // Only the creator's uploaded file satisfies this step; the platform template is a download.
+  const allDesignsValid = creatorTemplateFile !== null && !templateFileUploadError;
   const canProceedToStep2 =
     selectedProduct !== null || customProductRequest.trim() !== "";
-  const canProceedToStep3 = hasAnyDesigns && allDesignsValid;
+  const canProceedToStep3 = allDesignsValid;
   // Type-specific validation — collect every missing requirement so the UI can
   // tell the creator exactly what is still blocking submission.
   const submitBlockers: string[] = [];
+  if (!canProceedToStep2) submitBlockers.push("請選擇產品或填寫其他品項需求");
+  if (!canProceedToStep3) submitBlockers.push("請上傳有效的刀模檔案");
 
   if (productName.trim() === "") {
     submitBlockers.push("請填寫產品名稱");

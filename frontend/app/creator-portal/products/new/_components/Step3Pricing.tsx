@@ -31,8 +31,6 @@ import {
   Boxes,
   Download,
 } from "lucide-react";
-import { getEffectiveScalePercent } from "./lib/print-size";
-import { WatermarkOverlay } from "./WatermarkOverlay";
 import type { NewProductForm } from "./useNewProductForm";
 
 export function Step3Pricing({ form }: { form: NewProductForm }) {
@@ -77,9 +75,7 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
     setSaleEndAt,
     productNote,
     setProductNote,
-    designImages,
     creatorTemplateFile,
-    getMockupComponent,
     customProductRequest,
     canSubmit,
     submitBlockers,
@@ -88,8 +84,6 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
     setCurrentStep,
   } = form;
 
-  const isTemplateFileSource = selectedProduct?.designSource === "templateFile";
-  const templatePreviewFile = creatorTemplateFile ?? selectedProduct?.templateFile;
 
   return (
     <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
@@ -695,83 +689,11 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
         {/* Right: Preview Summary */}
         <div className="space-y-4">
           <div className="rounded-lg border border-border/50 bg-white/5 p-4">
-            <h3 className="mb-4 font-bold text-foreground">產品預覽</h3>
-
-            {/* Show all zones with their designs */}
-            {selectedProduct && (
-              <div className="space-y-4">
-                {isTemplateFileSource ? (
-                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-center">
-                    <FileText className="mx-auto mb-3 h-10 w-10 text-primary" />
-                    <p className="text-sm text-muted-foreground">
-                      此商品以刀模檔案作為設計來源，不提供效果圖預覽。
-                    </p>
-                    {templatePreviewFile ? (
-                      <Button asChild variant="outline" size="sm" className="mt-4 bg-transparent">
-                        <a href={templatePreviewFile.url} download={templatePreviewFile.name}>
-                          <Download className="mr-2 h-4 w-4" />
-                          下載刀模檔案
-                        </a>
-                      </Button>
-                    ) : (
-                      <p className="mt-3 text-xs text-muted-foreground">尚未上傳刀模檔案</p>
-                    )}
-                  </div>
-                ) : selectedProduct.printZones.map((zone) => {
-                  const zoneImages = designImages.filter(
-                    (img) => img.zoneId === zone.id,
-                  );
-                  const ZoneMockup = getMockupComponent(
-                    selectedProduct.id,
-                    zone.id,
-                  );
-
-                  return (
-                    <div key={zone.id} className="rounded-lg bg-muted/20 p-3">
-                      <p className="mb-2 text-sm font-medium text-foreground">
-                        {zone.name}
-                      </p>
-                      <div className="relative aspect-square overflow-hidden rounded-lg bg-gradient-to-br from-muted/30 to-muted/10">
-                        <div className="relative flex h-full items-center justify-center">
-                          {ZoneMockup ? (
-                            <ZoneMockup className="h-3/4 w-3/4" />
-                          ) : (
-                            <div className="flex h-3/4 w-3/4 items-center justify-center rounded-lg bg-white/10">
-                              <Package className="h-16 w-16 text-muted-foreground/30" />
-                            </div>
-                          )}
-                          {/* Show all images for this zone */}
-                          {zoneImages.map((img) => (
-                            <div
-                              key={img.id}
-                              className="pointer-events-none absolute"
-                              style={{
-                                left: `${img.position.x}%`,
-                                top: `${img.position.y}%`,
-                                transform: `translate(-50%, -50%) scale(${(getEffectiveScalePercent(img, zone) / 100) * 0.6}) rotate(${img.rotation}deg)`,
-                                maxWidth: "40%",
-                                maxHeight: "40%",
-                              }}
-                            >
-                              <img
-                                src={img.url}
-                                alt="Design preview"
-                                className="max-h-full max-w-full object-contain drop-shadow-lg"
-                              />
-                              <WatermarkOverlay />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {zoneImages.length > 0
-                          ? `${zoneImages.length} 張設計圖`
-                          : "無設計"}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
+            <h3 className="mb-4 font-bold text-foreground">申請摘要</h3>
+            {creatorTemplateFile && (
+              <a href={creatorTemplateFile.url} download={creatorTemplateFile.name} className="inline-flex max-w-full items-center gap-2 text-sm text-primary underline">
+                <Download className="h-4 w-4 shrink-0" /><span className="break-all">{creatorTemplateFile.name}</span>
+              </a>
             )}
 
             <div className="mt-4 space-y-2 border-t border-border/30 pt-4 text-sm">
@@ -793,18 +715,6 @@ export function Step3Pricing({ form }: { form: NewProductForm }) {
                 <span className="text-muted-foreground">產品類型</span>
                 <span className="text-foreground">
                   {selectedProduct?.nameZh || customProductRequest}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">印刷區域</span>
-                <span className="text-foreground">
-                  {selectedProduct?.printZones.length || 1} 個
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">設計圖總數</span>
-                <span className="text-foreground">
-                  {designImages.length} 張
                 </span>
               </div>
               <div className="flex justify-between">

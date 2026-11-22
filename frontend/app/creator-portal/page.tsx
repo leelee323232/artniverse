@@ -610,16 +610,8 @@ export default function CreatorPortalPage() {
     );
   };
 
-  // Check if user is a creator
-  if (!user) {
-    router.push("/login");
-    return null;
-  }
-
-  if (!user.is_creator) {
-    router.push("/creator-apply");
-    return null;
-  }
+  // Navigation runs in the auth effect above, never during rendering.
+  if (authLoading || !user || !user.is_creator) return null;
 
   const handleSaveProfile = async () => {
     setIsSavingProfile(true);
@@ -771,12 +763,15 @@ export default function CreatorPortalPage() {
                 錢包
               </Button>
             </Link>
-            <ComingSoon>
-              <Button className="bg-gradient-to-r from-primary to-secondary">
-                <Plus className="mr-2 h-4 w-4" />
-                新增商品
-              </Button>
-            </ComingSoon>
+            {/* <ComingSoon> */}
+            <Button
+              onClick={() => router.push("/creator-portal/products/new")}
+              className="bg-gradient-to-r from-primary to-secondary"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              新增商品
+            </Button>
+            {/* </ComingSoon> */}
           </div>
         </div>
 
