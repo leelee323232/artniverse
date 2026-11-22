@@ -167,7 +167,7 @@ const productCategories = [
   "其他",
 ];
 
-export default function CreatorPage({ params }: { params: { id: string } }) {
+export default function CreatorPage() {
   const [tipAmount, setTipAmount] = useState(100);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [showTipDialog, setShowTipDialog] = useState(false);

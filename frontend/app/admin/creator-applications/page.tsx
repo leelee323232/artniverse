@@ -11,35 +11,11 @@ import {
   getCreatorDocument,
   creatorReviewError,
   type ApplicationSummary,
+  type ApplicationStatus,
+  type CreatorApplication as Application,
 } from "@/lib/admin-creator-applications-api";
 import { Eye, Check, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-type ApplicationStatus = "pending" | "approved" | "rejected";
-
-// 根據 JSON 格式擴充 Interface，包含所有填寫欄位
-interface Application {
-  id: string;
-  date: string;
-  status: ApplicationStatus;
-  rejectReason?: string;
-
-  // JSON 欄位對接
-  email: string;
-  realName: string;
-  brandName: string;
-  storePickup: string;
-  phone: string;
-  birthday: string;
-  address: string;
-  bankCode: string;
-  bankAccount: string;
-  selectedCategories: string[]; // array
-  creativePhilosophy: string; // string
-  idFrontImage: string; // 身分證正面圖片網址
-  idBackImage: string; // 身分證反面圖片網址
-  agreeToContract: boolean; // boolean
-}
 
 const initialApplications: Application[] = [
   {
@@ -531,39 +507,8 @@ function CreatorApplications() {
                   {selectedApp.creativePhilosophy}
                 </span>
               </div>
-              {[
-                { label: "身分證正面", url: selectedApp.idFrontImage },
-                { label: "身分證反面", url: selectedApp.idBackImage },
-              ].map(({ label, url }) => (
-                <div
-                  key={label}
-                  className="space-y-2 border-b border-border/30 pb-3"
-                >
-                  <span className="font-medium text-muted-foreground">
-                    {label}
-                  </span>
-                  {url ? (
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block rounded-lg focus-visible:outline-2 focus-visible:outline-primary"
-                      aria-label={`在新分頁查看${label}原圖`}
-                    >
-                      <Image
-                        src={url}
-                        alt={`${selectedApp.realName}的${label}`}
-                        width={856}
-                        height={540}
-                        unoptimized
-                        className="h-auto w-full rounded-lg border border-border/50 bg-muted/20 object-contain"
-                      />
-                    </a>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">未提供圖片</p>
-                  )}
-                </div>
-              </div>
+              <IdentityDocument id={selectedApp.id} side="front" isDemo={selectedApp.isDemo} />
+              <IdentityDocument id={selectedApp.id} side="back" isDemo={selectedApp.isDemo} />
               <div className="grid grid-cols-3 border-b border-border/30 pb-2">
                 <span className="font-medium text-muted-foreground">
                   同意條款
@@ -815,21 +760,6 @@ function CreatorApplications() {
                     disabled={saving}
                     onClick={() =>
                       void handleStatusChange(selectedApp.id, "pending")
-                    }
-                    className="bg-gradient-to-r from-primary to-secondary text-primary-foreground"
-                  >
-                    確認
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setConfirmType(null)}
-                    className="bg-transparent text-muted-foreground hover:text-foreground"
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      handleStatusChange(selectedApp.id, "pending")
                     }
                     className="bg-gradient-to-r from-primary to-secondary text-primary-foreground"
                   >

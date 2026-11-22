@@ -16,7 +16,7 @@ export function fetchPosts(page: number, admin: true, signal: AbortSignal): Prom
 export function fetchPosts(page: number, admin: false, signal: AbortSignal): Promise<PostPage>;
 export async function fetchPosts(page: number, admin: boolean, signal: AbortSignal): Promise<PostPage<PublicPost> | PostPage<ApiPost>> {
   const { data } = await api.get<PostPage<PublicPost> | PostPage<ApiPost>>(admin ? "/api/v1/admin/posts" : "/api/v1/posts", { params: { page, per_page: 20 }, signal, timeout: 15000 });
-  return { ...data, data: data.data.map(displayPost) };
+  return { ...data, data: data.data.map(post => displayPost(post)) };
 }
 export async function postCsrf(signal: AbortSignal) {
   await api.get("/sanctum/csrf-cookie", { signal, timeout: 15000 });

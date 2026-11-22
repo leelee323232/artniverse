@@ -67,10 +67,6 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [webProducts, setWebProducts] = useState<CatalogProduct[]>([]);
-  const [demoProducts, setDemoProducts] = useState<CatalogProduct[]>([]);
-  useEffect(() => {
-    setDemoProducts(demoCatalog());
-  }, []);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -94,7 +90,6 @@ export default function ShopPage() {
   }, [reload]);
   const products = [
     ...webProducts.filter((p) => p.productType === "general"),
-    ...demoProducts,
   ];
   const categoryNameMap = Object.fromEntries(
     products.map((p) => [p.categoryId, p.category]),
