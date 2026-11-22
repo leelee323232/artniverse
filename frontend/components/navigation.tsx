@@ -33,22 +33,23 @@ export function Navigation() {
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const { user, logout, isLoading } = useAuth();
 
-  async function handleLogout() {
+  const handleLogout = async () => {
     try {
       await logout();
-      router.replace("/login");
-    } catch {
-      alert("登出失敗，請稍後再試。");
+      router.push("/");
+    } catch (error) {
+      console.error("登出失敗，請稍後再試", error);
     }
-  }
+  };
+
   const handleCreatorPortal = () => {
     if (!user) {
       router.push("/login");
       return;
     }
-    
+
     if (user.is_creator) {
-      router.push("/creator-portal")
+      router.push("/creator-portal");
     } else {
       router.push("/creator-apply");
     }
@@ -103,26 +104,33 @@ export function Navigation() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/cart" aria-label={`購物車${ready ? `，${cartCount} 件商品` : ""}`}>
+          <Link
+            href="/cart"
+            aria-label={`購物車${ready ? `，${cartCount} 件商品` : ""}`}
+          >
             <Button
               variant="ghost"
               size="icon"
               className="text-muted-foreground hover:bg-transparent hover:text-white dark:hover:bg-transparent"
             >
               <ShoppingCart className="h-5 w-5" />
-              {ready && cartCount > 0 && <span className="ml-1 text-xs">{cartCount}</span>}
+              {ready && cartCount > 0 && (
+                <span className="ml-1 text-xs">{cartCount}</span>
+              )}
             </Button>
           </Link>
-          {!isLoading && user?.is_admin === true && <Link href="/admin">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 bg-transparent"
-            >
-              <Shield className="h-4 w-4" />
-              管理後台
-            </Button>
-          </Link>}
+          {!isLoading && user?.is_admin === true && (
+            <Link href="/admin">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-transparent"
+              >
+                <Shield className="h-4 w-4" />
+                管理後台
+              </Button>
+            </Link>
+          )}
 
           {user ? (
             <>
@@ -167,7 +175,10 @@ export function Navigation() {
                   </DropdownMenuItem>
                   {/* 暫時阻擋：完成後恢復連結 /account/settings。 */}
                   <ComingSoon className="block">
-                    <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onSelect={(event) => event.preventDefault()}>
+                    <DropdownMenuItem
+                      className="flex items-center gap-2 cursor-pointer"
+                      onSelect={(event) => event.preventDefault()}
+                    >
                       <Settings className="h-4 w-4" />
                       設定
                     </DropdownMenuItem>
@@ -183,7 +194,10 @@ export function Navigation() {
                   </DropdownMenuItem>
                   {/* 暫時阻擋：完成後恢復連結 /account/auctions。 */}
                   <ComingSoon className="block">
-                    <DropdownMenuItem className="flex items-center gap-2 cursor-pointer" onSelect={(event) => event.preventDefault()}>
+                    <DropdownMenuItem
+                      className="flex items-center gap-2 cursor-pointer"
+                      onSelect={(event) => event.preventDefault()}
+                    >
                       <Gavel className="h-4 w-4" />
                       我的競標
                     </DropdownMenuItem>

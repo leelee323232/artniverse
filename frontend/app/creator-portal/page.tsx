@@ -63,7 +63,6 @@ import {
   Calendar,
   MapPin,
   CalendarPlus,
-
 } from "lucide-react";
 import Link from "next/link";
 
@@ -326,7 +325,9 @@ export default function CreatorPortalPage() {
   const [newBenefit, setNewBenefit] = useState("");
   const [quoteAmount, setQuoteAmount] = useState(0);
 
-  const creatorProducts = useCreatorProducts(user?.is_creator ? String(user.id) : null);
+  const creatorProducts = useCreatorProducts(
+    user?.is_creator ? String(user.id) : null,
+  );
 
   // Commission request status filter ("all" | "pending" | "quoted" | "paid")
   const [commissionFilter, setCommissionFilter] = useState<
@@ -352,7 +353,10 @@ export default function CreatorPortalPage() {
       if (saved) {
         try {
           const savedPosts: Post[] = JSON.parse(saved);
-          return savedPosts.map((post) => ({ ...post, authorId: post.authorId || user?.id || "" }));
+          return savedPosts.map((post) => ({
+            ...post,
+            authorId: post.authorId || user?.id || "",
+          }));
         } catch (e) {
           return [];
         }
@@ -539,7 +543,9 @@ export default function CreatorPortalPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
 
-    const files = Array.from(e.target.files).filter((file) => file.type.startsWith("image/"));
+    const files = Array.from(e.target.files).filter((file) =>
+      file.type.startsWith("image/"),
+    );
     setNewPostImages((prev) => [...prev, ...files]);
     e.target.value = "";
   };
@@ -605,7 +611,15 @@ export default function CreatorPortalPage() {
   };
 
   // Check if user is a creator
-  if (authLoading || !user || !user.is_creator) return null;
+  if (!user) {
+    router.push("/login");
+    return null;
+  }
+
+  if (!user.is_creator) {
+    router.push("/creator-apply");
+    return null;
+  }
 
   const handleSaveProfile = async () => {
     setIsSavingProfile(true);
@@ -872,10 +886,7 @@ export default function CreatorPortalPage() {
                 </h2>
                 {!isEditingProfile ? (
                   <ComingSoon>
-                    <Button
-                      variant="outline"
-                      className="bg-transparent"
-                    >
+                    <Button variant="outline" className="bg-transparent">
                       <Edit className="mr-2 h-4 w-4" />
                       編輯
                     </Button>
@@ -1256,7 +1267,10 @@ export default function CreatorPortalPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-foreground">商品管理</h2>
               <ComingSoon>
-                <Button size="sm" className="bg-gradient-to-r from-primary to-secondary">
+                <Button
+                  size="sm"
+                  className="bg-gradient-to-r from-primary to-secondary"
+                >
                   <Plus className="mr-1 h-4 w-4" />
                   新增商品
                 </Button>
@@ -1264,10 +1278,14 @@ export default function CreatorPortalPage() {
             </div>
 
             {creatorProducts.loading && <p role="status">載入商品中…</p>}
-            {creatorProducts.error && <div role="alert" className="space-y-2">
-              <p className="text-destructive">{creatorProducts.error}</p>
-              <Button variant="outline" onClick={creatorProducts.refresh}>重新載入</Button>
-            </div>}
+            {creatorProducts.error && (
+              <div role="alert" className="space-y-2">
+                <p className="text-destructive">{creatorProducts.error}</p>
+                <Button variant="outline" onClick={creatorProducts.refresh}>
+                  重新載入
+                </Button>
+              </div>
+            )}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {creatorProducts.products.map((product) => (
                 <TheCard
@@ -1296,20 +1314,42 @@ export default function CreatorPortalPage() {
                   </div>
                 </TheCard>
               ))}
-              {!creatorProducts.loading && !creatorProducts.error && creatorProducts.products.length === 0 && (
-                <div className="col-span-full flex flex-col items-center justify-center py-16 text-muted-foreground">
-                  <Package className="mb-3 h-10 w-10 opacity-30" />
-                  <p className="text-sm">目前尚無商品</p>
+              {!creatorProducts.loading &&
+                !creatorProducts.error &&
+                creatorProducts.products.length === 0 && (
+                  <div className="col-span-full flex flex-col items-center justify-center py-16 text-muted-foreground">
+                    <Package className="mb-3 h-10 w-10 opacity-30" />
+                    <p className="text-sm">目前尚無商品</p>
+                  </div>
+                )}
+            </div>
+            {!creatorProducts.loading &&
+              !creatorProducts.error &&
+              creatorProducts.lastPage > 1 && (
+                <div className="flex items-center justify-center gap-4">
+                  <Button
+                    variant="outline"
+                    disabled={creatorProducts.page <= 1}
+                    onClick={() =>
+                      creatorProducts.setPage(creatorProducts.page - 1)
+                    }
+                  >
+                    上一頁
+                  </Button>
+                  <span>
+                    第 {creatorProducts.page} / {creatorProducts.lastPage} 頁
+                  </span>
+                  <Button
+                    variant="outline"
+                    disabled={creatorProducts.page >= creatorProducts.lastPage}
+                    onClick={() =>
+                      creatorProducts.setPage(creatorProducts.page + 1)
+                    }
+                  >
+                    下一頁
+                  </Button>
                 </div>
               )}
-            </div>
-            {!creatorProducts.loading && !creatorProducts.error && creatorProducts.lastPage > 1 && (
-              <div className="flex items-center justify-center gap-4">
-                <Button variant="outline" disabled={creatorProducts.page <= 1} onClick={() => creatorProducts.setPage(creatorProducts.page - 1)}>上一頁</Button>
-                <span>第 {creatorProducts.page} / {creatorProducts.lastPage} 頁</span>
-                <Button variant="outline" disabled={creatorProducts.page >= creatorProducts.lastPage} onClick={() => creatorProducts.setPage(creatorProducts.page + 1)}>下一頁</Button>
-              </div>
-            )}
           </TabsContent>
 
           {/* Commission Requests Tab */}
@@ -2172,9 +2212,7 @@ export default function CreatorPortalPage() {
             <Card className="border-border/50 bg-card/30 p-6 backdrop-blur-sm">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">
-                    貼文牆
-                  </h2>
+                  <h2 className="text-xl font-bold text-foreground">貼文牆</h2>
                   <p className="text-sm text-muted-foreground">
                     發佈創作動態、新品花絮，與追蹤粉絲進行零距離留言互動。
                   </p>

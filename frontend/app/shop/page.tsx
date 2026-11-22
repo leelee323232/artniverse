@@ -29,7 +29,11 @@ import {
   LayoutList,
 } from "lucide-react";
 
-import { catalog, catalogError, type CatalogProduct } from "@/lib/commerce/catalog-api";
+import {
+  catalog,
+  catalogError,
+  type CatalogProduct,
+} from "@/lib/commerce/catalog-api";
 import { getAuctionPrices } from "@/lib/products/status";
 
 // 商品類型：未來會作為參數帶入搜尋 API（selectedProductType）
@@ -63,37 +67,60 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [webProducts, setWebProducts] = useState<CatalogProduct[]>([]);
+  const [demoProducts, setDemoProducts] = useState<CatalogProduct[]>([]);
+  useEffect(() => {
+    setDemoProducts(demoCatalog());
+  }, []);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [reload, setReload] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true); setError(""); setWebProducts([]);
-    void catalog(controller.signal).then(data => { if (!controller.signal.aborted) setWebProducts(data); })
-      .catch(e => { if (!controller.signal.aborted) setError(catalogError(e)); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    setLoading(true);
+    setError("");
+    setWebProducts([]);
+    void catalog(controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) setWebProducts(data);
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(catalogError(e));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
     return () => controller.abort();
   }, [reload]);
-  const products = webProducts.filter(p => p.productType === "general");
-  const categoryNameMap = Object.fromEntries(products.map(p => [p.categoryId, p.category]));
-  const categories = [{ id: "all", name: "全部商品", icon: Grid3X3, count: products.length }, ...Object.entries(categoryNameMap).map(([id, name]) => ({ id, name, icon: Grid3X3, count: products.filter(p => p.categoryId === id).length }))];
-
-  const filteredProducts = products.filter(
-    (product) => {
-      const categoryName = categoryNameMap[product.categoryId] ?? "";
-      const matchesCategory =
-        selectedCategory === "all" || product.categoryId === selectedCategory;
-      const matchesProductType =
-        selectedProductType === "all" ||
-        product.productType === selectedProductType;
-      const matchesSearch =
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        categoryName.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesProductType && matchesSearch;
-    },
+  const products = [
+    ...webProducts.filter((p) => p.productType === "general"),
+    ...demoProducts,
+  ];
+  const categoryNameMap = Object.fromEntries(
+    products.map((p) => [p.categoryId, p.category]),
   );
+  const categories = [
+    { id: "all", name: "全部商品", icon: Grid3X3, count: products.length },
+    ...Object.entries(categoryNameMap).map(([id, name]) => ({
+      id,
+      name,
+      icon: Grid3X3,
+      count: products.filter((p) => p.categoryId === id).length,
+    })),
+  ];
 
+  const filteredProducts = products.filter((product) => {
+    const categoryName = categoryNameMap[product.categoryId] ?? "";
+    const matchesCategory =
+      selectedCategory === "all" || product.categoryId === selectedCategory;
+    const matchesProductType =
+      selectedProductType === "all" ||
+      product.productType === selectedProductType;
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      categoryName.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesProductType && matchesSearch;
+  });
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
@@ -255,9 +282,19 @@ export default function ShopPage() {
             </div>
           </aside>
           {/* Products */}
-          <div className="min-w-0 lg:col-span-3">
+          <div className="lg:col-span-4">
             {loading && <p role="status">載入資料庫商品中…</p>}
-            {error && <div role="alert" className="mb-4"><p>{error}</p><Button variant="outline" onClick={() => setReload(n => n + 1)}>重新載入</Button></div>}
+            {error && (
+              <div role="alert" className="mb-4">
+                <p>{error}；以下仍可瀏覽預售與競標示範商品。</p>
+                <Button
+                  variant="outline"
+                  onClick={() => setReload((n) => n + 1)}
+                >
+                  重新載入
+                </Button>
+              </div>
+            )}
             {sortedProducts.length > 0 ? (
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
                 {sortedProducts.map((product) => {
@@ -274,7 +311,6 @@ export default function ShopPage() {
                         category={categoryName}
                         currentBackers={product.currentBackers ?? 0}
                         targetBackers={product.targetBackers ?? 0}
-                        
                         presaleStartTime={product.presaleStartTime}
                         presaleEndTime={product.presaleEndTime}
                       />
@@ -295,7 +331,6 @@ export default function ShopPage() {
                         auctionMinIncrement={prices.auctionMinIncrement}
                         auctionStartTime={product.auctionStartTime}
                         auctionEndTime={product.auctionEndTime}
-                        
                       />
                     );
                   }

@@ -216,7 +216,10 @@ export default function RegisterPage() {
           {/* Email Register Form */}
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             {error && (
-              <div role="alert" className="whitespace-pre-line rounded-lg bg-destructive/20 p-3 text-sm text-destructive">
+              <div
+                role="alert"
+                className="whitespace-pre-line rounded-lg bg-destructive/20 p-3 text-sm text-destructive"
+              >
                 {error}
               </div>
             )}
@@ -327,11 +330,23 @@ export default function RegisterPage() {
               />
               <span id="agreeTermsLabel" className="text-muted-foreground">
                 <label htmlFor="agreeTerms">我已閱讀並同意</label>{" "}
-                <Link href="/terms/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" aria-label="服務條款（另開新分頁）">
+                <Link
+                  href="/terms/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                  aria-label="服務條款（另開新分頁）"
+                >
                   服務條款
                 </Link>{" "}
                 與{" "}
-                <Link href="/privacy/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" aria-label="隱私權政策（另開新分頁）">
+                <Link
+                  href="/privacy/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                  aria-label="隱私權政策（另開新分頁）"
+                >
                   隱私權政策
                 </Link>
               </span>

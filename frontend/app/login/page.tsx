@@ -49,8 +49,12 @@ export default function LoginPage() {
     provider: "google" | "facebook" | "apple",
   ) => {
     setError("");
-    await loginWithProvider(provider);
-    router.push("/");
+    try {
+      await loginWithProvider(provider);
+      router.push("/");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "登入失敗");
+    }
   };
 
   return (
@@ -227,14 +231,6 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          {/* Test Account Info */}
-          <div className="mt-6 rounded-lg bg-primary/10 p-4 text-sm">
-            <p className="mb-2 font-medium text-foreground">測試帳號</p>
-            <div className="space-y-1 text-muted-foreground">
-              <p>一般會員：member@test.com / member123</p>
-              <p>創作者：creator@test.com / creator123</p>
-            </div>
-          </div>
         </Card>
       </div>
     </div>
