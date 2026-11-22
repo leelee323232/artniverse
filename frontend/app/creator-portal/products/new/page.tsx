@@ -39,7 +39,7 @@ export default function NewProductPage() {
           </Link>
           <h1 className="mb-2 text-3xl font-bold text-foreground">新增商品</h1>
           <p className="text-muted-foreground">
-            選擇產品、上傳設計、設定價格，申請產品開發
+            選擇產品、上傳刀模檔案、設定價格，申請產品開發
           </p>
         </div>
 
@@ -48,7 +48,7 @@ export default function NewProductPage() {
           <div className="flex items-center justify-center gap-4">
             {[
               { step: 1, label: "選擇產品" },
-              { step: 2, label: "上傳設計" },
+              { step: 2, label: "上傳刀模" },
               { step: 3, label: "設定價格" },
             ].map(({ step, label }) => (
               <div key={step} className="flex items-center">
