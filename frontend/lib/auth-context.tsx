@@ -25,9 +25,6 @@ export interface User {
   creatorProfile?: {
     brandName: string;
     bio: string;
-    links: { label: string; url: string }[];
-    brandName: string;
-    bio: string;
     links: {
       label: string;
       url: string;
@@ -381,13 +378,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  const context = useContext(AuthContext);
 
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
-    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context;
 
   return context;
 }
