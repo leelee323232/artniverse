@@ -79,6 +79,7 @@ export default function Footer() {
           <div className="min-w-[100px] flex flex-col items-center">
             <h3 className="text-[20px] font-bold mb-4 text-foreground">支援</h3>
             <ul className="space-y-2.5 text-[16px] flex flex-col items-center">
+              <li><Link href="/faq" className="text-muted-foreground hover:text-foreground transition-colors hover:underline">常見問題</Link></li>
               <li>
                 <a href="mailto:artniverse2022@gmail.com" className="text-muted-foreground hover:text-foreground transition-colors hover:underline">
                   聯絡我們
