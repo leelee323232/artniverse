@@ -353,22 +353,22 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
         {/* Tabs Section */}
         <div className="mt-16">
           <Tabs defaultValue="specs" className="w-full">
-            <TabsList className="w-full justify-start overflow-x-auto border-b border-border bg-transparent p-0">
+            <TabsList className="w-full justify-start border-b border-border bg-transparent p-0 h-auto rounded-none">
               <TabsTrigger
                 value="specs"
-                className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                className="rounded-none border-b-2 border-transparent px-6 py-3 text-white data-[state=active]:border-primary data-[state=active]:bg-transparent"
               >
                 商品規格
               </TabsTrigger>
               <TabsTrigger
                 value="reviews"
-                className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                className="rounded-none border-b-2 border-transparent px-6 py-3 text-white data-[state=active]:border-primary data-[state=active]:bg-transparent"
               >
                 顧客評價{product.reviewCount > 0 ? ` (${product.reviewCount})` : ""}
               </TabsTrigger>
               <TabsTrigger
                 value="shipping"
-                className="rounded-none border-b-2 border-transparent px-6 py-3 data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                className="rounded-none border-b-2 border-transparent px-6 py-3 text-white data-[state=active]:border-primary data-[state=active]:bg-transparent"
               >
                 配送說明
               </TabsTrigger>
@@ -384,7 +384,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                       className="flex min-w-0 justify-between gap-4 border-b border-border/50 pb-3"
                     >
                       <span className="shrink-0 text-muted-foreground">{key}</span>
-                      <span className="min-w-0 whitespace-pre-wrap break-words text-right font-medium text-foreground">{value}</span>
+                      <span className="min-w-0 whitespace-pre-wrap break-words text-right font-medium text-muted-foreground">{value}</span>
                     </div>
                   ))}
                 </div>
@@ -395,7 +395,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
 
               {product.rating === null ? (
                 <Card className="border-border/50 bg-card/30 p-8 text-center">
-                  <p className="font-medium">尚無評價</p>
+                  <p className="font-medium text-muted-foreground">尚無評價</p>
                   <p className="mt-2 text-sm text-muted-foreground">此商品目前還沒有顧客評價。</p>
                 </Card>
               ) : <div className="space-y-6">
@@ -542,7 +542,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
               <Card className="border-border/50 bg-card/30 p-6">
                 <div className="space-y-6">
                   <div>
-                    <h3 className="mb-3 font-semibold text-foreground">
+                    <h3 className="mb-3 font-semibold text-muted-foreground">
                       配送方式
                     </h3>
                     <ul className="space-y-2 text-muted-foreground">
@@ -558,7 +558,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                   </div>
                   <Separator />
                   <div>
-                    <h3 className="mb-3 font-semibold text-foreground">
+                    <h3 className="mb-3 font-semibold text-muted-foreground">
                       運費說明
                     </h3>
                     <ul className="space-y-2 text-muted-foreground">
@@ -578,7 +578,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                   </div>
                   <Separator />
                   <div>
-                    <h3 className="mb-3 font-semibold text-foreground">
+                    <h3 className="mb-3 font-semibold text-muted-foreground">
                       退換貨政策
                     </h3>
                     <p className="text-muted-foreground">

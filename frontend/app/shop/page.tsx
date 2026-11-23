@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
+import { UniverseBackground } from "@/components/universe-background";
 import { ProductCard } from "@/components/product-card";
 import { PresaleProductCard } from "@/components/presale-product-card";
 import { AuctionProductCard } from "@/components/auction-product-card";
@@ -134,7 +135,8 @@ export default function ShopPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen">
+      <UniverseBackground />
       <Navigation />
 
       {/* Hero Section */}
@@ -160,13 +162,13 @@ export default function ShopPage() {
       </section>
       <div className="container mx-auto px-4 pb-20">
         {/* Filters and Search */}
-        <div className="mb-8 md:sticky md:top-20 z-20 -mx-4 px-4 py-4 bg-[oklch(0.13_0.05_275)]/80 backdrop-blur-md flex flex-col gap-4 md:items-center md:justify-start w-full">
+        <div className="mb-8 md:sticky md:top-20 z-20 -mx-4 px-4 py-4 bg-[oklch(0.13_0.05_275)]/80 backdrop-blur-md flex flex-col gap-4 md:items-center md:justify-start w-full rounded-2xl">
           <div className="flex w-full justify-between gap-8">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="搜尋商品..."
-                className="bg-card/50 pl-10"
+                className="bg-card/50 pl-10 rounded-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -278,7 +280,7 @@ export default function ShopPage() {
             </div>
           </aside>
           {/* Products */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-3">
             {loading && <p role="status">載入資料庫商品中…</p>}
             {error && (
               <div role="alert" className="mb-4">

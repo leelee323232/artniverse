@@ -846,35 +846,38 @@ export default function CreatorPortalPage() {
 
         {/* Main Content Tabs - Order: 商店設定 - 訂單管理 - 商品管理 - 接案請求 - 企業委託 */}
         <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="mb-6 grid w-full max-w-5xl grid-cols-7">
-            <TabsTrigger value="profile">商店設定</TabsTrigger>
-            <TabsTrigger value="orders">
-              訂單管理
-              {stats.pendingOrders > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  {stats.pendingOrders}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="products">商品管理</TabsTrigger>
-            <TabsTrigger value="commissions">
-              接案請求
-              {stats.pendingCommissions > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  {stats.pendingCommissions}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="quests">
-              <Scroll className="mr-1 h-4 w-4" />
-              企業委託
-            </TabsTrigger>
-            <TabsTrigger value="events">
-              <Calendar className="mr-1 h-4 w-4" />
-              活動管理
-            </TabsTrigger>
-            <TabsTrigger value="posts">上傳貼文</TabsTrigger>
-          </TabsList>
+          {/* 手機版：單行可橫向滑動；桌機版：grid 7 欄 */}
+          <div className="mb-6 w-full overflow-x-auto md:overflow-x-visible">
+            <TabsList className="flex w-max min-w-full md:grid md:w-full md:max-w-5xl md:grid-cols-7">
+              <TabsTrigger value="profile" className="shrink-0 whitespace-nowrap">商店設定</TabsTrigger>
+              <TabsTrigger value="orders" className="shrink-0 whitespace-nowrap">
+                訂單管理
+                {stats.pendingOrders > 0 && (
+                  <Badge variant="destructive" className="ml-1.5 shrink-0">
+                    {stats.pendingOrders}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="products" className="shrink-0 whitespace-nowrap">商品管理</TabsTrigger>
+              <TabsTrigger value="commissions" className="shrink-0 whitespace-nowrap">
+                接案請求
+                {stats.pendingCommissions > 0 && (
+                  <Badge variant="destructive" className="ml-1.5 shrink-0">
+                    {stats.pendingCommissions}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="quests" className="shrink-0 whitespace-nowrap">
+                <Scroll className="mr-1 h-4 w-4 shrink-0" />
+                企業委託
+              </TabsTrigger>
+              <TabsTrigger value="events" className="shrink-0 whitespace-nowrap">
+                <Calendar className="mr-1 h-4 w-4 shrink-0" />
+                活動管理
+              </TabsTrigger>
+              <TabsTrigger value="posts" className="shrink-0 whitespace-nowrap">上傳貼文</TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Profile Tab with Super Subscription */}
           <TabsContent value="profile" className="space-y-6">
