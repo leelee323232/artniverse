@@ -7,6 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 
 interface ComingSoonProps {
   children: React.ReactNode;
@@ -15,8 +16,8 @@ interface ComingSoonProps {
 
 /**
  * 包住任何尚未串接的互動元素。
- * - hover 時顯示提示
- * - click 時攔截事件並保持提示顯示 2 秒
+ * - hover 時顯示 tooltip
+ * - click 時攔截事件並彈出 toast（手機也看得到）
  *
  * 用法：
  *   <ComingSoon>
@@ -25,11 +26,13 @@ interface ComingSoonProps {
  */
 export function ComingSoon({ children, className }: ComingSoonProps) {
   const [open, setOpen] = React.useState(false);
+  const { toast } = useToast();
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setOpen(true);
+    toast({ title: "功能即將推出", description: "敬請期待！" });
   };
 
   return (

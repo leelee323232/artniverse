@@ -6,6 +6,7 @@ import { ComingSoon } from "@/components/common/ComingSoon"
 import { ProductFavoriteButton } from "@/components/product-favorite-button"
 import { useRouter, useSearchParams } from "next/navigation"
 import { catalog, catalogProduct, addCatalogItem, catalogError, type CatalogProduct } from "@/lib/commerce/catalog-api"
+import { useAuth } from "@/lib/auth-context"
 import Link from "next/link"
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
@@ -63,6 +64,7 @@ function ProductLoader({ id }: { id: string }) {
 function ProductDetail({ product, allProducts }: { product: CatalogProduct; allProducts: CatalogProduct[] }) {
   const { toast } = useToast()
   const router = useRouter()
+  const { user } = useAuth()
   const [saving, setSaving] = useState(false)
   const locked = useRef(false)
   const ready = true
@@ -83,6 +85,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
   const recommendedProducts = [...relatedProducts, ...otherProducts].slice(0, 6)
 
   const handleAddToCart = async () => {
+    if (!user) { router.push("/login/"); return false }
     if (locked.current || unavailable) return false
     if (missingOption) {
       toast({ title: `請先選擇${missingOption[1]}`, variant: "destructive" })
@@ -205,7 +208,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                     <Separator orientation="vertical" className="h-4" />
                     <span className="text-muted-foreground">{product.reviewCount} 則評價</span>
                   </>
-                ) : <span className="text-muted-foreground">尚無評價</span>}
+                ) : <span className="text-foreground">尚無評價</span>}
                 {product.sold !== null && <>
                   <Separator orientation="vertical" className="h-4" />
                   <span className="text-muted-foreground">已售出 {product.sold.toLocaleString()} 件</span>
@@ -383,7 +386,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                       key={key}
                       className="flex min-w-0 justify-between gap-4 border-b border-border/50 pb-3"
                     >
-                      <span className="shrink-0 text-muted-foreground">{key}</span>
+                      <span className="shrink-0 text-foreground">{key}</span>
                       <span className="min-w-0 whitespace-pre-wrap break-words text-right font-medium text-muted-foreground">{value}</span>
                     </div>
                   ))}
@@ -395,7 +398,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
 
               {product.rating === null ? (
                 <Card className="border-border/50 bg-card/30 p-8 text-center">
-                  <p className="font-medium text-muted-foreground">尚無評價</p>
+                  <p className="font-medium text-foreground">尚無評價</p>
                   <p className="mt-2 text-sm text-muted-foreground">此商品目前還沒有顧客評價。</p>
                 </Card>
               ) : <div className="space-y-6">
@@ -542,7 +545,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
               <Card className="border-border/50 bg-card/30 p-6">
                 <div className="space-y-6">
                   <div>
-                    <h3 className="mb-3 font-semibold text-muted-foreground">
+                    <h3 className="mb-3 font-semibold text-foreground">
                       配送方式
                     </h3>
                     <ul className="space-y-2 text-muted-foreground">
@@ -558,7 +561,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                   </div>
                   <Separator />
                   <div>
-                    <h3 className="mb-3 font-semibold text-muted-foreground">
+                    <h3 className="mb-3 font-semibold text-foreground">
                       運費說明
                     </h3>
                     <ul className="space-y-2 text-muted-foreground">
@@ -578,7 +581,7 @@ function ProductDetail({ product, allProducts }: { product: CatalogProduct; allP
                   </div>
                   <Separator />
                   <div>
-                    <h3 className="mb-3 font-semibold text-muted-foreground">
+                    <h3 className="mb-3 font-semibold text-foreground">
                       退換貨政策
                     </h3>
                     <p className="text-muted-foreground">

@@ -4,7 +4,9 @@ import type React from "react";
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { addCatalogItem, catalogError } from "@/lib/commerce/catalog-api";
+import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Heart } from "lucide-react";
@@ -40,6 +42,8 @@ export function ProductCard({
   const [internalLiked, setInternalLiked] = useState(false);
   const isControlled = onToggleFavorite !== undefined;
   const isLiked = isControlled ? !!isFavorited : internalLiked;
+  const { user } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const locked = useRef(false);
@@ -56,6 +60,7 @@ export function ProductCard({
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
+    if (!user) { router.push("/login/"); return; }
     if (locked.current || unavailable) return;
     locked.current = true; setSaving(true);
     try { await addCatalogItem(id); toast({ title: "已加入購物車", description: name }); }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { fetchCreatorFollow, setCreatorFollow, creatorFollowError, type CreatorFollow } from "@/lib/creator/follow-api";
 
 const buttonClass = "bg-gradient-to-r from-primary to-secondary";
@@ -19,6 +20,7 @@ export function CreatorFollowButton(props: Props) {
 }
 
 function MemberFollowButton({ creatorId, onCount }: Props) {
+  const { toast } = useToast();
   const [state, setState] = useState<CreatorFollow | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,6 +46,7 @@ function MemberFollowButton({ creatorId, onCount }: Props) {
 
   const toggle = async () => {
     if (busy.current || loading || !state || (!state.canFollow && !state.isFollowing)) return;
+    const previousState = state;
     const controller = new AbortController(); mutation.current = controller;
     busy.current = true; setSaving(true); setError("");
     try {
@@ -53,8 +56,12 @@ function MemberFollowButton({ creatorId, onCount }: Props) {
       if (data.followers !== null) onCountRef.current(data.followers);
     } catch (err) {
       if (controller.signal.aborted) return;
-      // A timeout may have committed. Require a fresh GET instead of toggling stale state.
-      setState(null); setError(creatorFollowError(err));
+      // Restore previous state so the button reflects the actual server state.
+      // The user can click "重新查詢狀態" to confirm.
+      setState(previousState);
+      const message = creatorFollowError(err);
+      setError(message);
+      toast({ title: "操作未完成", description: message, variant: "destructive" });
     } finally {
       busy.current = false;
       if (!controller.signal.aborted) setSaving(false);
@@ -63,7 +70,7 @@ function MemberFollowButton({ creatorId, onCount }: Props) {
 
   return <div className="space-y-2">
     <Button size="lg" className={buttonClass} onClick={() => void toggle()}
-      disabled={loading || saving || !state || (!state.canFollow && !state.isFollowing)}
+      disabled={loading || saving || !!error || !state || (!state.canFollow && !state.isFollowing)}
       aria-pressed={state?.isFollowing ?? false}>
       {loading || saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Heart className={"mr-2 h-4 w-4 " + (state?.isFollowing ? "fill-current" : "")} />}
       {saving ? "處理中…" : loading ? "確認追蹤中…" : state?.isFollowing ? "取消追蹤" : state && !state.canFollow ? "無法追蹤此創作者" : "追蹤創作者"}

@@ -80,28 +80,49 @@ const recentOrders = [
   {
     id: "ORD-001",
     customer: "王小明",
+    phone: "0912-345-678",
+    email: "wang@example.com",
+    address: "台北市信義區松壽路 1 號 5 樓",
     product: "星空筆記本",
     quantity: 2,
+    unitPrice: 380,
     total: 760,
     status: "pending",
+    paymentMethod: "信用卡",
+    paymentStatus: "已付款",
+    shippingStatus: "待出貨",
     date: "2024-01-15",
   },
   {
     id: "ORD-002",
     customer: "李小華",
+    phone: "0923-456-789",
+    email: "lee@example.com",
+    address: "台中市西區民生路 88 號 3 樓",
     product: "療癒小熊貼紙組",
     quantity: 1,
+    unitPrice: 120,
     total: 120,
     status: "shipped",
+    paymentMethod: "ATM 轉帳",
+    paymentStatus: "已付款",
+    shippingStatus: "已出貨",
     date: "2024-01-14",
   },
   {
     id: "ORD-003",
     customer: "張美玲",
+    phone: "0934-567-890",
+    email: "chang@example.com",
+    address: "高雄市前金區中正四路 211 號",
     product: "夢境明信片套組",
     quantity: 3,
+    unitPrice: 250,
     total: 750,
     status: "completed",
+    paymentMethod: "信用卡",
+    paymentStatus: "已付款",
+    shippingStatus: "已完成",
     date: "2024-01-13",
   },
 ];
@@ -293,6 +314,9 @@ export default function CreatorPortalPage() {
     if (!user) router.replace("/login/");
     else if (!user.is_creator) router.replace("/creator-apply/");
   }, [authLoading, user, router]);
+
+  // Order detail dialog state
+  const [selectedOrder, setSelectedOrder] = useState<typeof recentOrders[0] | null>(null);
 
   // Profile editing state
   const [profileData, setProfileData] = useState({
@@ -847,25 +871,15 @@ export default function CreatorPortalPage() {
         {/* Main Content Tabs - Order: 商店設定 - 訂單管理 - 商品管理 - 接案請求 - 企業委託 */}
         <Tabs defaultValue="profile" className="w-full">
           {/* 手機版：單行可橫向滑動；桌機版：grid 7 欄 */}
-          <div className="mb-6 w-full overflow-x-auto md:overflow-x-visible">
-            <TabsList className="flex w-max min-w-full md:grid md:w-full md:max-w-5xl md:grid-cols-7">
+          <div className="mb-6 w-full overflow-x-auto pb-1 md:overflow-x-visible md:pb-0">
+            <TabsList className="flex w-max md:grid md:w-full md:max-w-5xl md:grid-cols-7">
               <TabsTrigger value="profile" className="shrink-0 whitespace-nowrap">商店設定</TabsTrigger>
               <TabsTrigger value="orders" className="shrink-0 whitespace-nowrap">
                 訂單管理
-                {stats.pendingOrders > 0 && (
-                  <Badge variant="destructive" className="ml-1.5 shrink-0">
-                    {stats.pendingOrders}
-                  </Badge>
-                )}
               </TabsTrigger>
               <TabsTrigger value="products" className="shrink-0 whitespace-nowrap">商品管理</TabsTrigger>
               <TabsTrigger value="commissions" className="shrink-0 whitespace-nowrap">
                 接案請求
-                {stats.pendingCommissions > 0 && (
-                  <Badge variant="destructive" className="ml-1.5 shrink-0">
-                    {stats.pendingCommissions}
-                  </Badge>
-                )}
               </TabsTrigger>
               <TabsTrigger value="quests" className="shrink-0 whitespace-nowrap">
                 <Scroll className="mr-1 h-4 w-4 shrink-0" />
@@ -1236,7 +1250,11 @@ export default function CreatorPortalPage() {
                   </thead>
                   <tbody>
                     {recentOrders.map((order) => (
-                      <tr key={order.id} className="border-b border-border/30">
+                      <tr
+                        key={order.id}
+                        className="cursor-pointer border-b border-border/30 transition-colors hover:bg-white/5"
+                        onClick={() => setSelectedOrder(order)}
+                      >
                         <td className="px-4 py-3 text-sm text-foreground">
                           {order.id}
                         </td>
@@ -1263,6 +1281,45 @@ export default function CreatorPortalPage() {
                 </table>
               </div>
             </Card>
+
+            {/* Order Detail Dialog */}
+            <Dialog open={selectedOrder !== null} onOpenChange={(open) => { if (!open) setSelectedOrder(null); }}>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>訂單明細 — {selectedOrder?.id}</DialogTitle>
+                </DialogHeader>
+                {selectedOrder && (
+                  <div className="space-y-5 text-sm">
+                    <div className="space-y-1">
+                      <p className="font-semibold text-foreground">基本資訊</p>
+                      <p className="text-muted-foreground">下單日期：{selectedOrder.date}</p>
+                      <p className="text-muted-foreground">訂單狀態：<Badge className={getStatusColor(selectedOrder.status)}>{getStatusText(selectedOrder.status)}</Badge></p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-foreground">商品明細</p>
+                      <p className="text-muted-foreground">{selectedOrder.product} × {selectedOrder.quantity}（NT$ {selectedOrder.unitPrice} / 件）</p>
+                      <p className="font-medium text-foreground">合計：NT$ {selectedOrder.total}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-foreground">收件資訊</p>
+                      <p className="text-muted-foreground">收件人：{selectedOrder.customer}</p>
+                      <p className="text-muted-foreground">電話：{selectedOrder.phone}</p>
+                      <p className="text-muted-foreground">Email：{selectedOrder.email}</p>
+                      <p className="text-muted-foreground">地址：{selectedOrder.address}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-foreground">付款資訊</p>
+                      <p className="text-muted-foreground">付款方式：{selectedOrder.paymentMethod}</p>
+                      <p className="text-muted-foreground">付款狀態：{selectedOrder.paymentStatus}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-foreground">出貨資訊</p>
+                      <p className="text-muted-foreground">出貨狀態：{selectedOrder.shippingStatus}</p>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* Products Tab */}
@@ -2280,15 +2337,11 @@ export default function CreatorPortalPage() {
                                 "創作者"}
                             </span>
 
-                            <button
-                              type="button"
-                              className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80 transition hover:bg-white/20"
-                            ></button>
                           </div>
 
                           <Textarea
                             id="post-content"
-                            placeholder="有什麼新鮮事？"
+                            placeholder="？"
                             value={newPostContent}
                             onChange={(e) => setNewPostContent(e.target.value)}
                             maxLength={500}
