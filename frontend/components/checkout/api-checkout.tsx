@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import { api } from "@/lib/api";
+import { isSingleSeller, sellerKey } from "@/lib/commerce/cart-selection";
 import { useAuth, type User } from "@/lib/auth-context";
 import { createApiOrder, draftKey, getPaymentConfig, checkoutError, uuidPattern, type CartApiItem, type CheckoutDraft, type Contact, type TapPayConfig } from "@/lib/commerce/checkout-api";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ function Form({ owner, draftId, profile }: { owner: string; draftId: string; pro
       const saved: CheckoutDraft = JSON.parse(raw);
       if (saved.owner !== owner || !Array.isArray(saved.items) || !saved.items.length) throw new Error("結帳資料無效。");
       if (saved.orderId && uuidPattern.test(saved.orderId)) { router.replace(`/checkout/payment?order=${saved.orderId}`); return; }
+      if (!isSingleSeller(saved.items)) throw new Error("每筆訂單只能包含同一位創作者的商品，請返回購物車重新選擇。");
       const conf = await getPaymentConfig(controller.signal);
       if (controller.signal.aborted) return;
       setDraft(saved); setConfig(conf);
@@ -60,10 +62,11 @@ function Form({ owner, draftId, profile }: { owner: string; draftId: string; pro
     locked.current = true; setBusy(true); setError("");
     let pending = draft;
     try {
+      if (!isSingleSeller(pending.items)) throw new Error("每筆訂單只能包含同一位創作者的商品，請返回購物車重新選擇。");
       if (!pending.submitted) {
         const response = await api.get<{ data: CartApiItem[] }>("/api/v1/cart", { timeout: 15000 });
         const current = response.data.data;
-        if (pending.items.some(item => !current.some(row => String(row.id) === String(item.id) && String(row.productId) === String(item.productId) && row.quantity === item.quantity && row.price === item.price && row.isAvailable !== false))) {
+        if (pending.items.some(item => !current.some(row => String(row.id) === String(item.id) && String(row.productId) === String(item.productId) && sellerKey(row) === sellerKey(item) && row.quantity === item.quantity && row.price === item.price && row.isAvailable !== false))) {
           throw new Error("購物車已變更，請返回購物車重新確認。");
         }
         const items = pending.items.map(item => ({ product_id: Number(item.productId), quantity: item.quantity }));

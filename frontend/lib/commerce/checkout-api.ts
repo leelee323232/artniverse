@@ -2,7 +2,7 @@ import axios from "axios";
 import { api } from "@/lib/api";
 
 export type Contact = { name: string; email: string; phone: string; address: string };
-export type CartApiItem = { id: string; productId: string; name: string; price: number; quantity: number; image: string; creator: string; stock?: number; isAvailable?: boolean };
+export type CartApiItem = { id: string; productId: string; name: string; price: number; quantity: number; image: string; creator: string; creatorId?: string | number; stock?: number; isAvailable?: boolean };
 export type PaymentMethod = "card" | "line_pay" | "atm";
 export const paymentLabels: Record<PaymentMethod, string> = { card: "信用卡", line_pay: "LINE Pay", atm: "ATM 虛擬帳號" };
 export const paymentMethods: PaymentMethod[] = ["card", "line_pay", "atm"];
